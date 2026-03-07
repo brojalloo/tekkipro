@@ -69,6 +69,10 @@ export default function ProduitForm() {
   const [stockQty, setStockQty] = useState('');
   const [stockUniteIdx, setStockUniteIdx] = useState(-1); // -1 = base unit
   const [unitesVente, setUnitesVente] = useState([]);
+  // Commercial pack helper (automatic conversion)
+  const [commercialMode, setCommercialMode] = useState(''); // 'poids'|'volume'|'carton'|''
+  const [commercialSize, setCommercialSize] = useState(''); // e.g. poids en kg ou volume en L ou unités par carton
+  const [commercialCount, setCommercialCount] = useState(''); // nombre de packs (sacs,bidons,cartons)
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -116,6 +120,24 @@ export default function ProduitForm() {
   // Calculate stock in base unit
   const getStockBase = () => {
     const qty = parseFloat(stockQty || 0);
+    // If commercial helper filled, compute from it (overrides stockQty)
+    if (commercialMode && commercialSize && commercialCount) {
+      const size = parseFloat(commercialSize || 0);
+      const count = parseFloat(commercialCount || 0);
+      if (isNaN(size) || isNaN(count)) return 0;
+      if (commercialMode === 'poids') {
+        // commercialSize in kg -> convert to grams
+        return count * size * 1000;
+      }
+      if (commercialMode === 'volume') {
+        // commercialSize in litres -> convert to ml
+        return count * size * 1000;
+      }
+      if (commercialMode === 'carton') {
+        // commercialSize = units per carton
+        return count * size;
+      }
+    }
     if (stockUniteIdx >= 0 && unitesVente[stockUniteIdx]) {
       return qty * parseFloat(unitesVente[stockUniteIdx].facteurConversion || 0);
     }
@@ -125,6 +147,27 @@ export default function ProduitForm() {
   // Add a new unit conversion row
   const addUnite = () => {
     setUnitesVente([...unitesVente, { nom: '', facteurConversion: '', prix: '', prixAchat: '', estDefaut: false, isNew: true }]);
+  };
+
+  const addCommercialUnitToList = () => {
+    if (!commercialMode || !commercialSize) return toast.error('Remplissez la contenance');
+    const size = parseFloat(commercialSize);
+    if (isNaN(size) || size <= 0) return toast.error('Contenance invalide');
+    let nom, facteur;
+    if (commercialMode === 'poids') {
+      nom = `Sac ${size}kg`;
+      facteur = size * 1000; // grams
+    } else if (commercialMode === 'volume') {
+      nom = `Bidon ${size}L`;
+      facteur = size * 1000; // ml
+    } else {
+      nom = `Carton ${size}`;
+      facteur = size; // units per carton
+    }
+    // prevent duplicates
+    if (unitesVente.some(u => u.nom === nom)) return toast.error(`${nom} existe déjà dans les unités`);
+    setUnitesVente([...unitesVente, { nom, facteurConversion: String(facteur), prix: '', prixAchat: '', estDefaut: unitesVente.length === 0, isNew: true }]);
+    toast.success(`Unité ${nom} ajoutée (ajoutez le prix si nécessaire)`);
   };
 
   // Add a suggested unit
@@ -374,6 +417,50 @@ export default function ProduitForm() {
                   ))}
                 </div>
               </div>
+              
+              {/* Commercial helper: show quick inputs to compute stock automatically */}
+              {!isEdit && (form.uniteBase === 'g' || form.uniteBase === 'ml' || form.uniteBase === 'piece' || form.uniteBase === 'paquet') && (
+                <div className="pf-commercial-helper">
+                  <label>
+                    <FiInfo size={14} /> Mode commercial (aide à la conversion automatique)
+                  </label>
+                  <div className="pf-row">
+                    <div className="pf-field">
+                      <select value={commercialMode} onChange={(e) => { setCommercialMode(e.target.value); setCommercialSize(''); setCommercialCount(''); }}>
+                        <option value="">-- Aucun --</option>
+                        {form.uniteBase === 'g' && <option value="poids">Sacs / Poids (kg)</option>}
+                        {form.uniteBase === 'ml' && <option value="volume">Bidons / Volume (L)</option>}
+                        {(form.uniteBase === 'piece' || form.uniteBase === 'paquet') && <option value="carton">Cartons / Unités par carton</option>}
+                      </select>
+                    </div>
+                    {commercialMode && (
+                      <>
+                        <div className="pf-field">
+                          <label>Contenance ({commercialMode === 'poids' ? 'kg' : commercialMode === 'volume' ? 'L' : 'unités'})</label>
+                          <input type="number" value={commercialSize} onChange={(e) => setCommercialSize(e.target.value)} placeholder={commercialMode === 'poids' ? 'Ex: 50' : commercialMode === 'volume' ? 'Ex: 20' : 'Ex: 40'} min="0" step="0.01" />
+                        </div>
+                        <div className="pf-field">
+                          <label>Nombre de packs</label>
+                          <input type="number" value={commercialCount} onChange={(e) => setCommercialCount(e.target.value)} placeholder="Ex: 10" min="0" step="1" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {commercialMode && commercialSize && commercialCount && (
+                    <div className="pf-stock-preview" style={{marginTop:'0.6rem'}}>
+                      <FiCheck size={15} />
+                      <div>
+                        <strong>Stock calculé :</strong> {getStockBase().toLocaleString('fr-FR')} {form.uniteBase}
+                      </div>
+                    </div>
+                  )}
+                  {commercialMode && commercialSize && (
+                    <div style={{marginTop:'0.5rem'}}>
+                      <button type="button" className="pf-btn" onClick={addCommercialUnitToList}>Ajouter l'unité commerciale</button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {!isEdit && (
                 <div className="pf-row">
