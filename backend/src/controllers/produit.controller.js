@@ -127,7 +127,40 @@ const create = async (req, res) => {
       include: { unitesVente: true, categorie: true },
     });
 
-    res.status(201).json({ success: true, message: 'Produit créé', data: produit });
+    // Safety: if commercial fields provided, ensure unit created and stock set (handles cases where nested create didn't apply)
+    if (commercialMode && commercialSize) {
+      const size = parseFloat(commercialSize);
+      const count = commercialCount ? parseFloat(commercialCount) : 0;
+      let facteur = 0;
+      if (commercialMode === 'poids') facteur = size * 1000;
+      else if (commercialMode === 'volume') facteur = size * 1000;
+      else if (commercialMode === 'carton') facteur = size;
+
+      const nomCommercial = commercialMode === 'poids' ? `Sac ${size}kg` : commercialMode === 'volume' ? `Bidon ${size}L` : `Carton ${size}`;
+
+      const exists = await prisma.uniteVente.findFirst({ where: { produitId: produit.id, nom: nomCommercial } });
+      if (!exists) {
+        try {
+          await prisma.uniteVente.create({ data: { nom: nomCommercial, facteurConversion: facteur, prix: 0, produitId: produit.id } });
+        } catch (e) { console.warn('Failed to create commercial unite after produit create', e); }
+      }
+
+      // ensure stock updated
+      const newStock = (!isNaN(size) && !isNaN(count)) ? (
+        commercialMode === 'poids' || commercialMode === 'volume' ? count * size * 1000 : count * size
+      ) : produit.stock;
+      if (newStock !== produit.stock) {
+        try {
+          await prisma.produit.update({ where: { id: produit.id }, data: { stock: newStock } });
+          produit.stock = newStock;
+        } catch (e) { console.warn('Failed to update produit stock after create', e); }
+      }
+    }
+
+    // Reload product with units
+    const produitWithUnits = await prisma.produit.findFirst({ where: { id: produit.id }, include: { unitesVente: true, categorie: true } });
+
+    res.status(201).json({ success: true, message: 'Produit créé', data: produitWithUnits });
   } catch (error) {
     console.error('Erreur create produit:', error);
     res.status(500).json({ success: false, message: 'Erreur lors de la création du produit' });
