@@ -59,32 +59,70 @@ const getById = async (req, res) => {
 // Créer un produit
 const create = async (req, res) => {
   try {
-    const { nom, description, prixVente, prixAchat, stock, stockAlerte, uniteBase, codeBarre, categorieId, fournisseurId, unitesVente } = req.body;
+    const { nom, description, prixVente, prixAchat, stock, stockAlerte, uniteBase, codeBarre, categorieId, fournisseurId, unitesVente, commercialMode, commercialSize, commercialCount } = req.body;
 
-    // stock est entré par l'utilisateur dans une unité de vente ou en unité de base
-    // Le frontend envoie le stock déjà converti en unité de base
+    // Compute stock in base unit if commercial fields provided
+    let stockBase = stock !== undefined && stock !== null && stock !== '' ? parseFloat(stock) : 0;
+    if (commercialMode && commercialSize && commercialCount) {
+      const size = parseFloat(commercialSize);
+      const count = parseFloat(commercialCount);
+      if (!isNaN(size) && !isNaN(count)) {
+        if (commercialMode === 'poids') {
+          // size in kg -> grams
+          stockBase = count * size * 1000;
+        } else if (commercialMode === 'volume') {
+          // size in L -> ml
+          stockBase = count * size * 1000;
+        } else if (commercialMode === 'carton') {
+          // size = units per carton
+          stockBase = count * size;
+        }
+      }
+    }
+
+    // Prepare units to create
+    const unitsToCreate = (unitesVente && unitesVente.length > 0) ? unitesVente.map(u => ({
+      nom: u.nom,
+      facteurConversion: parseFloat(u.facteurConversion),
+      prix: parseFloat(u.prix),
+      prixAchat: u.prixAchat ? parseFloat(u.prixAchat) : null,
+      estDefaut: Boolean(u.estDefaut),
+    })) : [];
+
+    // If commercial unit provided, add it to unitsToCreate unless duplicate
+    if (commercialMode && commercialSize) {
+      const size = parseFloat(commercialSize);
+      let nomCommercial = '';
+      let facteur = 0;
+      if (commercialMode === 'poids') {
+        nomCommercial = `Sac ${size}kg`;
+        facteur = size * 1000;
+      } else if (commercialMode === 'volume') {
+        nomCommercial = `Bidon ${size}L`;
+        facteur = size * 1000;
+      } else if (commercialMode === 'carton') {
+        nomCommercial = `Carton ${size}`;
+        facteur = size;
+      }
+      if (nomCommercial && !unitsToCreate.some(u => u.nom === nomCommercial)) {
+        unitsToCreate.push({ nom: nomCommercial, facteurConversion: facteur, prix: 0, prixAchat: null, estDefaut: unitsToCreate.length === 0 });
+      }
+    }
+
     const produit = await prisma.produit.create({
       data: {
         nom,
         description,
         prixVente: parseFloat(prixVente || 0),
         prixAchat: parseFloat(prixAchat || 0),
-        stock: parseFloat(stock || 0),
+        stock: stockBase,
         stockAlerte: parseFloat(stockAlerte || 0),
         uniteBase: uniteBase || 'piece',
         codeBarre,
         categorieId: categorieId ? parseInt(categorieId) : null,
         fournisseurId: fournisseurId ? parseInt(fournisseurId) : null,
         boutiqueId: req.boutiqueId,
-        unitesVente: unitesVente && unitesVente.length > 0 ? {
-          create: unitesVente.map(u => ({
-            nom: u.nom,
-            facteurConversion: parseFloat(u.facteurConversion),
-            prix: parseFloat(u.prix),
-            prixAchat: u.prixAchat ? parseFloat(u.prixAchat) : null,
-            estDefaut: Boolean(u.estDefaut),
-          })),
-        } : undefined,
+        unitesVente: unitsToCreate.length > 0 ? { create: unitsToCreate } : undefined,
       },
       include: { unitesVente: true, categorie: true },
     });
@@ -108,21 +146,57 @@ const update = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Produit non trouvé' });
     }
 
-    const { nom, description, prixVente, prixAchat, stockAlerte, uniteBase, codeBarre, categorieId, fournisseurId, actif } = req.body;
+    const { nom, description, prixVente, prixAchat, stockAlerte, uniteBase, codeBarre, categorieId, fournisseurId, actif, commercialMode, commercialSize, commercialCount } = req.body;
 
-    const produit = await prisma.produit.update({
-      where: { id: parseInt(id) },
-      data: {
-        nom, description,
-        prixVente: prixVente !== undefined && prixVente !== '' ? parseFloat(prixVente) : undefined,
-        prixAchat: prixAchat !== undefined && prixAchat !== '' ? parseFloat(prixAchat) : undefined,
-        stockAlerte: stockAlerte !== undefined && stockAlerte !== '' ? parseFloat(stockAlerte) : undefined,
-        uniteBase, codeBarre, actif,
-        categorieId: categorieId ? parseInt(categorieId) : (categorieId === '' || categorieId === null ? null : undefined),
-        fournisseurId: fournisseurId ? parseInt(fournisseurId) : (fournisseurId === '' || fournisseurId === null ? null : undefined),
-      },
-      include: { unitesVente: true, categorie: true },
-    });
+      // If commercial fields provided on update, compute stock in base unit
+      let stockToSet = undefined;
+      if (commercialMode && commercialSize && commercialCount) {
+        const size = parseFloat(commercialSize);
+        const count = parseFloat(commercialCount);
+        if (!isNaN(size) && !isNaN(count)) {
+          if (commercialMode === 'poids') stockToSet = count * size * 1000;
+          else if (commercialMode === 'volume') stockToSet = count * size * 1000;
+          else if (commercialMode === 'carton') stockToSet = count * size;
+        }
+      }
+
+      const produit = await prisma.produit.update({
+        where: { id: parseInt(id) },
+        data: {
+          nom, description,
+          prixVente: prixVente !== undefined && prixVente !== '' ? parseFloat(prixVente) : undefined,
+          prixAchat: prixAchat !== undefined && prixAchat !== '' ? parseFloat(prixAchat) : undefined,
+          stock: stockToSet !== undefined ? stockToSet : undefined,
+          stockAlerte: stockAlerte !== undefined && stockAlerte !== '' ? parseFloat(stockAlerte) : undefined,
+          uniteBase, codeBarre, actif,
+          categorieId: categorieId ? parseInt(categorieId) : (categorieId === '' || categorieId === null ? null : undefined),
+          fournisseurId: fournisseurId ? parseInt(fournisseurId) : (fournisseurId === '' || fournisseurId === null ? null : undefined),
+        },
+        include: { unitesVente: true, categorie: true },
+      });
+
+      // If commercial unit present, ensure an uniteVente exists for it
+      if (commercialMode && commercialSize) {
+        const size = parseFloat(commercialSize);
+        let nomCommercial = '';
+        let facteur = 0;
+        if (commercialMode === 'poids') {
+          nomCommercial = `Sac ${size}kg`;
+          facteur = size * 1000;
+        } else if (commercialMode === 'volume') {
+          nomCommercial = `Bidon ${size}L`;
+          facteur = size * 1000;
+        } else if (commercialMode === 'carton') {
+          nomCommercial = `Carton ${size}`;
+          facteur = size;
+        }
+        if (nomCommercial) {
+          const exists = await prisma.uniteVente.findFirst({ where: { produitId: produit.id, nom: nomCommercial } });
+          if (!exists) {
+            await prisma.uniteVente.create({ data: { nom: nomCommercial, facteurConversion: facteur, prix: 0, produitId: produit.id } });
+          }
+        }
+      }
 
     res.json({ success: true, message: 'Produit mis à jour', data: produit });
   } catch (error) {
