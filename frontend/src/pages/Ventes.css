@@ -1,0 +1,148 @@
+/* =====================================================
+   VENTES — PREMIUM DESIGN
+   Prefix: vnt-  |  Accent: Emerald / Blue
+   ===================================================== */
+
+.vnt-page { padding: 0; min-height: 100vh; background: transparent; }
+
+/* Loading */
+.vnt-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 1rem; }
+.vnt-loading-spinner { width: 40px; height: 40px; border: 3px solid var(--gray-200); border-top-color: #6366f1; border-radius: 50%; animation: vntSpin 0.7s linear infinite; }
+.vnt-loading p { font-size: 0.88rem; font-weight: 600; color: var(--gray-400); }
+
+/* ─── Header ────────────────────────────────────────── */
+.vnt-header { position: relative; padding: 2rem 2.5rem 1.75rem; overflow: hidden; border-bottom: 1px solid var(--gray-200); }
+.vnt-header-bg { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, rgba(99,102,241,0.03) 50%, rgba(16,185,129,0.02) 100%); pointer-events: none; }
+.vnt-header-content { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+.vnt-header-left { display: flex; align-items: center; gap: 1rem; }
+.vnt-header-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border-radius: 14px; box-shadow: 0 6px 20px rgba(59,130,246,0.25); flex-shrink: 0; }
+.vnt-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--gray-900); letter-spacing: -0.02em; margin: 0 0 0.1rem; line-height: 1.2; }
+.vnt-header p { color: var(--gray-500); font-size: 0.85rem; font-weight: 500; margin: 0; }
+
+/* ─── Stats ─────────────────────────────────────────── */
+.vnt-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding: 1.75rem 2.5rem 0; }
+.vnt-stat-card { background: white; border: 1px solid var(--gray-200); border-radius: 18px; padding: 1.25rem 1.35rem; display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm); transition: all 0.25s ease; }
+.vnt-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.vnt-stat-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 14px; flex-shrink: 0; }
+.vnt-stat-icon.blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.vnt-stat-icon.green { background: rgba(16,185,129,0.1); color: #10b981; }
+.vnt-stat-icon.purple { background: rgba(99,102,241,0.1); color: #6366f1; }
+.vnt-stat-icon.amber { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.vnt-stat-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.vnt-stat-value { font-size: 1.15rem; font-weight: 800; color: var(--gray-900); letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vnt-credit-val { color: #f59e0b; }
+.vnt-stat-label { font-size: 0.76rem; font-weight: 600; color: var(--gray-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── Toolbar ───────────────────────────────────────── */
+.vnt-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem 2.5rem 0; flex-wrap: wrap; }
+.vnt-filters { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.vnt-filter-field { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.75rem; background: white; border: 1px solid var(--gray-200); border-radius: 12px; transition: all 0.25s ease; }
+.vnt-filter-field:focus-within { border-color: rgba(59,130,246,0.5); box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+.vnt-filter-field svg { color: var(--gray-400); flex-shrink: 0; }
+.vnt-filter-field input,
+.vnt-filter-field select { border: none; background: transparent; outline: none; font-size: 0.82rem; font-weight: 500; font-family: inherit; color: var(--gray-700); cursor: pointer; }
+.vnt-filter-field input { width: 130px; }
+.vnt-filter-field select { width: 120px; appearance: none; -webkit-appearance: none; padding-right: 0.5rem; }
+.vnt-filter-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border: none; border-radius: 12px; font-size: 0.82rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 14px rgba(59,130,246,0.2); white-space: nowrap; }
+.vnt-filter-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.3); }
+
+.vnt-search-group { display: flex; align-items: center; gap: 0.75rem; }
+.vnt-search { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.85rem; background: white; border: 1px solid var(--gray-200); border-radius: 12px; min-width: 280px; transition: all 0.25s ease; }
+.vnt-search:focus-within { border-color: rgba(59,130,246,0.5); box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+.vnt-search svg { color: var(--gray-400); flex-shrink: 0; }
+.vnt-search input { border: none; background: transparent; outline: none; font-size: 0.82rem; font-weight: 500; font-family: inherit; color: var(--gray-900); width: 100%; }
+.vnt-search input::placeholder { color: var(--gray-400); }
+.vnt-result-count { font-size: 0.78rem; font-weight: 600; color: var(--gray-400); white-space: nowrap; }
+
+/* ─── Table ─────────────────────────────────────────── */
+.vnt-content { padding: 1.25rem 2.5rem 2.5rem; }
+.vnt-table-card { background: white; border: 1px solid var(--gray-200); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.vnt-table { width: 100%; border-collapse: collapse; }
+.vnt-table thead tr { background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+.vnt-table th { padding: 0.85rem 1rem; font-size: 0.72rem; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; }
+.vnt-table td { padding: 0.85rem 1rem; font-size: 0.82rem; font-weight: 500; color: var(--gray-700); border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+.vnt-table tbody tr:last-child td { border-bottom: none; }
+.vnt-table tbody tr { transition: background 0.15s ease; }
+.vnt-table tbody tr:hover { background: var(--gray-50); }
+.vnt-row-cancelled { background: rgba(156,163,175,0.04) !important; opacity: 0.65; }
+.vnt-row-cancelled:hover { background: rgba(156,163,175,0.08) !important; }
+.vnt-row-credit { background: rgba(245,158,11,0.015) !important; }
+.vnt-row-credit:hover { background: rgba(245,158,11,0.04) !important; }
+
+/* Numero */
+.vnt-numero { font-weight: 800; color: var(--gray-900); font-size: 0.82rem; background: rgba(59,130,246,0.06); padding: 0.2rem 0.6rem; border-radius: 8px; letter-spacing: -0.01em; }
+
+/* Date */
+.vnt-date-cell { display: flex; align-items: center; gap: 0.35rem; color: var(--gray-500); font-size: 0.8rem; }
+.vnt-date-cell svg { color: var(--gray-400); flex-shrink: 0; }
+
+/* Client */
+.vnt-client-cell { display: flex; align-items: center; gap: 0.55rem; }
+.vnt-avatar { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border-radius: 50%; font-size: 0.78rem; font-weight: 800; flex-shrink: 0; }
+.vnt-client-cell span { font-weight: 600; color: var(--gray-800); }
+
+/* Vendeur */
+.vnt-vendeur-cell { display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: var(--gray-600); }
+.vnt-vendeur-cell svg { color: var(--gray-400); }
+
+/* Muted */
+.vnt-muted { color: var(--gray-300); font-size: 0.82rem; }
+
+/* Products column */
+.vnt-produits-cell { display: flex; flex-direction: column; gap: 0.2rem; }
+.vnt-produit-line { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--gray-600); }
+.vnt-produit-line svg { color: var(--gray-400); flex-shrink: 0; }
+.vnt-produit-line strong { color: var(--gray-800); font-weight: 700; }
+.vnt-fraction { font-style: italic; color: #8b5cf6; font-size: 0.75rem; font-weight: 600; }
+
+/* Montant */
+.vnt-montant { font-weight: 800; color: var(--gray-900); font-size: 0.85rem; }
+
+/* ─── Badges ────────────────────────────────────────── */
+.vnt-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.7rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.vnt-badge.success { background: rgba(16,185,129,0.08); color: #059669; }
+.vnt-badge.danger { background: rgba(239,68,68,0.08); color: #dc2626; }
+.vnt-badge.blue { background: rgba(59,130,246,0.08); color: #2563eb; }
+
+/* Status badges */
+.vnt-status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.7rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.vnt-status.completed { background: rgba(16,185,129,0.08); color: #059669; }
+.vnt-status.credit { background: rgba(245,158,11,0.08); color: #d97706; }
+.vnt-status.cancelled { background: rgba(156,163,175,0.08); color: #6b7280; }
+
+/* ─── Actions ───────────────────────────────────────── */
+.vnt-actions { display: flex; gap: 0.35rem; }
+.vnt-action-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gray-200); border-radius: 10px; background: white; cursor: pointer; transition: all 0.2s ease; }
+.vnt-action-btn.pdf { color: var(--gray-400); }
+.vnt-action-btn.pdf:hover { background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.2); color: #3b82f6; }
+.vnt-action-btn.cancel { color: var(--gray-300); }
+.vnt-action-btn.cancel:hover { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); color: #ef4444; }
+
+/* ─── Empty ─────────────────────────────────────────── */
+.vnt-empty { display: flex; flex-direction: column; align-items: center; padding: 3.5rem 2rem; color: var(--gray-300); }
+.vnt-empty svg { margin-bottom: 0.75rem; opacity: 0.5; }
+.vnt-empty p { font-size: 0.95rem; font-weight: 700; color: var(--gray-500); margin: 0 0 0.25rem; }
+.vnt-empty span { font-size: 0.82rem; color: var(--gray-400); font-weight: 500; }
+
+/* ─── Animations ────────────────────────────────────── */
+@keyframes vntSpin { to { transform: rotate(360deg); } }
+
+/* ─── Responsive ────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .vnt-stats { grid-template-columns: repeat(2, 1fr); }
+  .vnt-toolbar { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 768px) {
+  .vnt-header { padding: 1.5rem; }
+  .vnt-header-content { flex-direction: column; align-items: flex-start; }
+  .vnt-stats { grid-template-columns: 1fr; padding: 1.25rem 1.5rem 0; }
+  .vnt-toolbar { padding: 1.25rem 1.5rem 0; }
+  .vnt-filters { flex-direction: column; align-items: stretch; }
+  .vnt-filter-field input { width: 100%; }
+  .vnt-filter-field select { width: 100%; }
+  .vnt-search { min-width: unset; }
+  .vnt-search-group { flex-direction: column; align-items: stretch; }
+  .vnt-content { padding: 1.25rem 1.5rem 2rem; }
+  .vnt-table-card { overflow-x: auto; }
+  .vnt-table th, .vnt-table td { padding: 0.65rem 0.75rem; font-size: 0.75rem; }
+}
