@@ -1,23 +1,24 @@
-// Service Cron — Gestion automatique des abonnements
+// Service Cron — Gestion automatique des abonnements + alertes produits
 const cron = require('node-cron');
 const prisma = require('../config/database');
 const { sendSubscriptionExpiryEmail } = require('./email.service');
+const logger = require('../common/utils/logger');
 
-// Vérifier et expirer les abonnements dépassés — tous les jours à 2h du matin
+// Vérifier et expirer les abonnements + alertes produits — tous les jours à 2h du matin
 const startSubscriptionCron = () => {
-  // Exécuter à 02:00 chaque jour
   cron.schedule('0 2 * * *', async () => {
-    console.log('[CRON] Vérification des abonnements...');
+    logger.info('[CRON] Vérification des abonnements et produits...');
     try {
       await expireOverdueSubscriptions();
       await sendExpiryReminders();
-      console.log('[CRON] Vérification terminée avec succès');
+      await alertExpiredProducts();
+      logger.info('[CRON] Vérification terminée avec succès');
     } catch (error) {
-      console.error('[CRON] Erreur:', error);
+      logger.error('[CRON] Erreur critique', error);
     }
   });
 
-  console.log('📅 Cron abonnements activé (quotidien à 02:00)');
+  logger.info('[CRON] Cron abonnements + produits activé (quotidien à 02:00)');
 };
 
 // Expirer les abonnements dont la dateFin est dépassée
@@ -51,19 +52,19 @@ const expireOverdueSubscriptions = async () => {
       data: { plan: 'GRATUIT' },
     });
 
-    console.log(`[CRON] Abonnement #${abo.id} expiré — Boutique ${abo.boutique.nom} repassée en GRATUIT`);
+    logger.info('[CRON] Abonnement expiré', { aboId: abo.id, boutique: abo.boutique.nom });
 
     // Notifier l'admin
     const admin = abo.boutique.users[0];
     if (admin) {
       sendSubscriptionExpiryEmail(admin, abo.boutique, 0).catch(err => {
-        console.error(`[CRON] Erreur email expiration boutique ${abo.boutiqueId}:`, err.message);
+        logger.error('[CRON] Erreur email expiration', { boutiqueId: abo.boutiqueId, err: err.message });
       });
     }
   }
 
   if (expired.length > 0) {
-    console.log(`[CRON] ${expired.length} abonnement(s) expiré(s)`);
+    logger.info('[CRON] Abonnements expirés traités', { count: expired.length });
   }
 };
 
@@ -99,15 +100,73 @@ const sendExpiryReminders = async () => {
       const admin = abo.boutique.users[0];
       if (admin) {
         sendSubscriptionExpiryEmail(admin, abo.boutique, days).catch(err => {
-          console.error(`[CRON] Erreur email rappel boutique ${abo.boutiqueId}:`, err.message);
+          logger.error('[CRON] Erreur email rappel', { boutiqueId: abo.boutiqueId, err: err.message });
         });
       }
     }
 
     if (expiring.length > 0) {
-      console.log(`[CRON] ${expiring.length} rappel(s) envoyé(s) — expiration dans ${days} jour(s)`);
+      logger.info('[CRON] Rappels expiration envoyés', { count: expiring.length, dansJours: days });
     }
   }
 };
 
-module.exports = { startSubscriptionCron, expireOverdueSubscriptions, sendExpiryReminders };
+// Alerter sur les produits périmés ou proches de péremption
+const alertExpiredProducts = async () => {
+  const now = new Date();
+
+  // Récupérer tous les produits actifs avec une date de péremption
+  const produits = await prisma.produit.findMany({
+    where: {
+      actif: true,
+      datePeremption: { not: null },
+    },
+    select: {
+      id: true,
+      nom: true,
+      datePeremption: true,
+      alertePeremptionJours: true,
+      boutiqueId: true,
+      boutique: {
+        select: {
+          nom: true,
+          users: { where: { role: 'ADMIN' }, take: 1, select: { email: true, nom: true, prenom: true } },
+        },
+      },
+    },
+  });
+
+  const expires = [];
+  const alerts = [];
+
+  for (const produit of produits) {
+    const datePeremption = new Date(produit.datePeremption);
+    const joursRestants = Math.ceil((datePeremption - now) / (1000 * 60 * 60 * 24));
+    const seuilAlerte = produit.alertePeremptionJours ?? 30;
+
+    if (joursRestants <= 0) {
+      expires.push({ ...produit, joursRestants });
+    } else if (joursRestants <= seuilAlerte) {
+      alerts.push({ ...produit, joursRestants });
+    }
+  }
+
+  if (expires.length > 0) {
+    logger.warn('[CRON] Produits périmés détectés', { count: expires.length });
+  }
+  if (alerts.length > 0) {
+    logger.warn('[CRON] Produits proches de péremption', { count: alerts.length });
+  }
+
+  // Désactiver les produits périmés depuis plus de 0 jours (optionnel selon la config)
+  if (process.env.AUTO_DEACTIVATE_EXPIRED_PRODUCTS === 'true' && expires.length > 0) {
+    const expiredIds = expires.map(p => p.id);
+    await prisma.produit.updateMany({
+      where: { id: { in: expiredIds } },
+      data: { actif: false },
+    });
+    logger.info('[CRON] Produits périmés désactivés', { count: expiredIds.length });
+  }
+};
+
+module.exports = { startSubscriptionCron, expireOverdueSubscriptions, sendExpiryReminders, alertExpiredProducts };

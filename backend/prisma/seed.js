@@ -25,6 +25,7 @@ async function main() {
   await prisma.vente.deleteMany();
   await prisma.entreeStock.deleteMany();
   await prisma.uniteVente.deleteMany();
+  await prisma.productBarcode.deleteMany();
   await prisma.produit.deleteMany();
   await prisma.categorie.deleteMany();
   await prisma.client.deleteMany();

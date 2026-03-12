@@ -1,14 +1,14 @@
 // Middleware d'authentification JWT
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
+const { error: sendError, forbidden, unauthorized } = require('../common/utils/response');
 
 const auth = async (req, res, next) => {
   try {
-    // Support token from Authorization header OR query param (for PDF export via window.open)
-    const token = req.header('Authorization')?.replace('Bearer ', '') || req.query.token;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({ success: false, message: 'Accès non autorisé' });
+      return unauthorized(res, 'Accès non autorisé', { code: 'AUTH_REQUIRED' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -18,7 +18,7 @@ const auth = async (req, res, next) => {
     });
 
     if (!user || !user.actif) {
-      return res.status(401).json({ success: false, message: 'Utilisateur non trouvé ou désactivé' });
+      return unauthorized(res, 'Utilisateur non trouvé ou désactivé', { code: 'USER_INACTIVE_OR_MISSING' });
     }
 
     req.user = user;
@@ -40,7 +40,7 @@ const auth = async (req, res, next) => {
             ],
           },
         });
-        if (allowed && user.role === 'ADMIN') {
+        if (allowed && user.boutique.plan === 'BUSINESS') {
           req.boutiqueId = targetId;
         }
       }
@@ -48,14 +48,14 @@ const auth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(401).json({ success: false, message: 'Token invalide' });
+    return unauthorized(res, 'Token invalide', { code: 'INVALID_TOKEN' });
   }
 };
 
 // Middleware pour vérifier le rôle ADMIN
 const adminOnly = (req, res, next) => {
   if (req.user.role !== 'ADMIN') {
-    return res.status(403).json({ success: false, message: 'Accès réservé aux administrateurs' });
+    return forbidden(res, 'Accès réservé aux administrateurs', { code: 'ADMIN_ONLY' });
   }
   next();
 };
@@ -113,36 +113,37 @@ const requirePlan = (...allowedPlans) => {
       const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
       if (!allowedPlans.includes(boutique.plan)) {
         const planNames = allowedPlans.map(p => PLAN_LIMITS[p].nom).join(' ou ');
-        return res.status(403).json({
-          success: false,
-          message: `Cette fonctionnalité est réservée au plan ${planNames}. Passez à un plan supérieur.`,
+        return forbidden(res, `Cette fonctionnalité est réservée au plan ${planNames}. Passez à un plan supérieur.`, {
+          code: 'PLAN_UPGRADE_REQUIRED',
           upgrade: true,
           requiredPlan: allowedPlans[0],
         });
       }
       next();
     } catch (error) {
-      res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+      return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
     }
   };
 };
+
+const getPlanDisplayName = (plan) => PLAN_LIMITS[plan]?.nom || plan;
 
 // Middleware pour vérifier les limites du plan (produits)
 const checkPlanProduits = async (req, res, next) => {
   try {
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].produits;
+    const planName = getPlanDisplayName(boutique.plan);
     const count = await prisma.produit.count({ where: { boutiqueId: req.boutiqueId, actif: true } });
     if (count >= limite) {
-      return res.status(403).json({
-        success: false,
-        message: `Limite du plan ${boutique.plan} atteinte (${limite} produits). Passez à un plan supérieur.`,
+      return forbidden(res, `Limite du plan ${planName} atteinte (${limite} produits). Passez à un plan supérieur.`, {
+        code: 'PLAN_UPGRADE_REQUIRED',
         upgrade: true,
       });
     }
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+    return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
   }
 };
 
@@ -151,17 +152,17 @@ const checkPlanUtilisateurs = async (req, res, next) => {
   try {
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].utilisateurs;
+    const planName = getPlanDisplayName(boutique.plan);
     const count = await prisma.user.count({ where: { boutiqueId: req.boutiqueId, actif: true } });
     if (count >= limite) {
-      return res.status(403).json({
-        success: false,
-        message: `Limite du plan ${boutique.plan} atteinte (${limite} utilisateur${limite > 1 ? 's' : ''}). Passez à un plan supérieur.`,
+      return forbidden(res, `Limite du plan ${planName} atteinte (${limite} utilisateur${limite > 1 ? 's' : ''}). Passez à un plan supérieur.`, {
+        code: 'PLAN_UPGRADE_REQUIRED',
         upgrade: true,
       });
     }
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+    return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
   }
 };
 
@@ -170,17 +171,17 @@ const checkPlanClients = async (req, res, next) => {
   try {
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].clients;
+    const planName = getPlanDisplayName(boutique.plan);
     const count = await prisma.client.count({ where: { boutiqueId: req.boutiqueId } });
     if (count >= limite) {
-      return res.status(403).json({
-        success: false,
-        message: `Limite du plan ${boutique.plan} atteinte (${limite} clients). Passez à un plan supérieur.`,
+      return forbidden(res, `Limite du plan ${planName} atteinte (${limite} clients). Passez à un plan supérieur.`, {
+        code: 'PLAN_UPGRADE_REQUIRED',
         upgrade: true,
       });
     }
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+    return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
   }
 };
 
@@ -189,6 +190,7 @@ const checkPlanVentes = async (req, res, next) => {
   try {
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].ventesParMois;
+    const planName = getPlanDisplayName(boutique.plan);
     // Compter les ventes du mois en cours
     const now = new Date();
     const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -200,15 +202,14 @@ const checkPlanVentes = async (req, res, next) => {
       },
     });
     if (count >= limite) {
-      return res.status(403).json({
-        success: false,
-        message: `Limite du plan ${boutique.plan} atteinte (${limite} ventes/mois). Passez à un plan supérieur.`,
+      return forbidden(res, `Limite du plan ${planName} atteinte (${limite} ventes/mois). Passez à un plan supérieur.`, {
+        code: 'PLAN_UPGRADE_REQUIRED',
         upgrade: true,
       });
     }
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+    return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
   }
 };
 
@@ -217,17 +218,17 @@ const checkPlanCategories = async (req, res, next) => {
   try {
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].categories;
+    const planName = getPlanDisplayName(boutique.plan);
     const count = await prisma.categorie.count({ where: { boutiqueId: req.boutiqueId } });
     if (count >= limite) {
-      return res.status(403).json({
-        success: false,
-        message: `Limite du plan ${boutique.plan} atteinte (${limite} catégories). Passez à un plan supérieur.`,
+      return forbidden(res, `Limite du plan ${planName} atteinte (${limite} catégories). Passez à un plan supérieur.`, {
+        code: 'PLAN_UPGRADE_REQUIRED',
         upgrade: true,
       });
     }
     next();
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur vérification plan' });
+    return sendError(res, 'Erreur vérification plan', 500, { code: 'PLAN_CHECK_FAILED' });
   }
 };
 

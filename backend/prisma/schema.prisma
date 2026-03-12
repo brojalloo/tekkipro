@@ -41,6 +41,24 @@ enum StatutAbonnement {
   ANNULE
 }
 
+enum TypeMouvement {
+  IN
+  OUT
+  SALE
+  RETURN
+  ADJUSTMENT
+  LOSS
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  CANCEL
+  STOCK_ADJUST
+  PRICE_CHANGE
+}
+
 enum ModePaiementAbo {
   WAVE
   ORANGE_MONEY
@@ -76,14 +94,17 @@ model Boutique {
   parentBoutique Boutique?  @relation("BoutiqueChildren", fields: [parentBoutiqueId], references: [id])
   childBoutiques Boutique[] @relation("BoutiqueChildren")
 
-  users        User[]
-  produits     Produit[]
-  categories   Categorie[]
-  ventes       Vente[]
-  clients      Client[]
-  fournisseurs Fournisseur[]
-  entreeStocks EntreeStock[]
-  abonnements  Abonnement[]
+  users          User[]
+  produits       Produit[]
+  categories     Categorie[]
+  ventes         Vente[]
+  clients        Client[]
+  fournisseurs   Fournisseur[]
+  entreeStocks   EntreeStock[]
+  abonnements    Abonnement[]
+  stockMovements StockMovement[]
+  stockBalances  StockBalance[]
+  auditLogs      AuditLog[]
 
   @@map("boutiques")
 }
@@ -133,6 +154,8 @@ model Produit {
   prixAchat       Float    @default(0)
   stock           Float    @default(0)
   stockAlerte     Float    @default(0)
+  datePeremption  DateTime?
+  alertePeremptionJours Int?
   uniteBase       String   @map("unite")
   codeBarre       String?
   image           String?
@@ -143,13 +166,19 @@ model Produit {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  categorie    Categorie?   @relation(fields: [categorieId], references: [id])
-  fournisseur  Fournisseur? @relation(fields: [fournisseurId], references: [id])
-  boutique     Boutique     @relation(fields: [boutiqueId], references: [id])
-  unitesVente  UniteVente[]
-  venteDetails VenteDetail[]
-  entreeStocks EntreeStock[]
+  categorie      Categorie?      @relation(fields: [categorieId], references: [id])
+  fournisseur    Fournisseur?    @relation(fields: [fournisseurId], references: [id])
+  boutique       Boutique        @relation(fields: [boutiqueId], references: [id])
+  unitesVente    UniteVente[]
+  venteDetails   VenteDetail[]
+  entreeStocks   EntreeStock[]
+  barcodes       ProductBarcode[]
+  stockMovements StockMovement[]
+  stockBalance   StockBalance?
 
+  @@index([boutiqueId, actif])
+  @@index([boutiqueId, nom])
+  @@index([boutiqueId, categorieId])
   @@map("produits")
 }
 
@@ -220,6 +249,9 @@ model Vente {
   details  VenteDetail[]
   dette    Dette?
 
+  @@index([boutiqueId, createdAt])
+  @@index([boutiqueId, clientId])
+  @@index([boutiqueId, statut])
   @@map("ventes")
 }
 
@@ -236,6 +268,8 @@ model VenteDetail {
   vente   Vente   @relation(fields: [venteId], references: [id], onDelete: Cascade)
   produit Produit @relation(fields: [produitId], references: [id])
 
+  @@index([venteId])
+  @@index([produitId])
   @@map("vente_details")
 }
 
@@ -283,6 +317,8 @@ model EntreeStock {
   fournisseur Fournisseur? @relation(fields: [fournisseurId], references: [id])
   boutique    Boutique     @relation(fields: [boutiqueId], references: [id])
 
+  @@index([boutiqueId, produitId])
+  @@index([boutiqueId, createdAt])
   @@map("entree_stocks")
 }
 
@@ -318,4 +354,77 @@ model PaiementAbonnement {
   abonnement      Abonnement       @relation(fields: [abonnementId], references: [id], onDelete: Cascade)
 
   @@map("paiements_abonnement")
+}
+
+// ─── Nouveaux modèles SaaS ────────────────────────────────────────────────────
+
+model ProductBarcode {
+  id         Int      @id @default(autoincrement())
+  barcode    String
+  isPrimary  Boolean  @default(false)
+  produitId  Int
+  uniteId    Int?
+  boutiqueId Int
+  createdAt  DateTime @default(now())
+
+  produit  Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
+
+  @@unique([boutiqueId, barcode])
+  @@index([boutiqueId, barcode])
+  @@map("product_barcodes")
+}
+
+model StockMovement {
+  id             Int           @id @default(autoincrement())
+  type           TypeMouvement
+  quantiteBase   Float
+  uniteNom       String?
+  facteurConv    Float         @default(1)
+  coutUnitaire   Float         @default(0)
+  referenceType  String?
+  referenceId    Int?
+  note           String?
+  produitId      Int
+  boutiqueId     Int
+  userId         Int?
+  createdAt      DateTime      @default(now())
+
+  produit  Produit  @relation(fields: [produitId], references: [id])
+  boutique Boutique @relation(fields: [boutiqueId], references: [id])
+
+  @@index([boutiqueId, produitId])
+  @@index([boutiqueId, createdAt])
+  @@map("stock_movements")
+}
+
+model StockBalance {
+  id              Int      @id @default(autoincrement())
+  stockBase       Float    @default(0)
+  dernierMouvement DateTime @default(now())
+  produitId       Int      @unique
+  boutiqueId      Int
+
+  produit  Produit  @relation(fields: [produitId], references: [id])
+  boutique Boutique @relation(fields: [boutiqueId], references: [id])
+
+  @@index([boutiqueId])
+  @@map("stock_balances")
+}
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  action     AuditAction
+  entite     String
+  entiteId   Int?
+  avant      Json?
+  apres      Json?
+  userId     Int?
+  boutiqueId Int
+  createdAt  DateTime    @default(now())
+
+  boutique Boutique @relation(fields: [boutiqueId], references: [id])
+
+  @@index([boutiqueId, createdAt])
+  @@index([boutiqueId, entite])
+  @@map("audit_logs")
 }

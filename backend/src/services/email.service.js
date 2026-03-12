@@ -2,14 +2,27 @@
 // Utilise Nodemailer avec SMTP (compatible SendGrid, Mailgun, Gmail, etc.)
 const nodemailer = require('nodemailer');
 
+const hasSmtpConfig = () => Boolean(process.env.SMTP_HOST);
+const getSmtpPort = () => Number.parseInt(process.env.SMTP_PORT, 10) || 587;
+const isSmtpSecure = () => process.env.SMTP_SECURE === 'true';
+
+const getSmtpConfigSummary = () => ({
+  configured: hasSmtpConfig(),
+  host: process.env.SMTP_HOST || null,
+  port: hasSmtpConfig() ? getSmtpPort() : null,
+  secure: hasSmtpConfig() ? isSmtpSecure() : null,
+  user: process.env.SMTP_USER || null,
+  from: process.env.EMAIL_FROM || 'TekkiPro <noreply@tekkipro.com>',
+});
+
 // Configuration du transporteur
 const createTransporter = () => {
   // Production : utiliser SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
-  if (process.env.SMTP_HOST) {
+  if (hasSmtpConfig()) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
+      port: getSmtpPort(),
+      secure: isSmtpSecure(),
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -38,13 +51,32 @@ const getTransporter = () => {
   return transporter;
 };
 
+const resetTransporterForTests = () => {
+  transporter = null;
+};
+
+const verifyEmailTransport = async () => {
+  const config = getSmtpConfigSummary();
+  if (!config.configured) {
+    return { ...config, mode: 'preview', verified: false };
+  }
+
+  const activeTransporter = getTransporter();
+  if (typeof activeTransporter.verify === 'function') {
+    await activeTransporter.verify();
+  }
+
+  return { ...config, mode: 'smtp', verified: true };
+};
+
 const FROM_EMAIL = () => process.env.EMAIL_FROM || 'TekkiPro <noreply@tekkipro.com>';
 const APP_URL = () => process.env.APP_URL || 'http://localhost:5173';
+const SUPPORT_EMAIL = () => process.env.SUPPORT_EMAIL || 'support@tekkipro.com';
 
 // ─────────────────────────────────────────
 //  EMAIL DE VÉRIFICATION DE COMPTE
 // ─────────────────────────────────────────
-const sendVerificationEmail = async (user, token) => {
+const buildVerificationEmail = (user, token) => {
   const verifyUrl = `${APP_URL()}/verify-email?token=${token}`;
 
   const html = `
@@ -60,18 +92,30 @@ const sendVerificationEmail = async (user, token) => {
     <div style="padding:32px;">
       <h2 style="color:#1a1a2e;margin:0 0 12px;">Bienvenue, ${user.prenom} !</h2>
       <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Merci de vous être inscrit sur TekkiPro. Veuillez confirmer votre adresse email pour activer votre compte.
+        L’adresse email <strong>${user.email}</strong> vient d’être utilisée pour créer un compte sur TekkiPro.
+      </p>
+      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
+        Si vous êtes bien à l’origine de cette inscription, cliquez sur le bouton ci-dessous pour activer votre compte et commencer à utiliser TekkiPro.
       </p>
       <div style="text-align:center;margin:32px 0;">
         <a href="${verifyUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;font-size:16px;">
-          ✅ Vérifier mon email
+          ✅ Activer mon compte
         </a>
       </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:20px 0;">
+        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
+          Si vous n’êtes pas à l’origine de cette demande, <strong>n’activez pas ce compte</strong>, n’appuyez pas sur le bouton et ignorez simplement cet email.
+        </p>
+      </div>
       <p style="color:#888;font-size:13px;line-height:1.5;">
-        Ce lien expire dans <strong>48 heures</strong>.<br>
-        Si vous n'avez pas créé de compte, ignorez simplement cet email.
+        Ce lien expire dans <strong>48 heures</strong>.
       </p>
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:0 0 20px;">
+        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
+          Besoin d’aide ? Contactez le support TekkiPro à <a href="mailto:${SUPPORT_EMAIL()}" style="color:#6366f1;text-decoration:none;">${SUPPORT_EMAIL()}</a>.
+        </p>
+      </div>
       <p style="color:#aaa;font-size:12px;text-align:center;">
         Ou copiez ce lien : <a href="${verifyUrl}" style="color:#6366f1;">${verifyUrl}</a>
       </p>
@@ -83,10 +127,19 @@ const sendVerificationEmail = async (user, token) => {
 </body>
 </html>`;
 
+  return {
+    subject: '✅ TekkiPro — Activez votre compte',
+    html,
+  };
+};
+
+const sendVerificationEmail = async (user, token) => {
+  const { subject, html } = buildVerificationEmail(user, token);
+
   await getTransporter().sendMail({
     from: FROM_EMAIL(),
     to: user.email,
-    subject: '✅ TekkiPro — Vérifiez votre adresse email',
+    subject,
     html,
   });
 };
@@ -94,7 +147,7 @@ const sendVerificationEmail = async (user, token) => {
 // ─────────────────────────────────────────
 //  EMAIL DE RÉINITIALISATION DE MOT DE PASSE
 // ─────────────────────────────────────────
-const sendPasswordResetEmail = async (user, token) => {
+const buildPasswordResetEmail = (user, token) => {
   const resetUrl = `${APP_URL()}/reset-password?token=${token}`;
 
   const html = `
@@ -110,16 +163,32 @@ const sendPasswordResetEmail = async (user, token) => {
     <div style="padding:32px;">
       <h2 style="color:#1a1a2e;margin:0 0 12px;">Bonjour, ${user.prenom}</h2>
       <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Vous avez demandé la réinitialisation de votre mot de passe. Cliquez ci-dessous pour choisir un nouveau mot de passe.
+        Une demande de réinitialisation du mot de passe a été effectuée pour le compte associé à l’adresse email <strong>${user.email}</strong>.
+      </p>
+      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
+        Si vous êtes bien à l’origine de cette demande, cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe sécurisé.
       </p>
       <div style="text-align:center;margin:32px 0;">
         <a href="${resetUrl}" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;font-size:16px;">
-          🔑 Nouveau mot de passe
+          🔑 Réinitialiser mon mot de passe
         </a>
       </div>
+      <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:16px;margin:20px 0;">
+        <p style="color:#9a3412;font-size:14px;line-height:1.6;margin:0;">
+          Si vous n’êtes pas à l’origine de cette demande, ne cliquez pas sur ce bouton et ignorez simplement cet email.
+        </p>
+      </div>
       <p style="color:#888;font-size:13px;line-height:1.5;">
-        Ce lien expire dans <strong>1 heure</strong>.<br>
-        Si vous n'avez pas fait cette demande, ignorez cet email.
+        Ce lien expire dans <strong>1 heure</strong>.
+      </p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:0 0 20px;">
+        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
+          Besoin d’aide ? Contactez le support TekkiPro à <a href="mailto:${SUPPORT_EMAIL()}" style="color:#ef4444;text-decoration:none;">${SUPPORT_EMAIL()}</a>.
+        </p>
+      </div>
+      <p style="color:#aaa;font-size:12px;text-align:center;">
+        Ou copiez ce lien : <a href="${resetUrl}" style="color:#ef4444;">${resetUrl}</a>
       </p>
     </div>
     <div style="background:#f8f9fa;padding:16px;text-align:center;">
@@ -129,10 +198,19 @@ const sendPasswordResetEmail = async (user, token) => {
 </body>
 </html>`;
 
+  return {
+    subject: '🔑 TekkiPro — Réinitialisez votre mot de passe',
+    html,
+  };
+};
+
+const sendPasswordResetEmail = async (user, token) => {
+  const { subject, html } = buildPasswordResetEmail(user, token);
+
   await getTransporter().sendMail({
     from: FROM_EMAIL(),
     to: user.email,
-    subject: '🔑 TekkiPro — Réinitialisation de votre mot de passe',
+    subject,
     html,
   });
 };
@@ -226,8 +304,13 @@ const sendSubscriptionExpiryEmail = async (user, boutique, daysLeft) => {
 };
 
 module.exports = {
+  verifyEmailTransport,
+  buildVerificationEmail,
+  buildPasswordResetEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendPaymentConfirmationEmail,
   sendSubscriptionExpiryEmail,
+  __getSmtpConfigSummaryForTests: getSmtpConfigSummary,
+  __resetTransporterForTests: resetTransporterForTests,
 };

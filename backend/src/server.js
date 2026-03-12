@@ -1,71 +1,95 @@
-// Tekkipro - Serveur principal
+// Tekkipro - Serveur principal v2.0 — Architecture modulaire
 require('dotenv').config();
+const { validateEnvironment } = require('./config/env');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const morgan = require('morgan');
 
-const authRoutes = require('./routes/auth.routes');
-const produitRoutes = require('./routes/produit.routes');
-const venteRoutes = require('./routes/vente.routes');
-const clientRoutes = require('./routes/client.routes');
-const fournisseurRoutes = require('./routes/fournisseur.routes');
-const stockRoutes = require('./routes/stock.routes');
-const detteRoutes = require('./routes/dette.routes');
-const statistiqueRoutes = require('./routes/statistique.routes');
-const factureRoutes = require('./routes/facture.routes');
-const categorieRoutes = require('./routes/categorie.routes');
-const boutiqueRoutes = require('./routes/boutique.routes');
-const abonnementRoutes = require('./routes/abonnement.routes');
-const publicStatsRoutes = require('./routes/publicStats.routes');
-const paymentRoutes = require('./routes/payment.routes');
-const { stripeWebhook } = require('./controllers/payment.controller');
+const { registerRoutes } = require('./app/routes');
+const { AppError } = require('./common/errors/AppError');
+const { badRequest, error: sendError } = require('./common/utils/response');
+const {
+  applySecurityHeaders,
+  createCorsOptions,
+  enforceOriginAllowlist,
+  getTrustProxySetting,
+  globalRateLimiter,
+} = require('./middleware/security.middleware');
+const { stripeWebhook } = require('./modules/payments/payment.controller');
 const { startSubscriptionCron } = require('./services/cron.service');
 
+validateEnvironment();
+
 const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', getTrustProxySetting());
 
 // Stripe webhook — doit être AVANT express.json() car il a besoin du raw body
 app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+// Middlewares globaux
+app.use(compression());
+app.use(applySecurityHeaders);
+app.use(enforceOriginAllowlist);
+app.use(globalRateLimiter);
+app.use(cors(createCorsOptions()));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || process.env.JSON_BODY_LIMIT || '100kb' }));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/produits', produitRoutes);
-app.use('/api/ventes', venteRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/fournisseurs', fournisseurRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/dettes', detteRoutes);
-app.use('/api/statistiques', statistiqueRoutes);
-app.use('/api/factures', factureRoutes);
-app.use('/api/categories', categorieRoutes);
-app.use('/api/boutique', boutiqueRoutes);
-app.use('/api/abonnements', abonnementRoutes);
-app.use('/api/public-stats', publicStatsRoutes);
-app.use('/api/payments', paymentRoutes);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', app: 'Tekkipro API', version: '1.0.0' });
+// Body parse error handler (JSON syntax errors)
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return badRequest(res, 'Corps JSON invalide.', { code: 'BAD_JSON' });
+  }
+  if (err && err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return badRequest(res, 'JSON invalide dans le corps de la requête.', { code: 'BAD_JSON' });
+  }
+  next(err);
 });
 
-// Error handler
+// Enregistrement de toutes les routes via le module centralisé
+registerRoutes(app);
+
+// Error handler global
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Erreur interne du serveur',
-  });
+  const status = err.status || err.statusCode || 500;
+  const isAppError = err instanceof AppError || err?.isOperational;
+  if (status >= 500) {
+    console.error(err.stack || err);
+  }
+
+  return sendError(
+    res,
+    status >= 500 && process.env.NODE_ENV === 'production'
+      ? 'Erreur interne du serveur'
+      : (err.message || 'Erreur interne du serveur'),
+    status,
+    {
+      code: err.code || (isAppError ? 'INTERNAL_ERROR' : undefined),
+      details: err.details,
+      ...(err.meta || {}),
+    }
+  );
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Tekkipro API démarrée sur le port ${PORT}`);
-  // Démarrer les tâches cron
+const server = app.listen(PORT, () => {
+  console.log(`Tekkipro API v2.0 démarrée sur le port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
   startSubscriptionCron();
 });
+
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`[${signal}] Arrêt gracieux en cours...`);
+  server.close(() => {
+    const prisma = require('./config/database');
+    prisma.$disconnect().finally(() => process.exit(0));
+  });
+  setTimeout(() => process.exit(1), 10000).unref();
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
 
 module.exports = app;

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/broto/OneDrive/Bureau/Mysaas/tekkipro/backend/tests -type f -name \"*.js\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|BUG\\\\|HACK\" /c/Users/broto/OneDrive/Bureau/Mysaas/tekkipro/backend/src --include=\"*.js\" 2>/dev/null | head -20)",
+      "Bash(find /c/Users/broto/OneDrive/Bureau/Mysaas/tekkipro -name \".env\" -o -name \".env.local\" -o -name \".env.*.local\" 2>/dev/null | head -10)",
+      "Bash(npm install compression --save 2>&1 | tail -5)",
+      "Bash(npx prisma validate 2>&1)",
+      "Bash(node -e \"require\\('./src/common/utils/logger'\\); require\\('./src/common/utils/pagination'\\); console.log\\('OK'\\)\" 2>&1)",
+      "Bash(npx prisma migrate dev --name add_performance_indexes --create-only 2>&1)",
+      "Bash(npx prisma generate 2>&1 | tail -5)",
+      "Bash(npx prisma migrate dev --name add_performance_indexes 2>&1)",
+      "Bash(PRISMA_MIGRATE_SKIP_INTERACTIVE=true npx prisma migrate dev --name add_performance_indexes 2>&1 || npx prisma db push --accept-data-loss 2>&1)",
+      "Bash(npm run dev 2>&1)",
+      "Bash(git -C /c/Users/broto/OneDrive/Bureau/Mysaas/tekkipro log --all --oneline --name-only 2>&1 | grep \"\\\\.env\")",
+      "Bash(node -e \"\n  require\\('./src/modules/customers/client.controller'\\);\n  require\\('./src/modules/suppliers/fournisseur.controller'\\);\n  require\\('./src/modules/sales/dette.controller'\\);\n  require\\('./src/modules/catalog/categorie.controller'\\);\n  require\\('./src/modules/reports/statistique.controller'\\);\n  require\\('./src/modules/abonnements/abonnement.controller'\\);\n  console.log\\('Tous les modules chargés OK'\\);\n\" 2>&1)"
+    ]
+  }
+}
