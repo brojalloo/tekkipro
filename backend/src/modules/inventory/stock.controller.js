@@ -1,6 +1,6 @@
 // Contrôleur Stock - Système de conversion d'unités
 const prisma = require('../../config/database');
-const { created, error: sendError, notFound } = require('../../common/utils/response');
+const { badRequest, created, error: sendError, notFound } = require('../../common/utils/response');
 const { getPeremptionStatus, hasPeremptionAlert } = require('../../common/utils/peremption');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
 const logger = require('../../common/utils/logger');
@@ -80,7 +80,6 @@ const entreeStock = async (req, res) => {
       // Entrée dans une unité de vente spécifique
       unite = produit.unitesVente.find(u => u.id === parseInt(uniteVenteId));
       if (!unite) {
-        const { badRequest } = require('../../common/utils/response');
         return badRequest(res, 'Unité de vente non trouvée', { code: 'UNIT_NOT_FOUND' });
       }
       quantiteBase = qtyUser * unite.facteurConversion;
@@ -101,13 +100,24 @@ const entreeStock = async (req, res) => {
 
     const result = await prisma.$transaction(async (tx) => {
       // Mettre à jour le stock du produit (toujours en unité de base)
-      await tx.produit.update({
+      // On récupère le produit mis à jour pour avoir le stock exact dans la transaction
+      const produitMisAJour = await tx.produit.update({
         where: { id: parseInt(produitId) },
         data: {
           stock: { increment: quantiteBase },
           prixAchat: prixAchatBase !== null ? prixAchatBase : undefined,
         },
       });
+
+      // Validation de sécurité : si un fournisseurId est fourni, il doit appartenir à cette boutique
+      if (fournisseurId) {
+        const fournisseurOwner = await tx.fournisseur.findFirst({
+          where: { id: parseInt(fournisseurId), boutiqueId: req.boutiqueId },
+        });
+        if (!fournisseurOwner) {
+          throw new Error('Fournisseur non trouvé ou n\'appartient pas à cette boutique');
+        }
+      }
 
       // Enregistrer l'entrée dans l'historique
       const entree = await tx.entreeStock.create({
@@ -146,7 +156,7 @@ const entreeStock = async (req, res) => {
         create: {
           produitId: parseInt(produitId),
           boutiqueId: req.boutiqueId,
-          stockBase: produit.stock + quantiteBase,
+          stockBase: produitMisAJour.stock, // valeur exacte post-update dans la transaction
           dernierMouvement: new Date(),
         },
       });
@@ -197,20 +207,28 @@ const getHistorique = async (req, res) => {
   }
 };
 
-// Inventaire complet
+// Inventaire complet (paginé)
 const getInventaire = async (req, res) => {
   try {
-    const produits = await prisma.produit.findMany({
-      where: { boutiqueId: req.boutiqueId, actif: true },
-      select: {
-        id: true, nom: true, stock: true, stockAlerte: true, uniteBase: true,
-        prixAchat: true, prixVente: true, codeBarre: true, datePeremption: true, alertePeremptionJours: true,
-        categorie: { select: { nom: true } },
-        unitesVente: { orderBy: { estDefaut: 'desc' } },
-        _count: { select: { venteDetails: true } },
-      },
-      orderBy: { nom: 'asc' },
-    });
+    const { page, limit, skip, take } = parsePagination(req.query);
+    const where = { boutiqueId: req.boutiqueId, actif: true };
+
+    const [produits, total] = await prisma.$transaction([
+      prisma.produit.findMany({
+        where,
+        select: {
+          id: true, nom: true, stock: true, stockAlerte: true, uniteBase: true,
+          prixAchat: true, prixVente: true, codeBarre: true, datePeremption: true, alertePeremptionJours: true,
+          categorie: { select: { nom: true } },
+          unitesVente: { orderBy: { estDefaut: 'desc' } },
+          _count: { select: { venteDetails: true } },
+        },
+        orderBy: { nom: 'asc' },
+        skip,
+        take,
+      }),
+      prisma.produit.count({ where }),
+    ]);
 
     const inventaire = produits.map(p => {
       const prixAchatBase = getPrixAchatBaseForInventaire(p);
@@ -229,17 +247,15 @@ const getInventaire = async (req, res) => {
       };
     });
 
+    // Totaux calculés sur la page courante (summary global disponible sans pagination)
     const totalValeur = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
+    const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
 
-    res.json({
-      success: true,
-      data: {
-        produits: inventaire,
-        totalProduits: inventaire.length,
-        totalValeurStock: totalValeur,
-        produitsEnAlerte: inventaire.filter(p => p.enAlerte).length,
-      },
-    });
+    const paginated = paginatedResponse(inventaire, total, page, limit);
+    paginated.data.totalValeurStock = totalValeur;
+    paginated.data.produitsEnAlerte = produitsEnAlerte;
+
+    res.json(paginated);
   } catch (error) {
     logger.error('Erreur getInventaire', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'INVENTORY_FETCH_FAILED' });

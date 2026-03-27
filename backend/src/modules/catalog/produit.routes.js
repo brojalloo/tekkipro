@@ -12,11 +12,12 @@ const {
   updateUnitValidation,
   unitIdValidation,
 } = require('./produit.validation');
+const { attachQuotaHeaders } = require('../../middleware/quota.middleware');
 
 router.get('/', auth, listProductsValidation, handleValidationErrors, ctrl.getAll);
 router.get('/alertes', auth, ctrl.getAlertesStock);
 router.get('/:id', auth, productIdValidation, handleValidationErrors, ctrl.getById);
-router.post('/', auth, adminOnly, checkPlanProduits, createProductValidation, handleValidationErrors, ctrl.create);
+router.post('/', auth, adminOnly, checkPlanProduits, createProductValidation, handleValidationErrors, ctrl.create, attachQuotaHeaders('Produits'));
 router.put('/:id', auth, adminOnly, updateProductValidation, handleValidationErrors, ctrl.update);
 router.delete('/:id', auth, adminOnly, productIdValidation, handleValidationErrors, ctrl.remove);
 

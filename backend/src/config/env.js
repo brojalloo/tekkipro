@@ -5,6 +5,7 @@ const KNOWN_WEAK_SECRETS = new Set([
   'replace-me',
   'development-secret',
   'dev-secret',
+  'tekkipro-secret-key-change-in-production',
 ]);
 
 const isProduction = () => process.env.NODE_ENV === 'production';
@@ -39,10 +40,18 @@ const ensurePositiveIntegerIfDefined = (name) => {
   assert(Number.isFinite(parsed) && parsed > 0, `${name} doit être un entier positif.`);
 };
 
+const JWT_EXPIRES_PATTERN = /^\d+\s*(ms|s|m|h|d|w|y)$/i;
+
 const validateJwtSecret = () => {
   const secret = process.env.JWT_SECRET || '';
   assert(secret.length >= 32, 'JWT_SECRET doit contenir au moins 32 caractères.');
   assert(!KNOWN_WEAK_SECRETS.has(secret), 'JWT_SECRET utilise une valeur trop faible ou par défaut.');
+};
+
+const validateJwtExpires = () => {
+  const value = process.env.JWT_EXPIRES_IN;
+  if (!value) return; // la valeur par défaut '7d' sera utilisée dans le code
+  assert(JWT_EXPIRES_PATTERN.test(value.trim()), 'JWT_EXPIRES_IN doit être une durée valide (ex: 7d, 24h, 3600s).');
 };
 
 const validateOptionalUrlList = (name) => {
@@ -82,14 +91,17 @@ const validateEnvironment = () => {
   ensurePositiveIntegerIfDefined('PAYMENT_READ_RATE_LIMIT_WINDOW_MS');
   ensurePositiveIntegerIfDefined('PAYMENT_READ_RATE_LIMIT_MAX');
   validateSmtpConfig();
+  validateJwtExpires();
+
+  if (process.env.NODE_ENV !== 'test') {
+    validateJwtSecret();
+  }
 
   if (!isProduction()) return;
 
   REQUIRED_IN_PRODUCTION.forEach((name) => {
     assert(process.env[name], `${name} est requis en production.`);
   });
-
-  validateJwtSecret();
   ensureAbsoluteUrl('FRONTEND_URL');
   ensureAbsoluteUrl('APP_URL');
   validateOptionalUrlList('CORS_ORIGINS');

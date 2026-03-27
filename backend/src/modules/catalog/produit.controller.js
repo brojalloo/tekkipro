@@ -220,14 +220,8 @@ const getAll = async (req, res) => {
     }
     if (categorieId) where.categorieId = parseInt(categorieId);
 
-    // Filtre alerte stock en SQL via champ calculé raw
-    // Prisma ne supporte pas la comparaison de colonnes directement,
-    // on utilise une clause raw uniquement pour ce filtre
-    const alertFilter = alerteStock === 'true'
-      ? { stock: { lte: prisma.produit.fields?.stockAlerte } }
-      : undefined;
-
-    // Fallback propre : on fait la comparaison après fetch uniquement si alerteStock
+    // Note : Prisma ne supporte pas la comparaison directe de colonnes (stock <= stockAlerte),
+    // le filtre alerteStock est appliqué en post-traitement JS après fetch.
     // Pour éviter le N+1, on charge une page complète puis on filtre si nécessaire
     const [produits, total] = await prisma.$transaction([
       prisma.produit.findMany({
@@ -509,18 +503,27 @@ const updateUniteVente = async (req, res) => {
 };
 
 // Produits en alerte de stock
+// Prisma ne supporte pas la comparaison de colonnes directement (stock <= stockAlerte),
+// on récupère les IDs via SQL raw, puis on charge les données complètes avec les includes.
 const getAlertesStock = async (req, res) => {
   try {
+    const alertIds = await prisma.$queryRaw`
+      SELECT id FROM produits
+      WHERE "boutiqueId" = ${req.boutiqueId} AND actif = true AND stock <= "stockAlerte"
+      ORDER BY stock ASC
+    `.then(rows => rows.map(r => Number(r.id)));
+
+    if (alertIds.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
     const produits = await prisma.produit.findMany({
-      where: {
-        boutiqueId: req.boutiqueId,
-        actif: true,
-      },
+      where: { id: { in: alertIds } },
       include: { categorie: { select: { nom: true } }, unitesVente: true },
       orderBy: { stock: 'asc' },
     });
-    const filtered = produits.filter(p => p.stock <= p.stockAlerte);
-    res.json({ success: true, data: filtered });
+
+    res.json({ success: true, data: produits });
   } catch (error) {
     logger.error('Erreur getAlertesStock', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'STOCK_ALERTS_FETCH_FAILED' });

@@ -1,6 +1,7 @@
 // Contrôleur Factures - Génération PDF professionnelle (compatible N&B)
 const PDFDocument = require('pdfkit');
 const prisma = require('../../config/database');
+const logger = require('../../common/utils/logger');
 
 // Palette compatible impression noir & blanc — texte toujours foncé, fonds très légers
 const C = {

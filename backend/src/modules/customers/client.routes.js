@@ -9,10 +9,11 @@ const {
   listClientsValidation,
   updateClientValidation,
 } = require('./client.validation');
+const { attachQuotaHeaders } = require('../../middleware/quota.middleware');
 
 router.get('/', auth, listClientsValidation, handleValidationErrors, ctrl.getAll);
 router.get('/:id', auth, clientIdValidation, handleValidationErrors, ctrl.getById);
-router.post('/', auth, checkPlanClients, createClientValidation, handleValidationErrors, ctrl.create);
+router.post('/', auth, checkPlanClients, createClientValidation, handleValidationErrors, ctrl.create, attachQuotaHeaders('Clients'));
 router.put('/:id', auth, updateClientValidation, handleValidationErrors, ctrl.update);
 router.delete('/:id', auth, clientIdValidation, handleValidationErrors, ctrl.remove);
 

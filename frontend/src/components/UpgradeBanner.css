@@ -1,200 +1,362 @@
-/* ===== UPGRADE BANNER — PLAN RESTRICTION UI ===== */
+/* ===== UPGRADE BANNER — LIGHT PREMIUM UI ===== */
 
-/* --- Compact Banner (top of page) --- */
+.upgrade-banner-compact,
+.upgrade-banner {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+  border: 1px solid var(--upgrade-soft-strong, rgba(99, 102, 241, 0.18));
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+}
+
 .upgrade-banner-compact {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.6rem 1.25rem;
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px solid rgba(99, 102, 241, 0.15);
-  border-radius: 10px;
+  padding: 0.85rem 1.2rem;
+  border-radius: 18px;
   margin-bottom: 1rem;
   flex-wrap: wrap;
 }
+
 .upgrade-banner-compact-left {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.82rem;
-  color: var(--gray-300);
+  font-size: 0.83rem;
+  color: var(--gray-600);
 }
-.upgrade-banner-compact-left svg { color: var(--gray-400); flex-shrink: 0; }
-.upgrade-banner-compact-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.9rem;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.2s;
-}
-.upgrade-banner-compact-btn:hover { opacity: 0.85; }
 
-/* --- Full Page Block --- */
-.upgrade-banner-fullpage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  padding: 2rem;
-}
-.upgrade-banner-fullpage-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 480px;
-  padding: 3rem 2.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-}
-.upgrade-banner-fullpage-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-.upgrade-banner-fullpage-card h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 0.5rem;
-}
-.upgrade-banner-fullpage-feature {
-  color: var(--gray-300);
-  font-size: 1rem;
-  margin: 0 0 0.75rem;
-}
-.upgrade-banner-fullpage-desc {
-  color: var(--gray-400);
-  font-size: 0.85rem;
-  line-height: 1.6;
-  margin: 0 0 1.5rem;
-}
-.upgrade-banner-fullpage-plan {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-.upgrade-banner-fullpage-plan-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.upgrade-banner-compact-left svg {
+  color: var(--upgrade-accent, #E8623A);
   flex-shrink: 0;
 }
-.upgrade-banner-fullpage-plan strong {
-  display: block;
-  color: white;
-  font-size: 0.9rem;
-}
-.upgrade-banner-fullpage-plan span {
-  color: var(--gray-400);
-  font-size: 0.78rem;
-}
+
+.upgrade-banner-compact-btn,
+.upgrade-banner-btn,
 .upgrade-banner-fullpage-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  border-radius: 10px;
+  justify-content: center;
+  gap: 0.45rem;
   color: white;
-  font-size: 0.9rem;
-  font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s;
-  margin-bottom: 0.75rem;
+  background: var(--upgrade-gradient, linear-gradient(135deg, #E8623A 0%, #F4A020 100%));
+  box-shadow: 0 10px 30px var(--upgrade-glow, rgba(99, 102, 241, 0.22));
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
 }
-.upgrade-banner-fullpage-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-}
-.upgrade-banner-fullpage-back {
-  color: var(--gray-400);
-  font-size: 0.8rem;
-  text-decoration: none;
-}
-.upgrade-banner-fullpage-back:hover { color: var(--gray-300); }
 
-/* --- Inline Banner --- */
+.upgrade-banner-compact-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.upgrade-banner-fullpage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 160px);
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.upgrade-banner-fullpage-glow {
+  position: absolute;
+  width: 540px;
+  height: 540px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--upgrade-glow, rgba(99, 102, 241, 0.22)) 0%, transparent 72%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.upgrade-banner-fullpage-card {
+  position: relative;
+  width: min(1080px, 100%);
+  padding: 2rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, #ffffff 100%);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 32px;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.08);
+}
+
+.upgrade-banner-fullpage-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.upgrade-banner-fullpage-tag,
+.upgrade-banner-fullpage-current {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.upgrade-banner-fullpage-tag {
+  background: var(--upgrade-soft, rgba(99, 102, 241, 0.1));
+  color: var(--upgrade-accent, #E8623A);
+}
+
+.upgrade-banner-fullpage-current {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.upgrade-banner-fullpage-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.upgrade-banner-fullpage-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upgrade-banner-fullpage-icon {
+  width: 78px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  color: white;
+  background: var(--upgrade-gradient, linear-gradient(135deg, #E8623A 0%, #F4A020 100%));
+  box-shadow: 0 20px 40px var(--upgrade-glow, rgba(99, 102, 241, 0.22));
+}
+
+.upgrade-banner-fullpage-feature {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--upgrade-accent, #E8623A);
+  margin: 0;
+}
+
+.upgrade-banner-fullpage-card h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.upgrade-banner-fullpage-desc {
+  font-size: 0.98rem;
+  line-height: 1.75;
+  color: var(--gray-500);
+  margin: 0;
+  max-width: 58ch;
+}
+
+.upgrade-banner-fullpage-benefits {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.upgrade-banner-fullpage-benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.upgrade-banner-fullpage-benefit svg {
+  color: var(--upgrade-accent, #E8623A);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.upgrade-banner-fullpage-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.upgrade-banner-fullpage-preview-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 132px;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--upgrade-soft, rgba(99, 102, 241, 0.1)) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border: 1px solid var(--upgrade-soft-strong, rgba(99, 102, 241, 0.18));
+}
+
+.upgrade-banner-fullpage-preview-card strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+
+.upgrade-banner-fullpage-preview-card span {
+  font-size: 0.83rem;
+  line-height: 1.6;
+  color: var(--gray-500);
+}
+
+.upgrade-banner-fullpage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--gray-100);
+}
+
+.upgrade-banner-fullpage-plan {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 18px;
+  text-align: left;
+}
+
+.upgrade-banner-fullpage-plan-icon,
+.upgrade-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--upgrade-accent, #E8623A);
+  background: var(--upgrade-soft, rgba(99, 102, 241, 0.1));
+}
+
+.upgrade-banner-fullpage-plan-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.upgrade-banner-fullpage-plan strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--gray-900);
+}
+
+.upgrade-banner-fullpage-plan span {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.upgrade-banner-fullpage-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upgrade-banner-fullpage-btn {
+  padding: 0.9rem 1.35rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.upgrade-banner-compact-btn:hover,
+.upgrade-banner-btn:hover,
+.upgrade-banner-fullpage-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.96;
+}
+
+.upgrade-banner-fullpage-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.2rem;
+  border-radius: 14px;
+  border: 1px solid var(--gray-200);
+  background: white;
+  color: var(--gray-600);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.upgrade-banner-fullpage-back:hover {
+  border-color: var(--gray-300);
+  color: var(--gray-800);
+}
+
 .upgrade-banner {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid;
-  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  border-left: 4px solid var(--upgrade-accent, #E8623A);
+  border-radius: 18px;
   margin-bottom: 1.25rem;
 }
+
 .upgrade-banner-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
 }
+
 .upgrade-banner-content {
   flex: 1;
 }
+
 .upgrade-banner-content h4 {
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin: 0 0 0.15rem;
+  color: var(--gray-900);
+  font-size: 0.93rem;
+  font-weight: 700;
+  margin: 0 0 0.18rem;
 }
+
 .upgrade-banner-content p {
-  color: var(--gray-400);
-  font-size: 0.78rem;
+  color: var(--gray-500);
+  font-size: 0.8rem;
   margin: 0;
 }
+
 .upgrade-banner-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  color: white;
+  padding: 0.62rem 1rem;
+  border-radius: 10px;
   font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
+  font-weight: 700;
   white-space: nowrap;
-  transition: opacity 0.2s;
 }
-.upgrade-banner-btn:hover { opacity: 0.85; }
 
 /* --- Plan Limit Banner --- */
 .plan-limit-banner {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  border-radius: 18px;
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
 }
 .plan-limit-banner-left {
   display: flex;
@@ -206,35 +368,48 @@
   align-items: center;
 }
 .plan-limit-text {
-  font-size: 0.8rem;
-  color: var(--gray-300);
+  font-size: 0.82rem;
+  color: var(--gray-600);
 }
-.plan-limit-text strong { color: white; }
+.plan-limit-text strong { color: var(--gray-900); }
 .plan-limit-bar {
   flex: 1;
   min-width: 80px;
-  height: 4px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 4px;
+  height: 8px;
+  background: linear-gradient(180deg, rgba(241,245,249,0.95) 0%, rgba(226,232,240,0.88) 100%);
+  border-radius: 999px;
   overflow: hidden;
 }
 .plan-limit-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 999px;
   transition: width 0.4s ease;
 }
 .plan-limit-upgrade {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(239,68,68,0.08);
   font-size: 0.72rem;
-  color: #ef4444;
+  color: #dc2626;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
-.plan-limit-upgrade:hover { text-decoration: underline; }
+.plan-limit-upgrade:hover { text-decoration: none; background: rgba(239,68,68,0.12); }
 
 @media (max-width: 768px) {
   .upgrade-banner-compact { flex-direction: column; text-align: center; }
   .upgrade-banner { flex-direction: column; text-align: center; }
-  .upgrade-banner-fullpage-card { padding: 2rem 1.5rem; }
+  .upgrade-banner-fullpage { padding: 1rem; min-height: auto; }
+  .upgrade-banner-fullpage-card { padding: 1.35rem; border-radius: 24px; }
+  .upgrade-banner-fullpage-hero { grid-template-columns: 1fr; }
+  .upgrade-banner-fullpage-preview { grid-template-columns: 1fr; }
+  .upgrade-banner-fullpage-footer { align-items: stretch; }
+  .upgrade-banner-fullpage-plan,
+  .upgrade-banner-fullpage-actions,
+  .upgrade-banner-fullpage-btn,
+  .upgrade-banner-fullpage-back { width: 100%; }
   .plan-limit-banner { flex-direction: column; gap: 0.5rem; }
 }

@@ -1,4 +1,6 @@
 // Contrôleur Ventes - Système de conversion d'unités
+class BusinessError extends Error {}
+
 const prisma = require('../../config/database');
 const { badRequest, created, error: sendError, notFound } = require('../../common/utils/response');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
@@ -26,6 +28,16 @@ const create = async (req, res) => {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      // Vérifier l'ownership du client en premier, avant toute écriture en base
+      if (clientId) {
+        const clientOwner = await tx.client.findFirst({
+          where: { id: parseInt(clientId), boutiqueId: req.boutiqueId },
+        });
+        if (!clientOwner) {
+          throw new BusinessError('Client non trouvé ou n\'appartient pas à cette boutique');
+        }
+      }
+
       let montantTotal = 0;
       const venteDetails = [];
       // Accumuler les données de mouvement pour écriture après création de la vente
@@ -38,7 +50,7 @@ const create = async (req, res) => {
         });
 
         if (!produit) {
-          throw new Error(`Produit #${item.produitId} non trouvé`);
+          throw new BusinessError(`Produit #${item.produitId} non trouvé`);
         }
 
         let quantiteBase, prixUnitaire, uniteNom, facteurConv = 1;
@@ -46,7 +58,7 @@ const create = async (req, res) => {
 
         if (item.uniteVenteId) {
           const unite = produit.unitesVente.find(u => u.id === parseInt(item.uniteVenteId));
-          if (!unite) throw new Error(`Unité de vente non trouvée pour ${produit.nom}`);
+          if (!unite) throw new BusinessError(`Unité de vente non trouvée pour ${produit.nom}`);
           quantiteBase = quantiteUser * unite.facteurConversion;
           prixUnitaire = unite.prix;
           uniteNom = unite.nom;
@@ -61,7 +73,7 @@ const create = async (req, res) => {
           const stockInfo = item.uniteVenteId && uniteNom
             ? `Stock: ${produit.stock} ${produit.uniteBase} (≈ ${Math.floor(produit.stock / (quantiteBase / quantiteUser))} ${uniteNom})`
             : `Stock: ${produit.stock} ${produit.uniteBase}`;
-          throw new Error(`Stock insuffisant pour ${produit.nom}. ${stockInfo}`);
+          throw new BusinessError(`Stock insuffisant pour ${produit.nom}. ${stockInfo}`);
         }
 
         const sousTotal = prixUnitaire * quantiteUser;
@@ -96,7 +108,7 @@ const create = async (req, res) => {
 
       if (paiementMode === 'CREDIT' || paye < montantTotal) {
         statut = 'EN_CREDIT';
-        if (!clientId) throw new Error('Un client est requis pour une vente à crédit');
+        if (!clientId) throw new BusinessError('Un client est requis pour une vente à crédit');
       }
 
       const vente = await tx.vente.create({
@@ -151,8 +163,11 @@ const create = async (req, res) => {
 
     return created(res, result, 'Vente enregistrée');
   } catch (error) {
+    if (error instanceof BusinessError) {
+      return badRequest(res, error.message, { code: 'SALE_CREATE_FAILED' });
+    }
     logger.error('Erreur create vente', error);
-    return badRequest(res, error.message, { code: 'SALE_CREATE_FAILED' });
+    return sendError(res, 'Erreur lors de la création de la vente', 500, { code: 'SALE_CREATE_FAILED' });
   }
 };
 

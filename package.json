@@ -1,0 +1,14 @@
+{
+  "name": "tekkipro",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*",
+    "frontend",
+    "mobile"
+  ],
+  "scripts": {
+    "frontend": "npm run dev --workspace=frontend",
+    "mobile": "npm run start --workspace=mobile"
+  }
+}

@@ -14,6 +14,7 @@ const {
   unauthorized,
 } = require('../../common/utils/response');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../../services/email.service');
+const { PLAN_LIMITS } = require('../../middleware/auth.middleware');
 
 const isEmailVerificationEnforced = () => process.env.NODE_ENV === 'production' || Boolean(process.env.SMTP_HOST);
 const PASSWORD_MIN_LENGTH = 8;
@@ -109,7 +110,7 @@ const register = async (req, res) => {
       : jwt.sign(
           { id: result.user.id, role: result.user.role, boutiqueId: result.boutique.id },
           process.env.JWT_SECRET,
-          { expiresIn: process.env.JWT_EXPIRES_IN }
+          { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
     if (verificationToken) {
@@ -177,7 +178,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, boutiqueId: user.boutiqueId },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
     res.json({
@@ -221,10 +222,33 @@ const getMe = async (req, res) => {
         actif: true,
         boutiqueId: true,
         createdAt: true,
-        boutique: true,
+        boutique: {
+          select: { id: true, nom: true, slug: true, plan: true, devise: true, telephone: true, adresse: true, email: true },
+        },
       },
     });
-    res.json({ success: true, data: user });
+
+    const boutiqueId = user.boutiqueId;
+    const plan = user.boutique?.plan || 'GRATUIT';
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.GRATUIT;
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [ventesCount, produitsCount, clientsCount] = await Promise.all([
+      prisma.vente.count({ where: { boutiqueId, createdAt: { gte: startOfMonth }, statut: { not: 'ANNULEE' } } }),
+      prisma.produit.count({ where: { boutiqueId, actif: true } }),
+      prisma.client.count({ where: { boutiqueId } }),
+    ]);
+
+    const planUsage = {
+      ventesParMois: { used: ventesCount,    limit: limits.ventesParMois },
+      produits:      { used: produitsCount,  limit: limits.produits },
+      clients:       { used: clientsCount,   limit: limits.clients },
+    };
+
+    res.json({ success: true, data: { ...user, planUsage } });
   } catch (error) {
     logger.error('Erreur getMe', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'PROFILE_FETCH_FAILED' });
@@ -293,6 +317,16 @@ const toggleEmployee = async (req, res) => {
       return notFound(res, 'Employé non trouvé', { code: 'EMPLOYEE_NOT_FOUND' });
     }
 
+    // Protéger le dernier admin actif : la boutique deviendrait inaccessible
+    if (user.actif && user.role === 'ADMIN') {
+      const otherAdmins = await countOtherActiveAdmins(req.boutiqueId, user.id);
+      if (otherAdmins === 0) {
+        return badRequest(res, 'Impossible de désactiver le seul administrateur actif de la boutique.', {
+          code: 'LAST_ADMIN_PROTECTION',
+        });
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { actif: !user.actif },
@@ -356,7 +390,7 @@ const resendVerification = async (req, res) => {
     }
 
     if (user.emailVerifie) {
-      return badRequest(res, 'Cet email est déjà vérifié', { code: 'EMAIL_ALREADY_VERIFIED' });
+      return res.json({ success: true, message: 'Si cet email existe et n\'est pas encore vérifié, un lien a été envoyé.' });
     }
 
     const newToken = crypto.randomBytes(32).toString('hex');

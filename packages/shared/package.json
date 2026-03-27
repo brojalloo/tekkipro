@@ -1,0 +1,10 @@
+{
+  "name": "@tekkipro/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./apiError": "./src/apiError.js",
+    "./apiSuccess": "./src/apiSuccess.js"
+  },
+  "private": true
+}

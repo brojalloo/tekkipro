@@ -1,7 +1,31 @@
 // Contrôleur Boutique
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const prisma = require('../../config/database');
-const { badRequest, created, error: sendError, notFound, forbidden } = require('../../common/utils/response');
+const { badRequest, created, error: sendError, notFound, forbidden, success } = require('../../common/utils/response');
 const logger = require('../../common/utils/logger');
+
+const LOGOS_DIR = path.join(__dirname, '../../../../uploads/logos');
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 Mo
+
+const logoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, LOGOS_DIR),
+  filename: (req, _file, cb) => {
+    const ext = _file.mimetype === 'image/png' ? '.png' : _file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+    cb(null, `boutique-${req.boutiqueId}${ext}`);
+  },
+});
+
+const logoUpload = multer({
+  storage: logoStorage,
+  limits: { fileSize: MAX_SIZE_BYTES },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);
+    cb(new Error('Format non supporté. Utilisez JPG, PNG ou WebP.'));
+  },
+}).single('logo');
 
 const getInfo = async (req, res) => {
   try {
@@ -9,9 +33,10 @@ const getInfo = async (req, res) => {
       where: { id: req.boutiqueId },
       include: { _count: { select: { users: true, produits: true, ventes: true, clients: true } } },
     });
-    res.json({ success: true, data: boutique });
+    return success(res, boutique);
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    logger.error('Erreur getInfo boutique', error);
+    return sendError(res, 'Erreur serveur', 500, { code: 'BOUTIQUE_INFO_FETCH_FAILED' });
   }
 };
 
@@ -29,9 +54,10 @@ const updateInfo = async (req, res) => {
       where: { id: req.boutiqueId },
       data,
     });
-    res.json({ success: true, message: 'Boutique mise à jour', data: boutique });
+    return success(res, boutique, 200, 'Boutique mise à jour');
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    logger.error('Erreur updateInfo boutique', error);
+    return sendError(res, 'Erreur serveur', 500, { code: 'BOUTIQUE_UPDATE_FAILED' });
   }
 };
 
@@ -164,8 +190,8 @@ const deleteBoutique = async (req, res) => {
       await tx.dette.deleteMany({ where: { vente: { boutiqueId } } });
       // Supprimer les ventes
       await tx.vente.deleteMany({ where: { boutiqueId } });
-      // Supprimer les fractions
-      await tx.fractionProduit.deleteMany({ where: { produit: { boutiqueId } } });
+      // Supprimer les unités de vente
+      await tx.uniteVente.deleteMany({ where: { produit: { boutiqueId } } });
       // Supprimer les entrées stock
       await tx.entreeStock.deleteMany({ where: { boutiqueId } });
       // Supprimer les produits
@@ -193,4 +219,42 @@ const deleteBoutique = async (req, res) => {
   }
 };
 
-module.exports = { getInfo, updateInfo, getMesBoutiques, createBoutique, deleteBoutique };
+// Upload / remplacement du logo de la boutique
+const uploadLogo = (req, res) => {
+  logoUpload(req, res, async (err) => {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return badRequest(res, 'Le fichier dépasse la taille maximale autorisée (2 Mo).', { code: 'LOGO_TOO_LARGE' });
+    }
+    if (err) {
+      return badRequest(res, err.message || 'Erreur lors de l\'upload.', { code: 'LOGO_UPLOAD_ERROR' });
+    }
+    if (!req.file) {
+      return badRequest(res, 'Aucun fichier reçu.', { code: 'LOGO_MISSING' });
+    }
+
+    try {
+      const logoUrl = `/uploads/logos/${req.file.filename}`;
+
+      // Supprimer l'ancien logo s'il existe et est différent
+      const existing = await prisma.boutique.findUnique({ where: { id: req.boutiqueId }, select: { logo: true } });
+      if (existing?.logo) {
+        const oldPath = path.join(__dirname, '../../../../', existing.logo);
+        if (oldPath !== path.join(LOGOS_DIR, req.file.filename) && fs.existsSync(oldPath)) {
+          fs.unlink(oldPath, () => {});
+        }
+      }
+
+      const boutique = await prisma.boutique.update({
+        where: { id: req.boutiqueId },
+        data: { logo: logoUrl },
+      });
+
+      return success(res, { logo: boutique.logo }, 200, 'Logo mis à jour');
+    } catch (error) {
+      logger.error('Erreur uploadLogo', error);
+      return sendError(res, 'Erreur serveur', 500, { code: 'LOGO_UPDATE_FAILED' });
+    }
+  });
+};
+
+module.exports = { getInfo, updateInfo, getMesBoutiques, createBoutique, deleteBoutique, uploadLogo };

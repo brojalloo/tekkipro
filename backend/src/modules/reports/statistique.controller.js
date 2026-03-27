@@ -77,6 +77,18 @@ const getDashboard = async (req, res) => {
     let beneficeMois = 0;
 
     if (req.user.role === 'ADMIN') {
+      const detailSelect = {
+        include: {
+          produit: {
+            select: {
+              prixAchat: true,
+              uniteBase: true,
+              unitesVente: { select: { nom: true, facteurConversion: true } },
+            },
+          },
+        },
+      };
+
       const ventesDetailJour = await prisma.venteDetail.findMany({
         where: {
           vente: {
@@ -85,11 +97,12 @@ const getDashboard = async (req, res) => {
             createdAt: { gte: today, lt: tomorrow },
           },
         },
-        include: { produit: { select: { prixAchat: true } } },
+        ...detailSelect,
       });
 
       beneficeJour = ventesDetailJour.reduce((sum, d) => {
-        return sum + (d.prixUnitaire - d.produit.prixAchat) * d.quantite;
+        const facteur = d.produit.unitesVente?.find(u => u.nom === d.uniteNom)?.facteurConversion ?? 1;
+        return sum + (d.prixUnitaire - d.produit.prixAchat * facteur) * d.quantite;
       }, 0);
 
       const ventesDetailMois = await prisma.venteDetail.findMany({
@@ -100,11 +113,12 @@ const getDashboard = async (req, res) => {
             createdAt: { gte: firstDayMonth },
           },
         },
-        include: { produit: { select: { prixAchat: true } } },
+        ...detailSelect,
       });
 
       beneficeMois = ventesDetailMois.reduce((sum, d) => {
-        return sum + (d.prixUnitaire - d.produit.prixAchat) * d.quantite;
+        const facteur = d.produit.unitesVente?.find(u => u.nom === d.uniteNom)?.facteurConversion ?? 1;
+        return sum + (d.prixUnitaire - d.produit.prixAchat * facteur) * d.quantite;
       }, 0);
     }
 

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const logger = require('../../common/utils/logger');
 // Contrôleur Paiements — Stripe, Wave, Orange Money
 const prisma = require('../../config/database');
@@ -96,6 +97,26 @@ const createStripeSession = async (req, res) => {
       actif = renewalContext.actif;
     }
 
+    // Idempotence — éviter les doublons si session EN_ATTENTE récente (< 30 min)
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const existingPending = await prisma.paiementAbonnement.findFirst({
+      where: {
+        modePaiement: 'STRIPE',
+        statut: 'EN_ATTENTE',
+        createdAt: { gte: thirtyMinAgo },
+        abonnement: { boutiqueId: req.boutiqueId },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existingPending?.stripeSessionId) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(existingPending.stripeSessionId);
+        if (existingSession.status === 'open') {
+          return res.json({ success: true, data: { sessionId: existingSession.id, url: existingSession.url } });
+        }
+      } catch (_) { /* session expirée ou invalide, on en crée une nouvelle */ }
+    }
+
     const planInfo = PLAN_LIMITS[plan];
     const montantCFA = planInfo.prix; // en FCFA
     // Stripe gère les centimes, FCFA n'a pas de subdivision → montant en unités entières
@@ -142,11 +163,11 @@ const createStripeSession = async (req, res) => {
         },
       });
     } else {
-      // Créer un abonnement en attente
+      // Créer un abonnement en attente de confirmation paiement
       await prisma.abonnement.create({
         data: {
           plan,
-          statut: 'ACTIF',
+          statut: 'EN_ATTENTE',
           montant: montantCFA,
           dateDebut,
           dateFin,
@@ -215,7 +236,13 @@ const stripeWebhook = async (req, res) => {
         });
 
         if (type === 'souscrire') {
-          // Expirer les anciens abonnements actifs sauf le nouveau
+          // Activer le nouvel abonnement
+          await prisma.abonnement.update({
+            where: { id: paiement.abonnementId },
+            data: { statut: 'ACTIF' },
+          });
+
+          // Expirer les anciens abonnements actifs
           await prisma.abonnement.updateMany({
             where: {
               boutiqueId: parseInt(boutiqueId),
@@ -377,7 +404,7 @@ const initiateWavePayment = async (req, res) => {
         await prisma.abonnement.create({
           data: {
             plan,
-            statut: 'ACTIF',
+            statut: 'EN_ATTENTE',
             montant,
             dateDebut,
             dateFin,
@@ -476,6 +503,69 @@ const initiateWavePayment = async (req, res) => {
   }
 };
 
+// POST /api/payments/wave/webhook — Notification de paiement Wave
+const waveWebhook = async (req, res) => {
+  try {
+    // Vérification signature Wave — header wave-signature contient HMAC-SHA256
+    const waveSignature = req.headers['wave-signature'];
+    if (process.env.WAVE_WEBHOOK_SECRET && waveSignature) {
+      const expectedSig = require('crypto')
+        .createHmac('sha256', process.env.WAVE_WEBHOOK_SECRET)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
+      if (!require('crypto').timingSafeEqual(Buffer.from(waveSignature), Buffer.from(expectedSig))) {
+        logger.warn('Wave webhook: signature invalide');
+        return badRequest(res, 'Signature invalide', { code: 'WAVE_INVALID_SIGNATURE' });
+      }
+    }
+
+    const { type, data: eventData } = req.body;
+    if (type !== 'checkout.session.completed' || !eventData?.id) {
+      return res.json({ received: true });
+    }
+
+    const waveSessionId = eventData.id;
+
+    const paiement = await prisma.paiementAbonnement.findFirst({
+      where: { reference: waveSessionId, modePaiement: 'WAVE', statut: 'EN_ATTENTE' },
+      include: { abonnement: true },
+    });
+
+    if (!paiement) return res.json({ received: true });
+
+    await prisma.paiementAbonnement.update({
+      where: { id: paiement.id },
+      data: { statut: 'CONFIRME' },
+    });
+
+    const abo = paiement.abonnement;
+
+    if (abo.statut === 'EN_ATTENTE') {
+      await prisma.abonnement.update({ where: { id: abo.id }, data: { statut: 'ACTIF' } });
+      await prisma.abonnement.updateMany({
+        where: { boutiqueId: abo.boutiqueId, statut: 'ACTIF', id: { not: abo.id } },
+        data: { statut: 'EXPIRE' },
+      });
+      await prisma.boutique.update({ where: { id: abo.boutiqueId }, data: { plan: abo.plan } });
+    } else {
+      const nouvelleFin = new Date(abo.dateFin);
+      nouvelleFin.setMonth(nouvelleFin.getMonth() + 1);
+      await prisma.abonnement.update({ where: { id: abo.id }, data: { dateFin: nouvelleFin } });
+    }
+
+    try {
+      const user = await prisma.user.findFirst({ where: { boutiqueId: abo.boutiqueId, role: 'ADMIN' } });
+      const boutique = await prisma.boutique.findUnique({ where: { id: abo.boutiqueId } });
+      if (user && boutique) sendPaymentConfirmationEmail(user, boutique, abo.plan, paiement.montant).catch(() => {});
+    } catch (_) {}
+
+    res.json({ received: true });
+  } catch (error) {
+    logger.error('Erreur waveWebhook', error);
+    return sendError(res, 'Erreur webhook Wave', 500, { code: 'WAVE_WEBHOOK_FAILED' });
+  }
+};
+
 // ============================================
 // ORANGE MONEY (Sénégal)
 // ============================================
@@ -510,9 +600,78 @@ const initiateOrangeMoneyPayment = async (req, res) => {
 
     // Si API Orange Money configurée
     if (process.env.ORANGE_MONEY_API_KEY) {
-      // TODO: Intégration API Orange Money Sénégal
-      // https://developer.orange.com/apis/om-webpay
-      return serviceUnavailable(res, 'Intégration Orange Money API en cours de développement', { code: 'ORANGE_MONEY_NOT_AVAILABLE' });
+      const appUrl = process.env.APP_URL || 'http://localhost:5173';
+      const orderId = `OM-${Date.now()}-${req.boutiqueId}`;
+
+      const omResponse = await fetch('https://api.orange.com/orange-money-webpay/sn/v1/webpayment', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.ORANGE_MONEY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          merchant_key: process.env.ORANGE_MONEY_MERCHANT_KEY,
+          currency: 'OUV',
+          order_id: orderId,
+          amount: montant,
+          return_url: `${appUrl}/abonnement?payment=success&provider=orange-money`,
+          cancel_url: `${appUrl}/abonnement?payment=cancel`,
+          notif_url: `${process.env.APP_URL}/api/payments/orange-money/webhook`,
+          lang: 'fr',
+        }),
+      });
+
+      if (!omResponse.ok) {
+        const errData = await omResponse.json().catch(() => ({}));
+        logger.error('Erreur Orange Money API', errData);
+        throw new Error('Erreur API Orange Money');
+      }
+
+      const omData = await omResponse.json();
+      const paymentUrl = omData.data?.payment_url || omData.payment_url;
+      const reference = omData.data?.payment_token || omData.payment_token || orderId;
+
+      if (subscriptionType === 'renouveler') {
+        await prisma.paiementAbonnement.create({
+          data: {
+            montant: actif.montant,
+            modePaiement: 'ORANGE_MONEY',
+            statut: 'EN_ATTENTE',
+            telephone,
+            reference,
+            abonnementId: actif.id,
+          },
+        });
+      } else {
+        const dateDebut = new Date();
+        const dateFin = new Date();
+        dateFin.setMonth(dateFin.getMonth() + 1);
+
+        await prisma.abonnement.create({
+          data: {
+            plan,
+            statut: 'EN_ATTENTE',
+            montant,
+            dateDebut,
+            dateFin,
+            boutiqueId: req.boutiqueId,
+            paiements: {
+              create: {
+                montant,
+                modePaiement: 'ORANGE_MONEY',
+                statut: 'EN_ATTENTE',
+                telephone,
+                reference,
+              },
+            },
+          },
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: { paymentUrl, reference },
+      });
     }
 
     if (isProduction()) {
@@ -584,6 +743,95 @@ const initiateOrangeMoneyPayment = async (req, res) => {
   } catch (error) {
     logger.error('Erreur initiateOrangeMoneyPayment', error);
     return sendError(res, 'Erreur paiement Orange Money', 500, { code: 'ORANGE_MONEY_PAYMENT_FAILED' });
+  }
+};
+
+// POST /api/payments/orange-money/webhook — Notification de paiement Orange Money
+const orangeMoneyWebhook = async (req, res) => {
+  try {
+    const { status, txnid, order_id, notif_token } = req.body;
+
+    if (!order_id) {
+      return badRequest(res, 'order_id manquant', { code: 'ORANGE_MONEY_WEBHOOK_INVALID' });
+    }
+
+    // Vérification de signature : notif_token = sha256(merchant_key + order_id)
+    const merchantKey = process.env.ORANGE_MONEY_MERCHANT_KEY;
+    if (merchantKey) {
+      if (!notif_token) {
+        logger.warn('Orange Money webhook: notif_token absent', { order_id });
+        return badRequest(res, 'Signature manquante', { code: 'ORANGE_MONEY_MISSING_SIGNATURE' });
+      }
+      const expectedToken = crypto
+        .createHash('sha256')
+        .update(merchantKey + order_id)
+        .digest('hex');
+      if (!crypto.timingSafeEqual(Buffer.from(notif_token), Buffer.from(expectedToken))) {
+        logger.warn('Orange Money webhook: signature invalide', { order_id });
+        return badRequest(res, 'Signature invalide', { code: 'ORANGE_MONEY_INVALID_SIGNATURE' });
+      }
+    }
+
+    const paiement = await prisma.paiementAbonnement.findFirst({
+      where: { reference: order_id, modePaiement: 'ORANGE_MONEY', statut: 'EN_ATTENTE' },
+      include: { abonnement: true },
+    });
+
+    if (!paiement) {
+      return res.json({ received: true });
+    }
+
+    if (status === 'SUCCESS') {
+      await prisma.paiementAbonnement.update({
+        where: { id: paiement.id },
+        data: { statut: 'CONFIRME', reference: txnid || order_id },
+      });
+
+      const abo = paiement.abonnement;
+
+      if (abo.statut === 'EN_ATTENTE') {
+        await prisma.abonnement.update({
+          where: { id: abo.id },
+          data: { statut: 'ACTIF' },
+        });
+
+        await prisma.abonnement.updateMany({
+          where: { boutiqueId: abo.boutiqueId, statut: 'ACTIF', id: { not: abo.id } },
+          data: { statut: 'EXPIRE' },
+        });
+
+        await prisma.boutique.update({
+          where: { id: abo.boutiqueId },
+          data: { plan: abo.plan },
+        });
+      } else {
+        // Renouvellement — prolonger dateFin
+        const nouvelleFin = new Date(abo.dateFin);
+        nouvelleFin.setMonth(nouvelleFin.getMonth() + 1);
+        await prisma.abonnement.update({
+          where: { id: abo.id },
+          data: { dateFin: nouvelleFin },
+        });
+      }
+
+      try {
+        const user = await prisma.user.findFirst({ where: { boutiqueId: abo.boutiqueId, role: 'ADMIN' } });
+        const boutique = await prisma.boutique.findUnique({ where: { id: abo.boutiqueId } });
+        if (user && boutique) {
+          sendPaymentConfirmationEmail(user, boutique, abo.plan, paiement.montant).catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+    } else if (status === 'FAILED' || status === 'CANCELLED') {
+      await prisma.paiementAbonnement.update({
+        where: { id: paiement.id },
+        data: { statut: 'ECHOUE' },
+      });
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    logger.error('Erreur orangeMoneyWebhook', error);
+    return sendError(res, 'Erreur webhook Orange Money', 500, { code: 'ORANGE_MONEY_WEBHOOK_FAILED' });
   }
 };
 
@@ -714,7 +962,9 @@ module.exports = {
   stripeWebhook,
   verifyStripeSession,
   initiateWavePayment,
+  waveWebhook,
   initiateOrangeMoneyPayment,
+  orangeMoneyWebhook,
   initiateFreeMoneyPayment,
   getPaymentStatus,
 };

@@ -7,7 +7,6 @@ import {
   FiTag, FiDollarSign, FiBox, FiAlertTriangle, FiBarChart2,
   FiHash, FiFileText, FiTruck, FiLayers, FiInfo, FiCheck
 } from 'react-icons/fi';
-import './ProduitForm.css';
 
 // Unités de base disponibles
 const UNITES_BASE = [
@@ -284,48 +283,43 @@ export default function ProduitForm() {
     : null;
 
   return (
-    <div className="pf-page">
+    <div className="min-h-[calc(100vh-64px)] bg-transparent p-5 md:p-8 flex flex-col gap-6 font-sans">
       {/* Header */}
-      <div className="pf-header">
-        <div className="pf-header-bg" />
-        <div className="pf-header-content">
-          <div className="pf-header-left">
-            <button type="button" className="pf-back-btn" onClick={() => navigate('/app/produits')}>
-              <FiArrowLeft size={18} />
+      <div className="relative p-8 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#071C08] via-[#0D2710] to-[#071C08] shadow-[0_8px_32px_rgba(7,28,8,0.35)]">
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#1B5E20] via-[#FFD600] to-[#D32F2F] rounded-t-[28px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(27,94,32,0.35),transparent_55%)] pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <button onClick={() => navigate('/app/produits')} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all border-none cursor-pointer">
+              <FiArrowLeft size={20} />
             </button>
-            <div className="pf-header-icon">
-              <FiPackage size={22} />
-            </div>
+            <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-[#FFD600] to-[#F9A825] text-[#071C08] rounded-xl shadow-[0_6px_20px_rgba(255,214,0,0.3)] shrink-0"><FiPackage size={22} /></div>
             <div>
-              <h1>{isEdit ? 'Modifier le produit' : 'Nouveau produit'}</h1>
-              <p>{isEdit ? 'Mettez à jour les informations de votre produit' : 'Ajoutez un nouveau produit à votre catalogue'}</p>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight m-0 mb-0.5 leading-tight" style={{fontFamily:'Sora,sans-serif'}}>{isEdit ? 'Modifier le produit' : 'Nouveau produit'}</h1>
+              <p className="text-[0.85rem] font-medium text-white/55 m-0">{isEdit ? 'Mettez à jour les informations' : 'Ajoutez un produit à votre catalogue'}</p>
             </div>
           </div>
+          <button type="submit" form="produit-form" disabled={loading} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-[#FFD600] to-[#F9A825] text-[#071C08] font-extrabold text-[0.9rem] rounded-xl shadow-[0_4px_14px_rgba(255,214,0,0.35)] hover:-translate-y-0.5 transition-all border-none cursor-pointer disabled:opacity-70" style={{fontFamily:'Sora,sans-serif'}}>
+            <FiSave size={18} /> {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+          </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="pf-form-layout">
+      <form id="produit-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-7 items-start">
         {/* Main Column */}
-        <div className="pf-main">
+        <div className="flex flex-col gap-6 min-w-0">
           {/* Section: Informations de base */}
-          <div className="pf-section">
-            <div className="pf-section-header">
-              <div className="pf-section-icon blue">
-                <FiTag size={18} />
-              </div>
-              <div>
-                <h2>Informations de base</h2>
-                <p>Nom, description et identification du produit</p>
-              </div>
-            </div>
-            <div className="pf-section-body">
-              <div className="pf-field">
+          <div className="bg-white border border-[#1B5E20]/10 rounded-[22px] shadow-sm p-6 flex flex-col gap-5">
+            <h2 className="text-[1rem] font-extrabold text-[#1B5E20]" style={{fontFamily:'Sora,sans-serif'}}>Informations de base</h2>
+            <div className="flex flex-col gap-5">
+              <div className="space-y-2">
                 <label>
                   <FiPackage size={14} />
                   Nom du produit
-                  <span className="pf-req">*</span>
+                  <span className="text-destructive font-bold">*</span>
                 </label>
                 <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                   type="text"
                   name="nom"
                   value={form.nom}
@@ -335,13 +329,14 @@ export default function ProduitForm() {
                 />
               </div>
 
-              <div className="pf-row">
-                <div className="pf-field">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
                   <label>
                     <FiHash size={14} />
                     Code barre
                   </label>
                   <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                     type="text"
                     name="codeBarre"
                     value={form.codeBarre}
@@ -349,24 +344,25 @@ export default function ProduitForm() {
                     placeholder="Scanner ou saisir le code"
                   />
                 </div>
-                <div className="pf-field">
+                <div className="space-y-2">
                   <label>
                     <FiLayers size={14} />
                     Catégorie
                   </label>
-                  <select name="categorieId" value={form.categorieId} onChange={handleChange}>
+                  <select className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" name="categorieId" value={form.categorieId} onChange={handleChange}>
                     <option value="">-- Aucune catégorie --</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                   </select>
                 </div>
               </div>
 
-              <div className="pf-field">
+              <div className="space-y-2">
                 <label>
                   <FiFileText size={14} />
                   Description
                 </label>
                 <textarea
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                   name="description"
                   value={form.description}
                   onChange={handleChange}
@@ -378,18 +374,18 @@ export default function ProduitForm() {
           </div>
 
           {/* Section: Unité de base */}
-          <div className="pf-section">
-            <div className="pf-section-header">
-              <div className="pf-section-icon amber">
+          <div className="bg-card shadow-sm border border-border overflow-hidden rounded-2xl">
+            <div className="flex flex-row items-center gap-3.5 border-b border-border/50 bg-muted/20 px-6 py-5">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-orange-500/10 text-orange-500 shrink-0">
                 <FiBox size={18} />
               </div>
               <div>
-                <h2>Unité de base & Stock</h2>
+                <h2 className="text-base font-bold m-0 text-foreground">Unité de base & Stock</h2>
                 <p>L'unité de base sert à stocker le stock en interne</p>
               </div>
             </div>
-            <div className="pf-section-body">
-              <div className="pf-stock-guide">
+            <div className="p-6 space-y-6">
+              <div className="flex gap-3 p-3.5 bg-gradient-to-br from-amber-400/10 to-amber-500/5 border border-amber-500/15 rounded-xl mb-5 items-start">
                 <FiInfo size={15} />
                 <div>
                   <strong>Comment ça marche ?</strong>
@@ -397,18 +393,18 @@ export default function ProduitForm() {
                 </div>
               </div>
 
-              <div className="pf-field">
+              <div className="space-y-2">
                 <label>
                   <FiBox size={14} />
                   Unité de base
-                  <span className="pf-req">*</span>
+                  <span className="text-destructive font-bold">*</span>
                 </label>
-                <div className="pf-unite-base-grid">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
                   {UNITES_BASE.map(u => (
                     <button
                       key={u.value}
                       type="button"
-                      className={`pf-unite-base-option ${form.uniteBase === u.value ? 'active' : ''}`}
+                      className={`flex flex-col items-start p-3 border rounded-xl text-left transition-all hover:border-[#1B5E20]/30 ${form.uniteBase === u.value ? 'border-[#1B5E20] bg-[#1B5E20]/5 text-[#1B5E20] ring-1 ring-[#1B5E20]/20' : 'border-gray-100 bg-white'}`}
                       onClick={() => setForm({ ...form, uniteBase: u.value })}
                     >
                       <strong>{u.label}</strong>
@@ -424,9 +420,9 @@ export default function ProduitForm() {
                   <label>
                     <FiInfo size={14} /> Mode commercial (aide à la conversion automatique)
                   </label>
-                  <div className="pf-row">
-                    <div className="pf-field">
-                      <select value={commercialMode} onChange={(e) => { setCommercialMode(e.target.value); setCommercialSize(''); setCommercialCount(''); }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <select className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" value={commercialMode} onChange={(e) => { setCommercialMode(e.target.value); setCommercialSize(''); setCommercialCount(''); }}>
                         <option value="">-- Aucun --</option>
                         {form.uniteBase === 'g' && <option value="poids">Sacs / Poids (kg)</option>}
                         {form.uniteBase === 'ml' && <option value="volume">Bidons / Volume (L)</option>}
@@ -435,11 +431,11 @@ export default function ProduitForm() {
                     </div>
                     {commercialMode && (
                       <>
-                        <div className="pf-field">
+                        <div className="space-y-2">
                           <label>Contenance ({commercialMode === 'poids' ? 'kg' : commercialMode === 'volume' ? 'L' : 'unités'})</label>
                           <input type="number" value={commercialSize} onChange={(e) => setCommercialSize(e.target.value)} placeholder={commercialMode === 'poids' ? 'Ex: 50' : commercialMode === 'volume' ? 'Ex: 20' : 'Ex: 40'} min="0" step="0.01" />
                         </div>
-                        <div className="pf-field">
+                        <div className="space-y-2">
                           <label>Nombre de packs</label>
                           <input type="number" value={commercialCount} onChange={(e) => setCommercialCount(e.target.value)} placeholder="Ex: 10" min="0" step="1" />
                         </div>
@@ -447,7 +443,7 @@ export default function ProduitForm() {
                     )}
                   </div>
                   {commercialMode && commercialSize && commercialCount && (
-                    <div className="pf-stock-preview" style={{marginTop:'0.6rem'}}>
+                    <div className="flex gap-2.5 p-3.5 bg-primary/5 border border-primary/15 rounded-xl text-sm text-foreground" style={{marginTop:'0.6rem'}}>
                       <FiCheck size={15} />
                       <div>
                         <strong>Stock calculé :</strong> {getStockBase().toLocaleString('fr-FR')} {form.uniteBase}
@@ -463,14 +459,15 @@ export default function ProduitForm() {
               )}
 
               {!isEdit && (
-                <div className="pf-row">
-                  <div className="pf-field" style={{ flex: 2 }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2" style={{ flex: 2 }}>
                     <label>
                       <FiBarChart2 size={14} />
                       Stock initial — quantité
                     </label>
-                    <div className="pf-input-with-icon">
+                    <div className="relative">
                       <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                         type="number"
                         value={stockQty}
                         onChange={(e) => setStockQty(e.target.value)}
@@ -480,7 +477,7 @@ export default function ProduitForm() {
                       />
                     </div>
                   </div>
-                  <div className="pf-field" style={{ flex: 2 }}>
+                  <div className="space-y-2" style={{ flex: 2 }}>
                     <label>
                       <FiLayers size={14} />
                       Unité de la quantité saisie
@@ -501,25 +498,26 @@ export default function ProduitForm() {
               )}
 
               {!isEdit && stockBase > 0 && (
-                <div className="pf-stock-preview">
+                <div className="flex gap-2.5 p-3.5 bg-primary/5 border border-primary/15 rounded-xl text-sm text-foreground">
                   <FiCheck size={15} />
                   <div>
                     <strong>Stock en base :</strong> {stockBase.toLocaleString('fr-FR')} {form.uniteBase}
                     {formatStockDisplay()?.slice(1).map((eq, i) => (
-                      <span key={i} className="pf-stock-equiv"> = {eq}</span>
+                      <span key={i} className="text-muted-foreground font-medium"> = {eq}</span>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="pf-row">
-                <div className="pf-field">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
                   <label>
                     <FiAlertTriangle size={14} />
                     Seuil d'alerte stock (en {form.uniteBase})
                   </label>
-                  <div className="pf-input-with-icon">
+                  <div className="relative">
                     <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                       type="number"
                       name="stockAlerte"
                       value={form.stockAlerte}
@@ -527,15 +525,15 @@ export default function ProduitForm() {
                       placeholder="0"
                       min="0"
                     />
-                    <span className="pf-input-suffix">{form.uniteBase}</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">{form.uniteBase}</span>
                   </div>
                 </div>
-                <div className="pf-field">
+                <div className="space-y-2">
                   <label>
                     <FiTruck size={14} />
                     Fournisseur
                   </label>
-                  <select name="fournisseurId" value={form.fournisseurId} onChange={handleChange}>
+                  <select className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" name="fournisseurId" value={form.fournisseurId} onChange={handleChange}>
                     <option value="">-- Aucun fournisseur --</option>
                     {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                   </select>
@@ -545,25 +543,26 @@ export default function ProduitForm() {
           </div>
 
           {/* Section: Prix de référence */}
-          <div className="pf-section">
-            <div className="pf-section-header">
-              <div className="pf-section-icon green">
+          <div className="bg-card shadow-sm border border-border overflow-hidden rounded-2xl">
+            <div className="flex flex-row items-center gap-3.5 border-b border-border/50 bg-muted/20 px-6 py-5">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-secondary/10 text-secondary shrink-0">
                 <FiDollarSign size={18} />
               </div>
               <div>
-                <h2>Prix de référence</h2>
+                <h2 className="text-base font-bold m-0 text-foreground">Prix de référence</h2>
                 <p>Prix par défaut (utilisés si aucune unité de vente n'est définie)</p>
               </div>
             </div>
-            <div className="pf-section-body">
-              <div className="pf-row">
-                <div className="pf-field">
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
                   <label>
                     <FiDollarSign size={14} />
                     Prix de vente (CFA)
                   </label>
-                  <div className="pf-input-with-icon">
+                  <div className="relative">
                     <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                       type="number"
                       name="prixVente"
                       value={form.prixVente}
@@ -571,16 +570,17 @@ export default function ProduitForm() {
                       placeholder="0"
                       min="0"
                     />
-                    <span className="pf-input-suffix">CFA</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">CFA</span>
                   </div>
                 </div>
-                <div className="pf-field">
+                <div className="space-y-2">
                   <label>
                     <FiDollarSign size={14} />
                     Prix d'achat (CFA)
                   </label>
-                  <div className="pf-input-with-icon">
+                  <div className="relative">
                     <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                       type="number"
                       name="prixAchat"
                       value={form.prixAchat}
@@ -588,13 +588,13 @@ export default function ProduitForm() {
                       placeholder="0"
                       min="0"
                     />
-                    <span className="pf-input-suffix">CFA</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">CFA</span>
                   </div>
                 </div>
               </div>
 
               {marge !== null && !isNaN(marge) && (
-                <div className={`pf-marge-indicator ${Number(marge) > 0 ? 'positive' : Number(marge) < 0 ? 'negative' : 'neutral'}`}>
+                <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium mt-2 border ${Number(marge) > 0 ? 'bg-green-600/10 border-green-600/20 text-green-800' : Number(marge) < 0 ? 'bg-red-600/10 border-red-600/20 text-red-700' : 'bg-gray-500/10 border-gray-500/20 text-gray-600'}`}>
                   <FiBarChart2 size={16} />
                   <span>
                     Marge bénéficiaire: <strong>{marge}%</strong>
@@ -606,22 +606,22 @@ export default function ProduitForm() {
           </div>
 
           {/* Section: Unités de vente / Conversions */}
-          <div className="pf-section pf-section-fractions">
-            <div className="pf-section-header">
-              <div className="pf-section-icon purple">
+          <div className="bg-card shadow-sm border border-border overflow-hidden rounded-2xl">
+            <div className="flex flex-row items-center gap-3.5 border-b border-border/50 bg-muted/20 px-6 py-5">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-accent/10 text-accent shrink-0">
                 <FiGrid size={18} />
               </div>
               <div>
-                <h2>Unités de vente (conversions)</h2>
+                <h2 className="text-base font-bold m-0 text-foreground">Unités de vente (conversions)</h2>
                 <p>Définissez dans quelles unités vous vendez ce produit</p>
               </div>
-              <button type="button" className="pf-add-fraction-btn" onClick={addUnite}>
+              <button type="button" className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 border border-secondary/20 rounded-lg text-secondary text-xs font-bold hover:bg-secondary/15 transition-all" onClick={addUnite}>
                 <FiPlus size={16} />
                 Ajouter
               </button>
             </div>
-            <div className="pf-section-body">
-              <div className="pf-fractions-info">
+            <div className="p-6 space-y-6">
+              <div className="flex gap-3 p-3.5 bg-gradient-to-br from-amber-400/10 to-violet-500/5 border border-amber-500/15 rounded-xl mb-5 items-start">
                 <FiInfo size={15} />
                 <div>
                   <strong>Exemple : Riz (base = gramme)</strong>
@@ -636,11 +636,11 @@ export default function ProduitForm() {
 
               {/* Quick suggestions */}
               {suggestions.length > 0 && (
-                <div className="pf-suggestions">
-                  <span className="pf-suggestions-label">Suggestions rapides :</span>
-                  <div className="pf-suggestions-list">
+                <div className="mb-4">
+                  <span className="text-xs font-bold text-muted-foreground block mb-2">Suggestions rapides :</span>
+                  <div className="flex flex-wrap gap-2">
                     {suggestions.map((s, i) => (
-                      <button key={i} type="button" className="pf-suggestion-btn" onClick={() => addSuggestion(s)}>
+                      <button key={i} type="button" className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#1B5E20]/20 rounded-full text-xs font-semibold text-[#1B5E20] bg-[#1B5E20]/5 hover:bg-[#1B5E20] hover:text-white transition-all" onClick={() => addSuggestion(s)}>
                         <FiPlus size={12} /> {s.nom} ({s.facteur.toLocaleString('fr-FR')} {form.uniteBase})
                       </button>
                     ))}
@@ -649,8 +649,8 @@ export default function ProduitForm() {
               )}
 
               {unitesVente.length > 0 && (
-                <div className="pf-fractions-list">
-                  <div className="pf-fraction-header-row">
+                <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.8fr_1.5fr_40px] gap-2 px-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-widest hidden md:grid">
                     <span>Nom de l'unité</span>
                     <span>Facteur ({form.uniteBase})</span>
                     <span>Prix vente (CFA)</span>
@@ -658,15 +658,17 @@ export default function ProduitForm() {
                     <span></span>
                   </div>
                   {unitesVente.map((u, idx) => (
-                    <div key={idx} className="pf-fraction-row">
+                    <div key={idx} className="grid grid-cols-1 md:grid-cols-[1.5fr_1.8fr_1.5fr_40px] gap-2 items-start bg-muted/30 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none border md:border-none border-border">
                       <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                         type="text"
                         placeholder="Ex: Sac 50kg"
                         value={u.nom}
                         onChange={(e) => updateUnite(idx, 'nom', e.target.value)}
                       />
-                      <div className="pf-fraction-contenance">
+                      <div className="flex flex-col gap-1">
                         <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                           type="number"
                           placeholder="Ex: 50000"
                           value={u.facteurConversion || ''}
@@ -675,13 +677,14 @@ export default function ProduitForm() {
                           min="0.01"
                         />
                         {u.facteurConversion && parseFloat(u.facteurConversion) > 0 && (
-                          <span className="pf-fraction-hint">
+                          <span className="text-[0.7rem] font-bold text-primary pl-1 opacity-85">
                             1 {u.nom || '...'} = {parseFloat(u.facteurConversion).toLocaleString('fr-FR')} {form.uniteBase}
                           </span>
                         )}
                       </div>
-                      <div className="pf-fraction-prix">
+                      <div className="flex flex-col gap-1">
                         <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                           type="number"
                           placeholder="Prix CFA"
                           value={u.prix}
@@ -691,13 +694,14 @@ export default function ProduitForm() {
                       </div>
                       <div style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
                         <input
+  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
                           type="checkbox"
                           checked={u.estDefaut || false}
                           onChange={(e) => updateUnite(idx, 'estDefaut', e.target.checked)}
                           style={{width:'18px',height:'18px', accentColor:'#6366f1'}}
                         />
                       </div>
-                      <button type="button" className="pf-fraction-delete" onClick={() => removeUnite(idx)}>
+                      <button type="button" className="w-9 h-9 flex items-center justify-center bg-destructive/10 border border-destructive/20 rounded-lg text-destructive/50 hover:bg-destructive/20 hover:text-destructive transition-all" onClick={() => removeUnite(idx)}>
                         <FiTrash2 size={15} />
                       </button>
                     </div>
@@ -706,7 +710,7 @@ export default function ProduitForm() {
               )}
 
               {unitesVente.length === 0 && (
-                <div className="pf-fractions-empty">
+                <div className="text-center py-8 px-4 text-muted-foreground flex flex-col items-center">
                   <FiGrid size={28} />
                   <p>Aucune unité de vente définie</p>
                   <span>Ajoutez des unités de vente pour vendre en sac, kg, carton, etc.<br/>Utilisez les suggestions rapides ci-dessus ou cliquez « Ajouter »</span>
@@ -717,13 +721,13 @@ export default function ProduitForm() {
         </div>
 
         {/* Sidebar */}
-        <div className="pf-sidebar">
-          <div className="pf-sidebar-card pf-actions-card">
-            <h3>
+        <div className="flex flex-col gap-5 sticky top-8">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4">
               <FiCheck size={16} />
               Actions
             </h3>
-            <button type="submit" className="pf-btn-save" disabled={loading}>
+            <button type="submit" className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white rounded-xl font-bold shadow-[0_4px_16px_rgba(27,94,32,0.25)] hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(27,94,32,0.35)] transition-all disabled:opacity-50 disabled:transform-none" disabled={loading}>
               {loading ? (
                 <>
                   <div className="pf-spinner" />
@@ -736,31 +740,31 @@ export default function ProduitForm() {
                 </>
               )}
             </button>
-            <button type="button" className="pf-btn-cancel" onClick={() => navigate('/app/produits')}>
+            <button type="button" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mt-2.5 bg-muted border border-border rounded-xl text-muted-foreground font-semibold hover:bg-muted/80 hover:text-foreground transition-all" onClick={() => navigate('/app/produits')}>
               <FiArrowLeft size={15} />
               Retour aux produits
             </button>
           </div>
 
-          <div className="pf-sidebar-card pf-preview-card">
-            <h3>
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4">
               <FiPackage size={16} />
               Aperçu
             </h3>
-            <div className="pf-preview-body">
-              <div className="pf-preview-name">{form.nom || 'Nom du produit'}</div>
+            <div className="flex flex-col gap-3">
+              <div className="text-[1.05rem] font-bold text-foreground leading-snug">{form.nom || 'Nom du produit'}</div>
               {form.categorieId && (
-                <span className="pf-preview-cat">
+                <span className="inline-block px-2.5 py-0.5 bg-accent/10 text-primary rounded-full text-xs font-semibold w-fit">
                   {categories.find(c => String(c.id) === String(form.categorieId))?.nom}
                 </span>
               )}
-              <div className="pf-preview-meta">
+              <div className="flex flex-wrap gap-2">
                 <span><FiBox size={12} /> Base: {uniteBaseInfo?.label || form.uniteBase}</span>
                 {!isEdit && stockBase > 0 && <span><FiBarChart2 size={12} /> Stock: {stockBase.toLocaleString('fr-FR')} {form.uniteBase}</span>}
                 {isEdit && <span><FiBarChart2 size={12} /> (stock géré via entrées)</span>}
               </div>
               {unitesVente.filter(u => u.nom && u.facteurConversion).length > 0 && (
-                <div className="pf-preview-meta" style={{marginTop:'0.5rem', borderTop:'1px solid #eee', paddingTop:'0.5rem'}}>
+                <div className="flex flex-wrap gap-2" style={{marginTop:'0.5rem', borderTop:'1px solid #eee', paddingTop:'0.5rem'}}>
                   <strong style={{fontSize:'0.75rem', color:'#6366f1'}}>Unités de vente :</strong>
                   {unitesVente.filter(u => u.nom && u.facteurConversion).map((u, i) => (
                     <span key={i} style={{color:'#a855f7'}}>
@@ -772,7 +776,7 @@ export default function ProduitForm() {
                 </div>
               )}
               {!isEdit && stockBase > 0 && unitesVente.filter(u => u.nom && u.facteurConversion > 0).length > 0 && (
-                <div className="pf-preview-meta" style={{marginTop:'0.5rem', borderTop:'1px solid #eee', paddingTop:'0.5rem'}}>
+                <div className="flex flex-wrap gap-2" style={{marginTop:'0.5rem', borderTop:'1px solid #eee', paddingTop:'0.5rem'}}>
                   <strong style={{fontSize:'0.75rem', color:'#059669'}}>Équivalences stock :</strong>
                   {formatStockDisplay()?.map((eq, i) => (
                     <span key={i} style={{color:'#059669'}}><FiBox size={12} /> {eq}</span>

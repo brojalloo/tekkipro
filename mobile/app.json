@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "TekkiPro",
+    "slug": "tekkipro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E8623A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tekkipro.app"
+    },
+    "android": {
+      "package": "com.tekkipro.app",
+      "usesCleartextTraffic": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#E8623A"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Autoriser TekkiPro à accéder à la caméra pour scanner les codes-barres."
+        }
+      ],
+      "./plugins/withThermalPrinter",
+      "expo-audio"
+    ]
+  }
+}

@@ -2,18 +2,16 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { FiCheckCircle, FiXCircle, FiLoader } from 'react-icons/fi';
-import './AuthPages.css';
+import { getApiErrorMessage } from '@tekkipro/shared/apiError';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('loading'); // loading, success, error
-  const [message, setMessage] = useState('');
+  const token = searchParams.get('token');
+  const [status, setStatus] = useState(token ? 'loading' : 'error');
+  const [message, setMessage] = useState(token ? '' : 'Lien de vérification invalide. Aucun token fourni.');
 
   useEffect(() => {
-    const token = searchParams.get('token');
     if (!token) {
-      setStatus('error');
-      setMessage('Lien de vérification invalide. Aucun token fourni.');
       return;
     }
 
@@ -24,28 +22,28 @@ export default function VerifyEmail() {
       })
       .catch(err => {
         setStatus('error');
-        setMessage(err.response?.data?.message || 'Erreur lors de la vérification');
+        setMessage(getApiErrorMessage(err, { fallback: 'Erreur lors de la vérification' }));
       });
-  }, [searchParams]);
+  }, [token]);
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <div className="min-h-screen flex bg-[#FFFAF0] text-[#1A1C23] font-sans">
+      <div className="bg-white rounded-[24px] shadow-2xl p-10 md:p-14 max-w-[480px] w-full text-center flex flex-col items-center mx-auto">
         <div className="auth-logo">TekkiPro</div>
         
         {status === 'loading' && (
           <div className="auth-status loading">
             <FiLoader size={48} className="auth-spinner" />
-            <h2>Vérification en cours...</h2>
-            <p>Veuillez patienter pendant que nous vérifions votre adresse email.</p>
+            <h2 className="font-sans text-[2.5rem] font-extrabold leading-[1.1] mb-6 tracking-tight text-white">Vérification en cours...</h2>
+            <p className="text-[1.1rem] text-white/60 leading-[1.6] mb-12 max-w-[480px]">Veuillez patienter pendant que nous vérifions votre adresse email.</p>
           </div>
         )}
 
         {status === 'success' && (
           <div className="auth-status success">
             <FiCheckCircle size={48} />
-            <h2>Email vérifié !</h2>
-            <p>{message}</p>
+            <h2 className="font-sans text-[2.5rem] font-extrabold leading-[1.1] mb-6 tracking-tight text-white">Email vérifié !</h2>
+            <p className="text-[1.1rem] text-white/60 leading-[1.6] mb-12 max-w-[480px]">{message}</p>
             <Link to="/login" className="auth-btn">Se connecter</Link>
           </div>
         )}
@@ -53,8 +51,8 @@ export default function VerifyEmail() {
         {status === 'error' && (
           <div className="auth-status error">
             <FiXCircle size={48} />
-            <h2>Erreur de vérification</h2>
-            <p>{message}</p>
+            <h2 className="font-sans text-[2.5rem] font-extrabold leading-[1.1] mb-6 tracking-tight text-white">Erreur de vérification</h2>
+            <p className="text-[1.1rem] text-white/60 leading-[1.6] mb-12 max-w-[480px]">{message}</p>
             <Link to="/login" className="auth-link">Retour à la connexion</Link>
           </div>
         )}

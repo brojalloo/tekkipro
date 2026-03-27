@@ -12,7 +12,8 @@ const DEV_ALLOWED_ORIGINS = [
   'http://127.0.0.1:5173',
   'http://localhost:8081',
   'http://127.0.0.1:8081',
-  'exp://127.0.0.1:8081',
+  'http://localhost:5178',
+  'http://127.0.0.1:5178',
 ];
 
 const normalizeOrigin = (origin) => origin?.trim().replace(/\/$/, '');
@@ -88,6 +89,9 @@ const createCorsOptions = () => {
 
   return {
     origin(origin, callback) {
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
       callback(null, isOriginAllowed(origin, allowedOrigins));
     },
     credentials: true,
@@ -111,9 +115,11 @@ const applySecurityHeaders = (req, res, next) => {
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('X-DNS-Prefetch-Control', 'off');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()');
-  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+  const appUrl = process.env.APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '');
+  const cspSelf = appUrl ? `'self' ${appUrl}` : "'self'";
+  res.setHeader('Content-Security-Policy', `default-src ${cspSelf}; connect-src ${cspSelf}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`);
 
   const forwardedProto = getForwardedProto(req);
   if (req.secure || forwardedProto === 'https') {
@@ -131,7 +137,16 @@ const createRateLimiter = ({
 } = {}) => {
   const buckets = new Map();
 
-  return (req, res, next) => {
+  // Nettoyage périodique des entrées expirées pour éviter la fuite mémoire
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of buckets) {
+      if (entry.resetAt <= now) buckets.delete(key);
+    }
+  }, windowMs).unref();
+
+  // Exposer pour les tests
+  const middleware = (req, res, next) => {
     const now = Date.now();
     const key = keyGenerator(req);
     const existing = buckets.get(key);
@@ -153,6 +168,10 @@ const createRateLimiter = ({
 
     next();
   };
+
+  middleware._buckets = buckets;
+  middleware._cleanup = cleanupInterval;
+  return middleware;
 };
 
 // Rate limiter global — protection DoS (300 req/min par IP)
@@ -200,6 +219,7 @@ module.exports = {
   createRateLimiter,
   enforceOriginAllowlist,
   getAllowedOrigins,
+  isOriginAllowed,
   getForwardedProto,
   getTrustProxySetting,
   passwordResetRateLimiter,

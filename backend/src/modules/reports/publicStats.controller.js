@@ -1,6 +1,6 @@
 // Statistiques publiques pour la landing page (pas d'auth requise)
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../../config/database');
+const logger = require('../../common/utils/logger');
 
 const getPublicStats = async (req, res) => {
   try {

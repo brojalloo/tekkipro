@@ -36,6 +36,7 @@ enum StatutDette {
 }
 
 enum StatutAbonnement {
+  EN_ATTENTE
   ACTIF
   EXPIRE
   ANNULE
@@ -194,6 +195,7 @@ model UniteVente {
 
   produit Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
 
+  @@index([produitId])
   @@map("unites_vente")
 }
 
@@ -288,6 +290,8 @@ model Dette {
   vente          Vente         @relation(fields: [venteId], references: [id], onDelete: Cascade)
   remboursements Remboursement[]
 
+  @@index([clientId])
+  @@index([statut])
   @@map("dettes")
 }
 
@@ -299,6 +303,7 @@ model Remboursement {
 
   dette       Dette    @relation(fields: [detteId], references: [id], onDelete: Cascade)
 
+  @@index([detteId])
   @@map("remboursements")
 }
 

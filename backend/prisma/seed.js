@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 // Helper : générer un numéro de vente
 const genNumero = (i) => {
-  const d = new Date(2026, 1, 20 + Math.floor(i / 5));
+  const d = new Date();
   const ds = d.toISOString().slice(0, 10).replace(/-/g, '');
   return `VNT-${ds}-${String(100000 + i).slice(1)}`;
 };

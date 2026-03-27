@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import toast from 'react-hot-toast';
+import { getApiErrorMessage } from '@tekkipro/shared/apiError';
+import { getApiSuccessMessage, getLocalSuccessMessage } from '@tekkipro/shared/apiSuccess';
+import PageHeader from '../components/PageHeader';
 import {
   FiPlus, FiEdit, FiTrash2, FiTruck, FiPhone, FiMail,
   FiMapPin, FiSearch, FiPackage, FiArrowDownCircle,
-  FiX, FiCheckCircle, FiUser, FiHash
+  FiX, FiCheckCircle, FiUser
 } from 'react-icons/fi';
-import UpgradeBanner from '../components/UpgradeBanner';
-import './Fournisseurs.css';
+import UpgradeBanner, { FeaturePreview } from '../components/UpgradeBanner';
 
 export default function Fournisseurs() {
   const { isPro, plan } = useAuth();
@@ -20,31 +22,38 @@ export default function Fournisseurs() {
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => { load(); }, []);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await api.get('/fournisseurs');
       setFournisseurs(res.data.data);
-    } catch (e) { toast.error('Erreur de chargement des fournisseurs'); } finally { setLoading(false); }
-  };
+    } catch { toast.error('Erreur de chargement des fournisseurs'); } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (!isPro) {
+      setLoading(false);
+      return;
+    }
+
+    load();
+  }, [isPro, load]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       if (editing) {
-        await api.put(`/fournisseurs/${editing.id}`, form);
-        toast.success('Fournisseur mis à jour');
+        const response = await api.put(`/fournisseurs/${editing.id}`, form);
+        toast.success(getApiSuccessMessage(response, { fallback: getLocalSuccessMessage({ entity: 'fournisseur', action: 'update' }) }));
       } else {
-        await api.post('/fournisseurs', form);
-        toast.success('Fournisseur ajouté avec succès');
+        const response = await api.post('/fournisseurs', form);
+        toast.success(getApiSuccessMessage(response, { fallback: getLocalSuccessMessage({ entity: 'fournisseur', action: 'create' }) }));
       }
       setShowModal(false);
       setEditing(null);
       setForm({ nom: '', telephone: '', adresse: '', email: '' });
       load();
-    } catch (e) { toast.error(e.response?.data?.message || 'Erreur lors de l\'enregistrement'); } finally { setSubmitting(false); }
+    } catch (error) { toast.error(getApiErrorMessage(error, { fallback: 'Erreur lors de l\'enregistrement' })); } finally { setSubmitting(false); }
   };
 
   const startEdit = (f) => {
@@ -62,10 +71,10 @@ export default function Fournisseurs() {
   const remove = async (id) => {
     if (!window.confirm('Supprimer ce fournisseur ?')) return;
     try {
-      await api.delete(`/fournisseurs/${id}`);
-      toast.success('Fournisseur supprimé');
+      const response = await api.delete(`/fournisseurs/${id}`);
+      toast.success(getApiSuccessMessage(response, { fallback: getLocalSuccessMessage({ entity: 'fournisseur', action: 'delete' }) }));
       load();
-    } catch (e) { toast.error('Erreur'); }
+    } catch (error) { toast.error(getApiErrorMessage(error, { fallback: 'Erreur' })); }
   };
 
   const filtered = fournisseurs.filter(f =>
@@ -76,133 +85,123 @@ export default function Fournisseurs() {
 
   if (loading) {
     return (
-      <div className="frn-page">
-        <div className="frn-loading"><div className="frn-loading-spinner" /><p>Chargement...</p></div>
+      <div className="min-h-[calc(100vh-64px)] bg-transparent flex flex-col font-sans pb-10">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4"><div className="w-10 h-10 border-4 border-muted border-t-primary rounded-full animate-spin" /><p>Chargement...</p></div>
       </div>
     );
   }
 
-  // Bloquer l'accès pour le plan Gratuit
+  // Bloquer l’accès pour le plan Gratuit
   if (!isPro) {
     return (
-      <div className="frn-page">
-        <UpgradeBanner
-          fullPage
-          feature="Gestion des fournisseurs"
+      <div className="min-h-[calc(100vh-64px)] bg-transparent p-5 md:p-8 font-sans">
+        <FeaturePreview
+          icon={<FiTruck size={26} />}
+          title="Gérez vos fournisseurs"
+          featureLabel="les fournisseurs"
           requiredPlan="PRO"
-          currentPlan={plan}
+          description="Centralisez contacts, livraisons et réapprovisionnements depuis une seule page."
         />
       </div>
     );
   }
 
   return (
-    <div className="frn-page">
-      {/* Header */}
-      <div className="frn-header">
-        <div className="frn-header-bg" />
-        <div className="frn-header-content">
-          <div className="frn-header-left">
-            <div className="frn-header-icon"><FiTruck size={24} /></div>
-            <div>
-              <h1>Fournisseurs</h1>
-              <p>Gérez vos fournisseurs et leurs informations</p>
-            </div>
-          </div>
-          <button className="frn-btn-add" onClick={openNew}>
-            <FiPlus size={18} /> Nouveau Fournisseur
+    <div className="min-h-[calc(100vh-64px)] bg-transparent p-5 md:p-8 flex flex-col gap-6 font-sans">
+      <PageHeader
+        icon={<FiTruck size={20} />}
+        title="Fournisseurs"
+        subtitle="Gérez vos partenaires et approvisionnements"
+        action={
+          <button onClick={openNew} className="inline-flex items-center gap-2 px-4 py-2 bg-[#1B5E20] text-white font-bold text-[0.85rem] rounded-xl hover:-translate-y-0.5 transition-all border-none cursor-pointer">
+            <FiPlus size={16} /> Nouveau fournisseur
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stats */}
-      <div className="frn-stats">
-        <div className="frn-stat-card">
-          <div className="frn-stat-icon blue"><FiTruck size={20} /></div>
-          <div className="frn-stat-info">
-            <span className="frn-stat-value">{fournisseurs.length}</span>
-            <span className="frn-stat-label">Fournisseurs</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="relative flex items-center gap-4 p-5 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] border border-[#1B5E20]/20 rounded-[22px] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all overflow-hidden">
+          <div className="w-[52px] h-[52px] flex items-center justify-center rounded-2xl shrink-0 bg-white/15 text-white"><FiTruck size={20} /></div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[1.25rem] font-extrabold text-white tracking-tight truncate">{fournisseurs.length}</span>
+            <span className="text-[0.8rem] font-bold text-white/70 truncate">Fournisseurs</span>
           </div>
         </div>
-        <div className="frn-stat-card">
-          <div className="frn-stat-icon green"><FiPackage size={20} /></div>
-          <div className="frn-stat-info">
-            <span className="frn-stat-value">{fournisseurs.reduce((s, f) => s + (f._count?.produits || 0), 0)}</span>
-            <span className="frn-stat-label">Produits liés</span>
+        <div className="relative flex items-center gap-4 p-5 bg-white border border-[#1B5E20]/10 rounded-[22px] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all overflow-hidden">
+          <div className="w-[52px] h-[52px] flex items-center justify-center rounded-2xl shrink-0 bg-[#FFD600]/10 text-[#F9A825]"><FiPackage size={20} /></div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[1.25rem] font-extrabold text-foreground tracking-tight truncate">{fournisseurs.reduce((s, f) => s + (f._count?.produits || 0), 0)}</span>
+            <span className="text-[0.8rem] font-bold text-muted-foreground truncate">Produits liés</span>
           </div>
         </div>
-        <div className="frn-stat-card">
-          <div className="frn-stat-icon purple"><FiArrowDownCircle size={20} /></div>
-          <div className="frn-stat-info">
-            <span className="frn-stat-value">{fournisseurs.reduce((s, f) => s + (f._count?.entreeStocks || 0), 0)}</span>
-            <span className="frn-stat-label">Entrées stock</span>
+        <div className="relative flex items-center gap-4 p-5 bg-white border border-[#1B5E20]/10 rounded-[22px] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all overflow-hidden">
+          <div className="w-[52px] h-[52px] flex items-center justify-center rounded-2xl shrink-0 bg-[#D32F2F]/10 text-[#D32F2F]"><FiArrowDownCircle size={20} /></div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[1.25rem] font-extrabold text-foreground tracking-tight truncate">{fournisseurs.reduce((s, f) => s + (f._count?.entreeStocks || 0), 0)}</span>
+            <span className="text-[0.8rem] font-bold text-muted-foreground truncate">Entrées stock</span>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="frn-toolbar">
-        <div className="frn-search">
-          <FiSearch size={16} />
-          <input
-            type="text"
-            placeholder="Rechercher un fournisseur..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-[18px] shadow-sm focus-within:border-[#1B5E20] focus-within:shadow-[0_0_0_4px_rgba(27,94,32,0.08)] transition-all md:min-w-[360px]">
+          <FiSearch className="text-gray-400" size={18} />
+          <input type="text" placeholder="Rechercher un fournisseur..." className="border-none outline-none bg-transparent flex-1 text-[0.9rem] font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
-        <span className="frn-result-count">{filtered.length} fournisseur{filtered.length > 1 ? 's' : ''}</span>
+        <span className="text-[0.85rem] font-bold text-muted-foreground">{filtered.length} fournisseur{filtered.length > 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
-      <div className="frn-content">
-        <div className="frn-table-card">
-          <table className="frn-table">
-            <thead>
+      <div>
+        <div className="bg-white border border-[#1B5E20]/10 rounded-[24px] shadow-sm overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead className="bg-muted/30 border-b border-border">
               <tr>
-                <th>Fournisseur</th>
-                <th>Contact</th>
-                <th>Adresse</th>
-                <th>Produits</th>
-                <th>Entrées</th>
-                <th>Actions</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Fournisseur</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Contact</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Adresse</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Produits</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Entrées</th>
+                <th className="px-6 py-4 text-[0.72rem] font-extrabold text-muted-foreground uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(f => (
-                <tr key={f.id}>
-                  <td>
-                    <div className="frn-name-cell">
-                      <div className="frn-avatar"><FiTruck size={16} /></div>
-                      <strong>{f.nom}</strong>
+                <tr key={f.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white font-extrabold rounded-full shrink-0 text-sm">{f.nom.charAt(0).toUpperCase()}</div>
+                      <strong className="text-[0.95rem] font-extrabold text-foreground block">{f.nom}</strong>
                     </div>
                   </td>
-                  <td>
-                    <div className="frn-contact-cell">
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle">
+                    <div className="flex flex-col gap-1.5">
                       {f.telephone && (
-                        <span className="frn-contact-item"><FiPhone size={12} /> {f.telephone}</span>
+                        <span className="inline-flex items-center gap-1.5 text-[0.85rem] font-semibold text-muted-foreground"><FiPhone size={12} /> {f.telephone}</span>
                       )}
                       {f.email && (
-                        <span className="frn-contact-item"><FiMail size={12} /> {f.email}</span>
+                        <span className="inline-flex items-center gap-1.5 text-[0.85rem] font-semibold text-muted-foreground"><FiMail size={12} /> {f.email}</span>
                       )}
-                      {!f.telephone && !f.email && <span className="frn-muted">—</span>}
+                      {!f.telephone && !f.email && <span className="text-muted-foreground/50">—</span>}
                     </div>
                   </td>
-                  <td>
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle">
                     {f.adresse ? (
-                      <span className="frn-address"><FiMapPin size={12} /> {f.adresse}</span>
+                      <span className="inline-flex items-center gap-1.5 text-[0.85rem] font-medium text-muted-foreground"><FiMapPin size={12} /> {f.adresse}</span>
                     ) : (
-                      <span className="frn-muted">—</span>
+                      <span className="text-muted-foreground/50">—</span>
                     )}
                   </td>
-                  <td><span className="frn-count-badge blue">{f._count?.produits || 0}</span></td>
-                  <td><span className="frn-count-badge green">{f._count?.entreeStocks || 0}</span></td>
-                  <td>
-                    <div className="frn-actions">
-                      <button className="frn-action-btn edit" onClick={() => startEdit(f)} title="Modifier">
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle"><span className="inline-flex items-center justify-center px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-bold min-w-[1.75rem]">{f._count?.produits || 0}</span></td>
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle"><span className="inline-flex items-center justify-center px-2.5 py-0.5 bg-[#d4af37]/10 text-[#d4af37] rounded-full text-xs font-bold min-w-[1.75rem]">{f._count?.entreeStocks || 0}</span></td>
+                  <td className="px-6 py-4 border-b border-muted/50 align-middle">
+                    <div className="flex gap-2">
+                      <button className="w-9 h-9 flex items-center justify-center border border-border rounded-xl bg-card shadow-sm text-muted-foreground transition-all hover:bg-[#1B5E20]/10 hover:border-[#1B5E20]/20 hover:text-[#1B5E20]" onClick={() => startEdit(f)} title="Modifier">
                         <FiEdit size={15} />
                       </button>
-                      <button className="frn-action-btn delete" onClick={() => remove(f.id)} title="Supprimer">
+                      <button className="w-9 h-9 flex items-center justify-center border border-border rounded-xl bg-card shadow-sm text-muted-foreground transition-all hover:bg-[#D32F2F]/10 hover:border-[#D32F2F]/20 hover:text-[#D32F2F]" onClick={() => remove(f.id)} title="Supprimer">
                         <FiTrash2 size={15} />
                       </button>
                     </div>
@@ -212,10 +211,10 @@ export default function Fournisseurs() {
             </tbody>
           </table>
           {filtered.length === 0 && (
-            <div className="frn-empty">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/50">
               <FiTruck size={40} />
-              <p>Aucun fournisseur trouvé</p>
-              <span>Ajoutez votre premier fournisseur</span>
+              <p className="text-[1.05rem] font-extrabold text-muted-foreground mt-4 mb-1">Aucun fournisseur trouvé</p>
+              <span className="text-[0.85rem] font-medium">Ajoutez votre premier fournisseur</span>
             </div>
           )}
         </div>
@@ -223,44 +222,44 @@ export default function Fournisseurs() {
 
       {/* Modal */}
       {showModal && (
-        <div className="frn-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="frn-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="frn-modal-header">
-              <div className="frn-modal-icon">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
+          <div className="bg-card border border-border/60 rounded-[24px] w-full max-w-[520px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-4 p-6 border-b border-border/50">
+              <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-[#FFD600] to-[#F9A825] text-[#071C08] rounded-xl shadow-[0_6px_20px_rgba(255,214,0,0.3)] shrink-0">
                 {editing ? <FiEdit size={22} /> : <FiPlus size={22} />}
               </div>
               <div>
-                <h3>{editing ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}</h3>
-                <p>{editing ? 'Modifiez les informations' : 'Ajoutez un nouveau partenaire'}</p>
+                <h3 className="text-xl font-extrabold text-foreground m-0">{editing ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}</h3>
+                <p className="text-sm font-medium text-muted-foreground m-0">{editing ? 'Modifiez les informations' : 'Ajoutez un nouveau partenaire'}</p>
               </div>
-              <button className="frn-modal-close" onClick={() => setShowModal(false)}><FiX size={20} /></button>
+              <button className="w-9 h-9 flex items-center justify-center bg-muted/50 hover:bg-muted text-muted-foreground rounded-xl transition-colors shrink-0" onClick={() => setShowModal(false)}><FiX size={20} /></button>
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="frn-modal-body">
-                <div className="frn-field">
-                  <label><FiUser size={14} /> Nom <span className="frn-req">*</span></label>
-                  <input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} required placeholder="Nom du fournisseur" />
+              <div className="p-6 flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-1.5 text-sm font-bold text-foreground"><FiUser className="text-muted-foreground" size={14} /> Nom <span className="text-destructive">*</span></label>
+                  <input className="w-full px-4 py-3 bg-muted/30 border border-border rounded-xl text-foreground text-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none placeholder:text-muted-foreground" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} required placeholder="Nom du fournisseur" />
                 </div>
-                <div className="frn-modal-row">
-                  <div className="frn-field">
-                    <label><FiPhone size={14} /> Téléphone</label>
-                    <input value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} placeholder="+221 77 000 0000" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-1.5 text-sm font-bold text-foreground"><FiPhone className="text-muted-foreground" size={14} /> Téléphone</label>
+                    <input className="w-full px-4 py-3 bg-muted/30 border border-border rounded-xl text-foreground text-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none placeholder:text-muted-foreground" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} placeholder="+221 77 000 0000" />
                   </div>
-                  <div className="frn-field">
-                    <label><FiMail size={14} /> Email</label>
-                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.com" />
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-1.5 text-sm font-bold text-foreground"><FiMail className="text-muted-foreground" size={14} /> Email</label>
+                    <input type="email" className="w-full px-4 py-3 bg-muted/30 border border-border rounded-xl text-foreground text-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none placeholder:text-muted-foreground" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemple.com" />
                   </div>
                 </div>
-                <div className="frn-field">
-                  <label><FiMapPin size={14} /> Adresse</label>
-                  <input value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} placeholder="Adresse complète" />
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-1.5 text-sm font-bold text-foreground"><FiMapPin className="text-muted-foreground" size={14} /> Adresse</label>
+                  <input className="w-full px-4 py-3 bg-muted/30 border border-border rounded-xl text-foreground text-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none placeholder:text-muted-foreground" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} placeholder="Adresse complète" />
                 </div>
               </div>
-              <div className="frn-modal-footer">
-                <button type="button" className="frn-btn-cancel" onClick={() => setShowModal(false)}>Annuler</button>
-                <button type="submit" className="frn-btn-save" disabled={submitting}>
-                  {submitting ? <span className="frn-spinner" /> : <FiCheckCircle size={16} />}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-border/50 bg-muted/10">
+                <button type="button" className="px-5 py-2.5 bg-white border border-border rounded-xl text-foreground font-bold hover:bg-muted/50 transition-colors" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white rounded-xl font-bold shadow-md shadow-[#1B5E20]/20 hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:pointer-events-none" disabled={submitting}>
+                  {submitting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiCheckCircle size={16} />}
                   {submitting ? 'Enregistrement...' : (editing ? 'Modifier' : 'Ajouter')}
                 </button>
               </div>

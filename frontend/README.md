@@ -1,16 +1,55 @@
-# React + Vite
+# TekkiPro Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Client web React + Vite pour TekkiPro.
 
-Currently, two official plugins are available:
+## Documentation liée
+- `../README.md`
+- `../docs/README.md`
+- `../docs/frontend-messaging.md`
+- `../docs/CONTRAT_ERREURS_API.md`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Configuration
+1. Copier `./.env.example` vers `.env`
+2. Configurer `VITE_API_URL`
 
-## React Compiler
+Exemples :
+- dev local direct : `http://localhost:5000/api`
+- derrière reverse proxy frontend : `/api`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Commandes principales
+- `npm ci`
+- `npm run dev`
+- `npm run lint`
+- `npm test`
+- `npm run test:watch`
+- `npm run build`
+- `npm run preview`
 
-## Expanding the ESLint configuration
+## Démarrage local
+Depuis ce dossier :
+1. `npm ci`
+2. vérifier `VITE_API_URL`
+3. `npm run dev`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Application locale par défaut : `http://localhost:5173`
+
+## Structure rapide
+- `src/pages/` : pages métier principales
+- `src/components/` : composants réutilisables
+- `src/context/` : auth et état global
+- `src/lib/` : client API, helpers erreur/succès, stockage auth
+- `src/services/` : intégration API
+
+## Qualité
+- `npm run lint` : lint ESLint
+- `npm test` : suite Vitest
+- `npm run build` : build production Vite
+
+## Conventions importantes
+- messages visibles : `../docs/frontend-messaging.md`
+- erreurs API : `../docs/CONTRAT_ERREURS_API.md`
+- préférer `getApiErrorMessage`, `getApiSuccessMessage` et `getLocalSuccessMessage` aux chaînes dispersées
+
+## Notes
+- le projet utilise actuellement Vite 8 beta ; toute évolution de l'outillage build doit être testée via `npm run build`
+- le frontend est prévu pour fonctionner soit avec une URL API complète, soit via proxy `/api`

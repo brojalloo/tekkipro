@@ -11,6 +11,7 @@ const {
 
 router.get('/', auth, ctrl.getInfo);
 router.put('/', auth, adminOnly, updateBoutiqueValidation, handleValidationErrors, ctrl.updateInfo);
+router.post('/logo', auth, adminOnly, ctrl.uploadLogo);
 
 // Multi-boutique (plan BUSINESS)
 router.get('/mes-boutiques', auth, adminOnly, ctrl.getMesBoutiques);

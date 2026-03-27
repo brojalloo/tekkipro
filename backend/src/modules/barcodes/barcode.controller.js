@@ -1,6 +1,7 @@
 // Module Barcodes — Controller
 const prisma = require('../../config/database');
 const logger = require('../../common/utils/logger');
+const { badRequest, conflict, created, error: sendError, notFound, success } = require('../../common/utils/response');
 
 // GET /api/barcodes/lookup/:code
 // Lookup rapide d'un produit par code-barres
@@ -44,10 +45,10 @@ async function lookupByBarcode(req, res) {
       });
     }
 
-    return res.status(404).json({ success: false, message: 'Produit introuvable pour ce code-barres' });
+    return notFound(res, 'Produit introuvable pour ce code-barres', { code: 'BARCODE_NOT_FOUND' });
   } catch (err) {
     logger.error('lookupByBarcode', err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    return sendError(res, 'Erreur serveur', 500, { code: 'BARCODE_LOOKUP_FAILED' });
   }
 }
 
@@ -63,10 +64,10 @@ async function getByProduit(req, res) {
       orderBy: { isPrimary: 'desc' },
     });
 
-    res.json({ success: true, data: barcodes });
+    return success(res, barcodes);
   } catch (err) {
     logger.error('getByProduit', err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    return sendError(res, 'Erreur serveur', 500, { code: 'BARCODES_FETCH_FAILED' });
   }
 }
 
@@ -79,7 +80,7 @@ async function addBarcode(req, res) {
     const { barcode, uniteId, isPrimary } = req.body;
 
     if (!barcode) {
-      return res.status(400).json({ success: false, message: 'Le code-barres est requis' });
+      return badRequest(res, 'Le code-barres est requis', { code: 'BARCODE_REQUIRED' });
     }
 
     // Vérifier unicité dans la boutique
@@ -87,7 +88,7 @@ async function addBarcode(req, res) {
       where: { barcode, boutiqueId },
     });
     if (existing) {
-      return res.status(409).json({ success: false, message: 'Ce code-barres est déjà utilisé dans cette boutique' });
+      return conflict(res, 'Ce code-barres est déjà utilisé dans cette boutique', { code: 'BARCODE_DUPLICATE' });
     }
 
     // Si isPrimary, retirer l'ancien primary de ce produit
@@ -98,17 +99,17 @@ async function addBarcode(req, res) {
       });
     }
 
-    const created = await prisma.productBarcode.create({
+    const newBarcode = await prisma.productBarcode.create({
       data: { barcode, produitId, boutiqueId, uniteId: uniteId || null, isPrimary: isPrimary || false },
     });
 
-    res.status(201).json({ success: true, data: created });
+    return created(res, newBarcode, 'Code-barres ajouté');
   } catch (err) {
     logger.error('addBarcode', err);
     if (err.code === 'P2002') {
-      return res.status(409).json({ success: false, message: 'Code-barres déjà utilisé dans cette boutique' });
+      return conflict(res, 'Code-barres déjà utilisé dans cette boutique', { code: 'BARCODE_DUPLICATE' });
     }
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    return sendError(res, 'Erreur serveur', 500, { code: 'BARCODE_ADD_FAILED' });
   }
 }
 
@@ -121,14 +122,14 @@ async function removeBarcode(req, res) {
 
     const existing = await prisma.productBarcode.findFirst({ where: { id, boutiqueId } });
     if (!existing) {
-      return res.status(404).json({ success: false, message: 'Code-barres introuvable' });
+      return notFound(res, 'Code-barres introuvable', { code: 'BARCODE_NOT_FOUND' });
     }
 
     await prisma.productBarcode.delete({ where: { id } });
-    res.json({ success: true, message: 'Code-barres supprimé' });
+    return success(res, null, 200, 'Code-barres supprimé');
   } catch (err) {
     logger.error('removeBarcode', err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
+    return sendError(res, 'Erreur serveur', 500, { code: 'BARCODE_REMOVE_FAILED' });
   }
 }
 

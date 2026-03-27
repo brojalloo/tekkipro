@@ -5,6 +5,10 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.*.production
+.env.staging
+.env.*.staging
 
 # Build outputs
 dist/
@@ -24,7 +28,6 @@ Thumbs.db
 
 # Editor
 .vscode/*
-!.vscode/extensions.json
 .idea/
 *.suo
 *.ntvs*
@@ -35,6 +38,12 @@ Thumbs.db
 # Prisma
 backend/prisma/*.db
 backend/prisma/*.db-journal
+
+# Local/generated verification artifacts
+backend/tmp/
+mobile/.expo*/
+mobile/product-save-log.txt
+SESSION_*.md
 
 # Local
 *.local

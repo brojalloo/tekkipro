@@ -1,34 +1,26 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { getPlanLimits } from '../config/planConfig';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './auth-context';
+import { registerPlanUsageUpdater } from '../services/planUsageStore';
+import {
+  clearStoredActiveBoutique,
+  clearStoredAuth,
+  getStoredAuthData,
+  persistAuthSession,
+  setStoredActiveBoutique,
+  updateStoredBoutique,
+  updateStoredUser,
+} from '../lib/authStorage';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [boutique, setBoutique] = useState(null);
-  const [activeBoutique, setActiveBoutique] = useState(null);
+  const [storedAuth] = useState(getStoredAuthData);
+  const [user, setUser] = useState(storedAuth.user);
+  const [boutique, setBoutique] = useState(storedAuth.boutique);
+  const [activeBoutique, setActiveBoutique] = useState(storedAuth.activeBoutique);
   const [mesBoutiques, setMesBoutiques] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('tekkipro_token');
-    const savedUser = localStorage.getItem('tekkipro_user');
-    const savedBoutique = localStorage.getItem('tekkipro_boutique');
-    const savedActive = localStorage.getItem('tekkipro_active_boutique');
-    
-    if (token && savedUser) {
-      const u = JSON.parse(savedUser);
-      const b = savedBoutique ? JSON.parse(savedBoutique) : null;
-      setUser(u);
-      setBoutique(b);
-      // Restaurer la boutique active
-      if (savedActive && b) {
-        setActiveBoutique(parseInt(savedActive));
-      }
-    }
-    setLoading(false);
-  }, []);
+  const [planUsage, setPlanUsage] = useState(null);
+  const loading = false;
 
   // Charger les boutiques quand user est admin BUSINESS
   const loadMesBoutiques = useCallback(async () => {
@@ -43,16 +35,64 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (user?.role === 'ADMIN' && boutique?.plan === 'BUSINESS') {
-      loadMesBoutiques();
+    if (user?.role !== 'ADMIN' || boutique?.plan !== 'BUSINESS') {
+      return undefined;
     }
-  }, [user, boutique, loadMesBoutiques]);
+
+    let cancelled = false;
+
+    api.get('/boutique/mes-boutiques')
+      .then(res => {
+        if (!cancelled) {
+          setMesBoutiques(res.data.data || []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMesBoutiques([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role, boutique?.plan]);
+
+  const updatePlanUsage = useCallback((payload) => {
+    setPlanUsage(prev => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      if (payload.ventesUsed  !== undefined) next.ventesParMois = { ...next.ventesParMois, used: payload.ventesUsed };
+      if (payload.ventesLimit !== undefined) next.ventesParMois = { ...next.ventesParMois, limit: payload.ventesLimit };
+      if (payload.produitsUsed  !== undefined) next.produits = { ...next.produits, used: payload.produitsUsed };
+      if (payload.produitsLimit !== undefined) next.produits = { ...next.produits, limit: payload.produitsLimit };
+      if (payload.clientsUsed  !== undefined) next.clients = { ...next.clients, used: payload.clientsUsed };
+      if (payload.clientsLimit !== undefined) next.clients = { ...next.clients, limit: payload.clientsLimit };
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    registerPlanUsageUpdater(updatePlanUsage);
+  }, [updatePlanUsage]);
+
+  // Charger planUsage au démarrage si l'utilisateur est déjà connecté (session restaurée)
+  useEffect(() => {
+    if (!user) return;
+    api.get('/auth/me')
+      .then(res => {
+        const data = res.data.data;
+        if (data?.planUsage) setPlanUsage(data.planUsage);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Une seule fois au montage
 
   const switchBoutique = (boutiqueId) => {
     const target = mesBoutiques.find(b => b.id === boutiqueId);
     if (target) {
       setActiveBoutique(boutiqueId);
-      localStorage.setItem('tekkipro_active_boutique', boutiqueId.toString());
+      setStoredActiveBoutique(boutiqueId);
     }
   };
 
@@ -67,38 +107,41 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     const { token, user: userData, boutique: boutiqueData } = res.data.data;
-    
-    localStorage.setItem('tekkipro_token', token);
-    localStorage.setItem('tekkipro_user', JSON.stringify(userData));
-    localStorage.setItem('tekkipro_boutique', JSON.stringify(boutiqueData));
-    localStorage.removeItem('tekkipro_active_boutique');
-    
+
+    persistAuthSession({ token, user: userData, boutique: boutiqueData });
+
     setUser(userData);
     setBoutique(boutiqueData);
+    if (res.data.data?.planUsage) setPlanUsage(res.data.data.planUsage);
     setActiveBoutique(null);
+    setMesBoutiques([]);
     return res.data;
   };
 
   const register = async (data) => {
     const res = await api.post('/auth/register', data);
-    const { token, user: userData, boutique: boutiqueData } = res.data.data;
-    
-    localStorage.setItem('tekkipro_token', token);
-    localStorage.setItem('tekkipro_user', JSON.stringify(userData));
-    localStorage.setItem('tekkipro_boutique', JSON.stringify(boutiqueData));
-    localStorage.removeItem('tekkipro_active_boutique');
+    const {
+      requiresEmailVerification = false,
+      token,
+      user: userData,
+      boutique: boutiqueData,
+    } = res.data.data;
+
+    if (requiresEmailVerification) {
+      return res.data;
+    }
+
+    persistAuthSession({ token, user: userData, boutique: boutiqueData });
     
     setUser(userData);
     setBoutique(boutiqueData);
     setActiveBoutique(null);
+    setMesBoutiques([]);
     return res.data;
   };
 
   const logout = () => {
-    localStorage.removeItem('tekkipro_token');
-    localStorage.removeItem('tekkipro_user');
-    localStorage.removeItem('tekkipro_boutique');
-    localStorage.removeItem('tekkipro_active_boutique');
+    clearStoredAuth();
     setUser(null);
     setBoutique(null);
     setActiveBoutique(null);
@@ -112,15 +155,21 @@ export function AuthProvider({ children }) {
       const data = res.data.data;
       if (data?.boutique) {
         setBoutique(data.boutique);
-        localStorage.setItem('tekkipro_boutique', JSON.stringify(data.boutique));
+        updateStoredBoutique(data.boutique);
       }
       if (data) {
-        const { boutique: b, ...userData } = data;
+        const { boutique: _boutique, ...userData } = data;
         setUser(userData);
-        localStorage.setItem('tekkipro_user', JSON.stringify(userData));
+        updateStoredUser(userData);
+        if (!(userData?.role === 'ADMIN' && data?.boutique?.plan === 'BUSINESS')) {
+          setMesBoutiques([]);
+          setActiveBoutique(null);
+          clearStoredActiveBoutique();
+        }
       }
+      if (data?.planUsage) setPlanUsage(data.planUsage);
     } catch (err) {
-      console.error('Erreur refreshBoutique:', err);
+      if (import.meta.env.DEV) console.error('Erreur refreshBoutique:', err);
     }
   }, []);
 
@@ -136,14 +185,10 @@ export function AuthProvider({ children }) {
       isAdmin, isPro, isBusiness, plan, planLimits,
       activeBoutique, mesBoutiques, switchBoutique, loadMesBoutiques, getActiveBoutiqueName,
       refreshBoutique,
+      planUsage,
+      updatePlanUsage,
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};

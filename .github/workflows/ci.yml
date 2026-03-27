@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  # ─── Deploy — se déclenche uniquement sur main ET si SSH_HOST est configuré ──
+  # Pour activer : ajouter ces 4 secrets dans GitHub → Settings → Secrets :
+  #   SSH_HOST     — IP ou domaine du VPS
+  #   SSH_USER     — utilisateur SSH (ex: ubuntu, deploy)
+  #   SSH_KEY      — clé privée SSH (contenu du fichier ~/.ssh/id_rsa)
+  #   DEPLOY_PATH  — chemin du projet sur le VPS (ex: /opt/tekkipro)
+  deploy:
+    name: Deploy to VPS
+    needs: [backend, frontend, mobile]
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      secrets.SSH_HOST != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "=== Pull latest code ==="
+            git pull origin main
+
+            echo "=== Build & restart containers ==="
+            cd infra
+            docker compose pull --quiet
+            docker compose up -d --build --remove-orphans
+
+            echo "=== Wait for backend health ==="
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect tekkipro_api --format='{{.State.Health.Status}}' 2>/dev/null || echo "missing")
+              echo "Attempt $i: $STATUS"
+              [ "$STATUS" = "healthy" ] && break
+              [ "$i" = "12" ] && echo "ERREUR: backend pas healthy après 60s" && exit 1
+              sleep 5
+            done
+
+            echo "=== Smoke test ==="
+            curl -sf http://localhost:5000/api/health || (echo "ERREUR: health check échoué" && exit 1)
+
+            echo "=== Deploy terminé ==="

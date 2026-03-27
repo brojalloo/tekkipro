@@ -8,7 +8,9 @@ const {
   stripeWebhook,
   verifyStripeSession,
   initiateWavePayment,
+  waveWebhook,
   initiateOrangeMoneyPayment,
+  orangeMoneyWebhook,
   initiateFreeMoneyPayment,
   getPaymentStatus,
 } = require('./payment.controller');
@@ -28,9 +30,11 @@ router.get('/stripe/verify/:sessionId', auth, paymentReadRateLimiter, verifyStri
 
 // Wave Mobile Money
 router.post('/wave/initiate', auth, paymentWriteRateLimiter, initiateWavePaymentValidation, handleValidationErrors, initiateWavePayment);
+router.post('/wave/webhook', waveWebhook);
 
 // Orange Money
 router.post('/orange-money/initiate', auth, paymentWriteRateLimiter, initiateOrangeMoneyPaymentValidation, handleValidationErrors, initiateOrangeMoneyPayment);
+router.post('/orange-money/webhook', orangeMoneyWebhook);
 
 // Free Money
 router.post('/free-money/initiate', auth, paymentWriteRateLimiter, initiateFreeMoneyPaymentValidation, handleValidationErrors, initiateFreeMoneyPayment);

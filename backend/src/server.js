@@ -1,8 +1,11 @@
 // Tekkipro - Serveur principal v2.0 — Architecture modulaire
 require('dotenv').config();
 const { validateEnvironment } = require('./config/env');
+const logger = require('./common/utils/logger');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 
@@ -28,12 +31,11 @@ app.set('trust proxy', getTrustProxySetting());
 // Stripe webhook — doit être AVANT express.json() car il a besoin du raw body
 app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
-// Middlewares globaux
+app.use(cors(createCorsOptions()));
+app.use(helmet());
 app.use(compression());
 app.use(applySecurityHeaders);
-app.use(enforceOriginAllowlist);
 app.use(globalRateLimiter);
-app.use(cors(createCorsOptions()));
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || process.env.JSON_BODY_LIMIT || '100kb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -49,6 +51,9 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Fichiers statiques — logos boutiques
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '7d' }));
+
 // Enregistrement de toutes les routes via le module centralisé
 registerRoutes(app);
 
@@ -57,7 +62,7 @@ app.use((err, req, res, next) => {
   const status = err.status || err.statusCode || 500;
   const isAppError = err instanceof AppError || err?.isOperational;
   if (status >= 500) {
-    console.error(err.stack || err);
+    logger.error('Unhandled error', { err: err.stack || err.message });
   }
 
   return sendError(
@@ -76,13 +81,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`Tekkipro API v2.0 démarrée sur le port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  logger.info(`Tekkipro API v2.0 démarrée sur le port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
   startSubscriptionCron();
 });
 
 // Graceful shutdown
 const shutdown = (signal) => {
-  console.log(`[${signal}] Arrêt gracieux en cours...`);
+  logger.info(`[${signal}] Arrêt gracieux en cours...`);
   server.close(() => {
     const prisma = require('./config/database');
     prisma.$disconnect().finally(() => process.exit(0));
