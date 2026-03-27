@@ -3,10 +3,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copier les fichiers workspace root
 COPY package*.json ./
-RUN npm ci
+COPY packages/ ./packages/
 
-COPY . .
+# Copier le frontend
+COPY frontend/package*.json ./frontend/
+
+# Installer toutes les dépendances workspace
+RUN npm ci --workspace=frontend --include-workspace-root
+
+# Copier le reste du frontend
+COPY frontend/ ./frontend/
+
+WORKDIR /app/frontend
 
 # Build Vite (injecter l'URL API au moment du build)
 ARG VITE_API_URL=/api
@@ -17,11 +27,9 @@ RUN npm run build
 # ---- Production stage (Nginx) ----
 FROM nginx:alpine AS production
 
-# Config Nginx pour SPA React (toutes les routes renvoyées vers index.html)
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/frontend/dist /usr/share/nginx/html
+COPY frontend/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
-
