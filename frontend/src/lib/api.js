@@ -2,7 +2,7 @@
 // C'est le point d'entrée unique pour tous les appels API
 import axios from 'axios';
 import { clearStoredAuth, getStoredActiveBoutiqueId, getStoredToken } from './authStorage';
-import { normalizeApiError, shouldClearAuthSession } from './apiError';
+import { normalizeApiError, shouldClearAuthSession } from '@tekkipro/shared/apiError';
 import { callPlanUsageUpdater } from '../services/planUsageStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
