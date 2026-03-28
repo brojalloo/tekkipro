@@ -149,7 +149,7 @@ export default function Dettes() {
       ) : (
         <div className="bg-white border border-[#1B5E20]/10 rounded-[18px] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[750px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
                   <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-[0.78rem] uppercase tracking-wide">Client</th>

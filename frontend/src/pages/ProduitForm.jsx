@@ -288,7 +288,7 @@ export default function ProduitForm() {
       <div className="relative p-8 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#071C08] via-[#0D2710] to-[#071C08] shadow-[0_8px_32px_rgba(7,28,8,0.35)]">
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#1B5E20] via-[#FFD600] to-[#D32F2F] rounded-t-[28px]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(27,94,32,0.35),transparent_55%)] pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-5">
             <button onClick={() => navigate('/app/produits')} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all border-none cursor-pointer">
               <FiArrowLeft size={20} />

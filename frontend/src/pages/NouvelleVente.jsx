@@ -9,7 +9,7 @@ import { getApiSuccessMessage, getLocalSuccessMessage } from '@tekkipro/shared/a
 import {
   FiShoppingCart, FiPlus, FiMinus, FiTrash2, FiUser, FiCheck,
   FiSearch, FiCreditCard, FiSmartphone, FiDollarSign, FiPackage,
-  FiAlertCircle, FiTag, FiChevronDown, FiZap, FiWifi, FiInbox
+  FiAlertCircle, FiTag, FiChevronDown, FiZap, FiWifi, FiInbox, FiX
 } from 'react-icons/fi';
 import BarcodeScannerInput from '../features/products/components/BarcodeScannerInput';
 import UsageMeter from '../components/UsageMeter';
@@ -41,6 +41,7 @@ export default function NouvelleVente() {
 
   const [scanMode, setScanMode] = useState(true);
   const [scanLoading, setScanLoading] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -225,7 +226,7 @@ export default function NouvelleVente() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 min-h-[calc(100vh-100px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 min-h-[calc(100vh-100px)] pb-20 lg:pb-0">
         <div className="p-5 md:p-8 lg:pr-6 overflow-y-auto">
           <BarcodeScannerInput onScan={handleScan} active={scanMode} showInput={false} />
 
@@ -298,14 +299,22 @@ export default function NouvelleVente() {
           </div>
         </div>
 
-        <div className="p-5 md:p-8 xl:pl-0 h-full">
-          <div className="bg-white border border-[#1B5E20]/12 rounded-[24px] shadow-lg lg:sticky top-6 flex flex-col max-h-[calc(100vh-48px)] lg:max-h-[calc(100vh-120px)] overflow-hidden">
+        {/* Mobile overlay backdrop */}
+        {showCart && (
+          <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowCart(false)} />
+        )}
+
+        <div className={`lg:p-5 xl:pl-0 h-full ${showCart ? 'fixed inset-x-0 bottom-0 z-50 lg:relative lg:inset-auto lg:z-auto' : 'hidden lg:block'}`}>
+          <div className="bg-white border border-[#1B5E20]/12 rounded-t-[24px] lg:rounded-[24px] shadow-lg lg:sticky top-6 flex flex-col max-h-[85vh] lg:max-h-[calc(100vh-120px)] overflow-hidden">
             <div className="p-5 px-6 bg-[#1B5E20]/5 border-b border-[#1B5E20]/10 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 <FiShoppingCart size={18} className="text-[#1B5E20]" />
                 <h3 className="text-[0.95rem] font-bold text-foreground m-0" style={{fontFamily:'Sora,sans-serif'}}>Détail du Panier</h3>
               </div>
-              <div className="w-7 h-7 flex items-center justify-center bg-[#1B5E20] text-white rounded-full text-xs font-bold">{cart.length}</div>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 flex items-center justify-center bg-[#1B5E20] text-white rounded-full text-xs font-bold">{cart.length}</div>
+                <button className="lg:hidden w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 border-none cursor-pointer" onClick={() => setShowCart(false)}><FiX size={15} /></button>
+              </div>
             </div>
 
             {cart.length === 0 ? (
@@ -398,6 +407,17 @@ export default function NouvelleVente() {
           </div>
         </div>
       </div>
+
+      {/* Floating cart button — mobile only */}
+      {cart.length > 0 && !showCart && (
+        <button
+          className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-3.5 bg-[#1B5E20] text-white rounded-full font-bold text-[0.9rem] shadow-[0_8px_28px_rgba(27,94,32,0.45)] border-none cursor-pointer whitespace-nowrap"
+          onClick={() => setShowCart(true)}
+        >
+          <FiShoppingCart size={17} />
+          Panier ({cart.length})
+        </button>
+      )}
     </div>
   );
 }
