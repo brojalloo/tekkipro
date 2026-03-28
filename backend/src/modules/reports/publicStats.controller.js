@@ -11,13 +11,6 @@ const getPublicStats = async (req, res) => {
       prisma.user.count(),
     ]);
 
-    // Calculer le chiffre d'affaires total
-    const caResult = await prisma.vente.aggregate({
-      _sum: { montantTotal: true },
-      where: { statut: { not: 'ANNULEE' } },
-    });
-    const chiffreAffaires = caResult._sum.montantTotal || 0;
-
     res.json({
       success: true,
       data: {
@@ -25,7 +18,6 @@ const getPublicStats = async (req, res) => {
         ventes,
         produits,
         utilisateurs: users,
-        chiffreAffaires,
       },
     });
   } catch (error) {

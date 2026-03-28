@@ -101,8 +101,12 @@ const getDashboard = async (req, res) => {
       });
 
       beneficeJour = ventesDetailJour.reduce((sum, d) => {
-        const facteur = d.produit.unitesVente?.find(u => u.nom === d.uniteNom)?.facteurConversion ?? 1;
-        return sum + (d.prixUnitaire - d.produit.prixAchat * facteur) * d.quantite;
+        if (d.uniteNom) {
+          const unite = d.produit.unitesVente?.find(u => u.nom === d.uniteNom);
+          if (!unite) return sum; // unité renommée/supprimée — exclure du calcul
+          return sum + (d.prixUnitaire - d.produit.prixAchat * unite.facteurConversion) * d.quantite;
+        }
+        return sum + (d.prixUnitaire - d.produit.prixAchat) * d.quantite;
       }, 0);
 
       const ventesDetailMois = await prisma.venteDetail.findMany({
@@ -117,8 +121,12 @@ const getDashboard = async (req, res) => {
       });
 
       beneficeMois = ventesDetailMois.reduce((sum, d) => {
-        const facteur = d.produit.unitesVente?.find(u => u.nom === d.uniteNom)?.facteurConversion ?? 1;
-        return sum + (d.prixUnitaire - d.produit.prixAchat * facteur) * d.quantite;
+        if (d.uniteNom) {
+          const unite = d.produit.unitesVente?.find(u => u.nom === d.uniteNom);
+          if (!unite) return sum; // unité renommée/supprimée — exclure du calcul
+          return sum + (d.prixUnitaire - d.produit.prixAchat * unite.facteurConversion) * d.quantite;
+        }
+        return sum + (d.prixUnitaire - d.produit.prixAchat) * d.quantite;
       }, 0);
     }
 

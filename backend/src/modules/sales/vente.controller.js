@@ -10,7 +10,7 @@ const logger = require('../../common/utils/logger');
 const generateNumeroVente = () => {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  const rand = require('crypto').randomBytes(4).toString('hex').toUpperCase();
   return `VNT-${dateStr}-${rand}`;
 };
 

@@ -508,7 +508,11 @@ const waveWebhook = async (req, res) => {
   try {
     // Vérification signature Wave — header wave-signature contient HMAC-SHA256
     const waveSignature = req.headers['wave-signature'];
-    if (process.env.WAVE_WEBHOOK_SECRET && waveSignature) {
+    if (process.env.WAVE_WEBHOOK_SECRET) {
+      if (!waveSignature) {
+        logger.warn('Wave webhook: header wave-signature manquant');
+        return badRequest(res, 'Signature manquante', { code: 'WAVE_MISSING_SIGNATURE' });
+      }
       const expectedSig = require('crypto')
         .createHmac('sha256', process.env.WAVE_WEBHOOK_SECRET)
         .update(JSON.stringify(req.body))
