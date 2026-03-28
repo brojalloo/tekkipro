@@ -46,11 +46,16 @@ const expireOverdueSubscriptions = async () => {
       data: { statut: 'EXPIRE' },
     });
 
-    // Repasser la boutique au plan GRATUIT
-    await prisma.boutique.update({
-      where: { id: abo.boutiqueId },
-      data: { plan: 'GRATUIT' },
+    // Repasser au GRATUIT seulement si aucun autre abonnement actif n'existe
+    const autreAboActif = await prisma.abonnement.findFirst({
+      where: { boutiqueId: abo.boutiqueId, statut: 'ACTIF', id: { not: abo.id } },
     });
+    if (!autreAboActif) {
+      await prisma.boutique.update({
+        where: { id: abo.boutiqueId },
+        data: { plan: 'GRATUIT' },
+      });
+    }
 
     logger.info('[CRON] Abonnement expiré', { aboId: abo.id, boutique: abo.boutique.nom });
 

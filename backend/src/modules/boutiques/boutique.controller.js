@@ -194,6 +194,9 @@ const deleteBoutique = async (req, res) => {
       await tx.uniteVente.deleteMany({ where: { produit: { boutiqueId } } });
       // Supprimer les entrées stock
       await tx.entreeStock.deleteMany({ where: { boutiqueId } });
+      // Supprimer les mouvements et soldes de stock (FK sur produit)
+      await tx.stockMovement.deleteMany({ where: { boutiqueId } });
+      await tx.stockBalance.deleteMany({ where: { boutiqueId } });
       // Supprimer les produits
       await tx.produit.deleteMany({ where: { boutiqueId } });
       // Supprimer les catégories

@@ -101,9 +101,10 @@ const create = async (req, res) => {
       }
 
       const paiementMode = modePaiement || 'CASH';
-      const paye = (montantPaye !== undefined && montantPaye !== null && montantPaye !== '')
+      const payeRaw = (montantPaye !== undefined && montantPaye !== null && montantPaye !== '')
         ? parseFloat(montantPaye)
         : (paiementMode === 'CREDIT' ? 0 : montantTotal);
+      const paye = Math.min(payeRaw, montantTotal);
       let statut = 'COMPLETEE';
 
       if (paiementMode === 'CREDIT' || paye < montantTotal) {
