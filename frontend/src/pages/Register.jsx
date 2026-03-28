@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import toast from 'react-hot-toast';
-import { FiArrowRight, FiEye, FiEyeOff, FiPackage, FiZap, FiBarChart2, FiMail, FiPhone, FiShoppingBag, FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
+import { FiArrowRight, FiArrowLeft, FiEye, FiEyeOff, FiPackage, FiZap, FiBarChart2, FiMail, FiPhone, FiShoppingBag, FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
 import { getApiErrorMessage } from '@tekkipro/shared/apiError';
 import { getLocalSuccessMessage } from '@tekkipro/shared/apiSuccess';
 
@@ -57,6 +57,11 @@ export default function Register() {
           <div className="absolute top-0 left-0 bottom-0 w-[4px] bg-gradient-to-b from-[#FFD600] via-[#1B5E20] to-[#D32F2F]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_25%,rgba(27,94,32,0.45),transparent_50%),radial-gradient(circle_at_85%_75%,rgba(255,214,0,0.08),transparent_45%)]" />
 
+          <Link to="/" className="relative z-[3] flex items-center gap-1.5 text-white/50 hover:text-white/90 transition-colors text-[0.82rem] font-medium mb-8 w-fit">
+            <FiArrowLeft size={13} />
+            Retour à l'accueil
+          </Link>
+
           <div className="relative z-[3] flex items-center gap-4 mb-14">
             <div className="w-14 h-14 bg-gradient-to-br from-[#FFD600] to-[#F9A825] rounded-[18px] flex items-center justify-center text-2xl font-extrabold text-[#071C08] shadow-[0_8px_28px_rgba(255,214,0,0.3)]" style={{fontFamily:'Sora,sans-serif'}}>T</div>
             <span className="text-[1.75rem] font-extrabold tracking-tight text-white" style={{fontFamily:'Sora,sans-serif'}}>TekkiPro</span>
@@ -84,6 +89,10 @@ export default function Register() {
         </div>
 
         <div className="flex-1 flex flex-col justify-center p-8 md:p-16 max-w-[580px] w-full mx-auto">
+          <Link to="/" className="md:hidden flex items-center gap-1.5 text-[#1B5E20] hover:text-[#071C08] transition-colors text-[0.82rem] font-medium mb-8 w-fit">
+            <FiArrowLeft size={13} />
+            Retour à l'accueil
+          </Link>
           <h1 className="text-[2rem] font-extrabold mb-2 tracking-tight text-[#1B5E20]" style={{fontFamily:'Sora,sans-serif'}}>Créer un compte</h1>
           <p className="text-base text-gray-500 mb-10 font-medium">Remplissez les informations ci-dessous pour commencer.</p>
 

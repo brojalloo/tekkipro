@@ -11,31 +11,18 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const features = [
-  { icon: <FiPackage />, title: 'Gestion d\'inventaire', desc: 'Suivez vos stocks en temps réel avec alertes de niveau bas et réapprovisionnement automatique.', color: '#1B5E20' },
-  { icon: <FiCamera />, title: 'Scanner de codes-barres', desc: 'Scannez et ajoutez des produits instantanément. Compatible avec tous les formats de codes-barres.', color: '#FFD600' },
-  { icon: <FiBarChart2 />, title: 'Rapports & Analytics', desc: 'Visualisez vos performances avec des tableaux de bord interactifs et rapports détaillés.', color: '#D32F2F' },
-  { icon: <FiDollarSign />, title: 'Point de vente', desc: 'Encaissez rapidement avec Wave, Orange Money ou espèces. Reçus digitaux automatiques.', color: '#1B5E20' },
-  { icon: <FiUsers />, title: 'Gestion d\'équipe', desc: 'Gérez les rôles et permissions de vos employés. Suivi des performances individuelles.', color: '#FFD600' },
-  { icon: <FiGlobe />, title: 'Mobile & Cloud', desc: 'Accédez à votre boutique depuis n\'importe où. Synchronisation en temps réel sur tous vos appareils.', color: '#D32F2F' },
+  { icon: FiPackage, title: 'Gestion d\'inventaire', desc: 'Suivez vos stocks en temps réel avec alertes de niveau bas et réapprovisionnement automatique.', accent: '#FFD600' },
+  { icon: FiCamera, title: 'Scanner codes-barres', desc: 'Scannez et ajoutez des produits instantanément. Compatible avec tous les formats de codes-barres.', accent: '#D32F2F' },
+  { icon: FiBarChart2, title: 'Rapports & Analytics', desc: 'Visualisez vos performances avec des tableaux de bord interactifs et rapports détaillés.', accent: '#FFD600' },
+  { icon: FiDollarSign, title: 'Point de vente', desc: 'Encaissez rapidement avec Wave, Orange Money ou espèces. Reçus digitaux automatiques.', accent: '#D32F2F' },
+  { icon: FiUsers, title: 'Gestion d\'équipe', desc: 'Gérez les rôles et permissions de vos employés. Suivi des performances individuelles.', accent: '#FFD600' },
+  { icon: FiGlobe, title: 'Mobile & Cloud', desc: 'Accédez à votre boutique depuis n\'importe où. Synchronisation en temps réel sur tous vos appareils.', accent: '#D32F2F' },
 ];
 
-const formatNumber = (n) => {
-  if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M+';
-  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'K+';
-  return n.toString() + '+';
-};
-
-const formatCurrencyCompact = (n = 0) => {
-  if (n >= 1000000000) return (n / 1000000000).toFixed(1).replace('.0', '') + ' Md';
-  if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + ' M';
-  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + ' K';
-  return n.toString();
-};
-
 const steps = [
-  { num: '1', title: 'Créez votre compte', desc: 'Inscription gratuite en moins de 2 minutes. Aucune carte bancaire requise.', icon: <FiTarget />, color: '#1B5E20' },
-  { num: '2', title: 'Ajoutez vos produits', desc: 'Importez votre catalogue ou scannez vos produits un par un avec la caméra.', icon: <FiPackage />, color: '#FFD600' },
-  { num: '3', title: 'Commencez à vendre', desc: 'Encaissez vos clients et suivez vos ventes en temps réel depuis votre tableau de bord.', icon: <FiTrendingUp />, color: '#D32F2F' },
+  { num: '01', title: 'Créez votre compte', desc: 'Inscription gratuite en moins de 2 minutes. Aucune carte bancaire requise.', icon: FiTarget },
+  { num: '02', title: 'Ajoutez vos produits', desc: 'Importez votre catalogue ou scannez vos produits un par un avec la caméra.', icon: FiPackage },
+  { num: '03', title: 'Commencez à vendre', desc: 'Encaissez vos clients et suivez vos ventes en temps réel depuis votre tableau de bord.', icon: FiTrendingUp },
 ];
 
 const plans = [
@@ -44,34 +31,34 @@ const plans = [
     price: 'Gratuit',
     period: '',
     desc: 'Parfait pour démarrer votre activité',
-    features: ['50 produits maximum', 'Rapports de vente basiques', '1 utilisateur'],
-    cta: 'Commencer',
+    features: ['50 produits maximum', 'Rapports de vente basiques', '1 utilisateur', 'Accès mobile'],
+    cta: 'Commencer gratuitement',
     popular: false,
   },
   {
     name: 'Pro',
-    price: '9 900',
+    price: '5 000',
     period: 'FCFA / mois',
     desc: 'Pour les boutiques en croissance',
-    features: ['Produits illimités', 'Rapports avancés & analytics', '5 utilisateurs', 'Scanner de codes-barres'],
+    features: ['Produits illimités', 'Rapports avancés & analytics', '5 utilisateurs', 'Scanner de codes-barres', 'Support prioritaire'],
     cta: 'Choisir Pro',
     popular: true,
   },
   {
     name: 'Business',
-    price: '24 900',
+    price: '10 000',
     period: 'FCFA / mois',
     desc: 'Pour les grandes entreprises',
-    features: ['Tout dans Pro +', 'Utilisateurs illimités', 'Multi-boutiques', 'Support prioritaire 24/7'],
+    features: ['Tout dans Pro +', 'Utilisateurs illimités', 'Multi-boutiques', 'Support 24/7', 'API & intégrations'],
     cta: 'Contacter l\'équipe',
     popular: false,
   },
 ];
 
 const testimonials = [
-  { name: 'Amadou Diallo', role: 'Boutique Électronique, Dakar', text: 'TekkiPro a transformé ma boutique. Je sais exactement ce que j\'ai en stock et mes ventes ont augmenté de 30%.', avatar: 'AD', color: '#1B5E20' },
-  { name: 'Fatou Ndiaye', role: 'Superette Teranga, Thiès', text: 'Le scanner de codes-barres me fait gagner un temps fou. Je recommande à tous les commerçants du marché Sandaga.', avatar: 'FN', color: '#FFD600' },
-  { name: 'Moussa Konaté', role: 'Quincaillerie Bamako, Mali', text: 'Grâce aux rapports, j\'ai identifié mes produits les plus rentables. Mon chiffre d\'affaires a doublé en 6 mois.', avatar: 'MK', color: '#D32F2F' },
+  { name: 'Amadou Diallo', role: 'Boutique Électronique, Dakar', text: 'TekkiPro a transformé ma boutique. Je sais exactement ce que j\'ai en stock et mes ventes ont augmenté de 30%.', initials: 'AD' },
+  { name: 'Fatou Ndiaye', role: 'Superette Teranga, Thiès', text: 'Le scanner de codes-barres me fait gagner un temps fou. Je recommande à tous les commerçants du marché Sandaga.', initials: 'FN' },
+  { name: 'Moussa Konaté', role: 'Quincaillerie Bamako, Mali', text: 'Grâce aux rapports, j\'ai identifié mes produits les plus rentables. Mon chiffre d\'affaires a doublé en 6 mois.', initials: 'MK' },
 ];
 
 const showcaseScreens = [
@@ -82,12 +69,18 @@ const showcaseScreens = [
   { src: '/screen-parametres.png', label: 'Paramètres' },
 ];
 
-const KENTE_COLORS = ['#1B5E20', '#FFD600', '#D32F2F', '#1B5E20', '#FFD600', '#D32F2F'];
+const formatNumber = (n) => {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M+';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'K+';
+  return n > 0 ? n.toString() + '+' : '—';
+};
 
 function KenteStrip() {
   return (
-    <div className="flex h-1.5 w-full" aria-hidden="true">
-      {KENTE_COLORS.map((c, i) => <div key={i} style={{ background: c }} />)}
+    <div className="flex w-full h-1.5 overflow-hidden" aria-hidden="true">
+      {['#1B5E20','#FFD600','#D32F2F','#1B5E20','#FFD600','#D32F2F','#1B5E20','#FFD600','#D32F2F','#1B5E20','#FFD600','#D32F2F'].map((c, i) => (
+        <div key={i} className="flex-1" style={{ background: c }} />
+      ))}
     </div>
   );
 }
@@ -96,9 +89,7 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeScreen, setActiveScreen] = useState(2);
-  const [stats, setStats] = useState({
-    boutiques: 0, ventes: 0, produits: 0, utilisateurs: 0, chiffreAffaires: 0
-  });
+  const [stats, setStats] = useState({ boutiques: 0, ventes: 0, produits: 0, utilisateurs: 0 });
 
   useEffect(() => {
     axios.get(`${API_URL}/public-stats`)
@@ -107,7 +98,7 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -120,324 +111,422 @@ export default function Landing() {
   }, []);
 
   useEffect(() => {
-    if (!mobileMenu) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
+    if (!mobileMenu) return;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    return () => { document.body.style.overflow = prev; };
   }, [mobileMenu]);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setMobileMenu(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setMobileMenu(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    const onResize = () => { if (window.innerWidth > 768) setMobileMenu(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setMobileMenu(false); };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('resize', onResize); window.removeEventListener('keydown', onKey); };
   }, []);
 
   return (
-    <div className="relative overflow-x-clip bg-[#FFFAF0] text-[#1a1a1a] font-sans before:absolute before:rounded-full before:pointer-events-none before:blur-[36px] before:opacity-45 before:w-[320px] before:h-[320px] before:top-32 before:-right-[120px] before:bg-[rgba(211,47,47,0.1)] after:absolute after:rounded-full after:pointer-events-none after:blur-[36px] after:opacity-45 after:w-[260px] after:h-[260px] after:bottom-64 after:-left-[90px] after:bg-[rgba(27,94,32,0.08)]">
-      <a href="#landing-main" className="skip-link skip-link-light">Aller au contenu principal</a>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+        .lp-root { font-family: 'DM Sans', sans-serif; }
+        .lp-root h1, .lp-root h2, .lp-root h3, .lp-root .font-display { font-family: 'Sora', sans-serif; }
+        .lp-hero-bg {
+          background: #071C08;
+          background-image:
+            radial-gradient(ellipse 70% 50% at 80% 20%, rgba(27,94,32,0.35) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,214,0,0.06) 0%, transparent 55%);
+        }
+        .lp-grain::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          opacity: 0.5;
+          z-index: 0;
+        }
+        .gold-underline { text-decoration: underline; text-decoration-color: #FFD600; text-underline-offset: 6px; text-decoration-thickness: 3px; }
+        .lp-card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .lp-card-hover:hover { transform: translateY(-4px); }
+        .skip-link { position: absolute; left: -9999px; }
+        .skip-link:focus { left: 1rem; top: 1rem; z-index: 9999; background: #FFD600; color: #071C08; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; }
+      `}</style>
 
-      {/* ========== NAV ========== */}
-      <nav className={`fixed inset-x-0 top-0 z-[60] py-4 transition-all duration-300 ${scrolled ? 'py-2.5 bg-white/80 backdrop-blur-md border-b border-slate-400/10' : ''}`} aria-label="Navigation principale TekkiPro">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto flex items-center justify-between gap-8 min-h-[72px] relative z-10">
-          <Link to="/" className="inline-flex items-center gap-3 text-[1.02rem] font-bold text-[#1a1a1a] relative z-20">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#D32F2F] to-[#FFD600] text-white font-extrabold shadow-[0_14px_28px_rgba(27,94,32,0.2)]">T</div>
-            <span>TekkiPro</span>
-          </Link>
-          <div className={`flex items-center gap-6 max-md:fixed max-md:inset-x-0 max-md:top-[72px] max-md:flex-col max-md:bg-white max-md:p-6 max-md:shadow-lg max-md:transition-all max-md:duration-300 ${mobileMenu ? 'max-md:opacity-100 max-md:translate-y-0' : 'max-md:opacity-0 max-md:-translate-y-4 max-md:pointer-events-none'}`} id="landing-nav-links">
-            <a href="#features" onClick={() => setMobileMenu(false)}>Fonctionnalités</a>
-            <a href="#pricing" onClick={() => setMobileMenu(false)}>Tarifs</a>
-            <a href="#testimonials" onClick={() => setMobileMenu(false)}>Témoignages</a>
-            <a href="mailto:ibrahimadiallo0899@gmail.com" onClick={() => setMobileMenu(false)}>Contact</a>
-            <div className="flex items-center gap-3 ml-2 flex-wrap">
-              <Link to="/login" className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[0.9rem] font-semibold bg-transparent border border-[#1a1a2e]/10 text-[#1a1a1a] transition-all hover:-translate-y-0.5" onClick={() => setMobileMenu(false)}>Se connecter</Link>
-              <Link to="/register" className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full text-[0.9rem] font-semibold bg-gradient-to-br from-[#D32F2F] to-[#F4A020] text-white shadow-[0_16px_28px_rgba(211,47,47,0.2)] transition-all hover:-translate-y-0.5" onClick={() => setMobileMenu(false)}>Essai gratuit <FiArrowRight size={15} /></Link>
+      <div className="lp-root relative overflow-x-clip">
+        <a href="#landing-main" className="skip-link">Aller au contenu principal</a>
+
+        {/* ══════════════════════ NAV ══════════════════════ */}
+        <nav
+          className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+            scrolled
+              ? 'bg-[#071C08]/95 backdrop-blur-md border-b border-white/10 py-3'
+              : 'bg-transparent py-5'
+          }`}
+          aria-label="Navigation principale TekkiPro"
+        >
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto flex items-center justify-between gap-6">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5 shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-[#FFD600] flex items-center justify-center">
+                <span className="font-display text-[#071C08] font-extrabold text-lg leading-none">T</span>
+              </div>
+              <span className="font-display text-white font-bold text-lg tracking-tight">TekkiPro</span>
+            </Link>
+
+            {/* Desktop links */}
+            <div className="hidden md:flex items-center gap-7 text-[0.9rem] font-medium text-white/75">
+              <a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a>
+              <a href="#pricing" className="hover:text-white transition-colors">Tarifs</a>
+              <a href="#testimonials" className="hover:text-white transition-colors">Témoignages</a>
+              <a href="mailto:ibrahimadiallo0899@gmail.com" className="hover:text-white transition-colors">Contact</a>
+            </div>
+
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link to="/login" className="text-[0.88rem] font-semibold text-white/80 hover:text-white transition-colors px-4 py-2">
+                Se connecter
+              </Link>
+              <Link to="/register" className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#FFD600] text-[#071C08] text-[0.88rem] font-bold hover:bg-[#FFC800] transition-colors shadow-[0_4px_20px_rgba(255,214,0,0.3)]">
+                Essai gratuit
+                <FiArrowRight size={14} />
+              </Link>
+            </div>
+
+            {/* Mobile toggle */}
+            <button
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg border border-white/20 text-white"
+              onClick={() => setMobileMenu(!mobileMenu)}
+              aria-label={mobileMenu ? 'Fermer le menu' : 'Ouvrir le menu'}
+            >
+              {mobileMenu ? <FiX size={20} /> : <FiMenu size={20} />}
+            </button>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`md:hidden absolute inset-x-0 top-full bg-[#071C08] border-t border-white/10 transition-all duration-300 overflow-hidden ${mobileMenu ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="flex flex-col gap-1 p-4 text-[0.95rem] font-medium text-white/80">
+              <a href="#features" onClick={() => setMobileMenu(false)} className="px-4 py-3 rounded-lg hover:bg-white/5">Fonctionnalités</a>
+              <a href="#pricing" onClick={() => setMobileMenu(false)} className="px-4 py-3 rounded-lg hover:bg-white/5">Tarifs</a>
+              <a href="#testimonials" onClick={() => setMobileMenu(false)} className="px-4 py-3 rounded-lg hover:bg-white/5">Témoignages</a>
+              <a href="mailto:ibrahimadiallo0899@gmail.com" onClick={() => setMobileMenu(false)} className="px-4 py-3 rounded-lg hover:bg-white/5">Contact</a>
+              <div className="border-t border-white/10 mt-2 pt-3 flex flex-col gap-2">
+                <Link to="/login" onClick={() => setMobileMenu(false)} className="px-4 py-3 rounded-lg text-center text-white/70 hover:bg-white/5">Se connecter</Link>
+                <Link to="/register" onClick={() => setMobileMenu(false)} className="px-4 py-3.5 rounded-full text-center bg-[#FFD600] text-[#071C08] font-bold">Essai gratuit</Link>
+              </div>
             </div>
           </div>
-          <button className="md:hidden w-11 h-11 rounded-xl flex items-center justify-center border border-slate-400/20 bg-white/90 backdrop-blur-md shadow-sm text-[#1a1a1a] transition-all hover:bg-white hover:border-[#D32F2F]/20 cursor-pointer" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? 'Fermer la navigation' : 'Ouvrir la navigation'} aria-expanded={mobileMenu} aria-controls="landing-nav-links">
-            {mobileMenu ? <FiX size={22} /> : <FiMenu size={22} />}
-          </button>
-        </div>
-      </nav>
+        </nav>
 
-      {/* ========== HERO ========== */}
-      <main id="landing-main">
-      <section className="relative overflow-hidden pt-36 pb-20 bg-white">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
-          <div className="hero-content">
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.82rem] font-bold mb-5">
-              <FiZap size={13} />
-              <span>#1 en Afrique du Cloud</span>
+        {/* ══════════════════════ HERO ══════════════════════ */}
+        <main id="landing-main">
+        <section className="lp-hero-bg lp-grain relative overflow-hidden pt-40 pb-24">
+          <div className="relative z-10 w-[min(1180px,calc(100%-2rem))] mx-auto">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 mb-7 px-4 py-2 rounded-full border border-[#FFD600]/30 bg-[#FFD600]/10 text-[#FFD600] text-xs font-semibold tracking-wide uppercase">
+              <FiZap size={12} />
+              Solution #1 pour commerçants d'Afrique de l'Ouest
             </div>
-            <h1 className="text-[clamp(2.8rem,5vw,4.8rem)] leading-[1.02] tracking-tight max-w-[11ch] mb-4 font-extrabold">
-              Gérez votre boutique comme un <span className="bg-clip-text text-transparent bg-gradient-to-br from-[#FFD600] to-[#D32F2F]">pro.</span>
+
+            {/* Headline */}
+            <h1 className="font-display text-[clamp(3rem,6.5vw,5.5rem)] leading-[1.0] font-extrabold text-white max-w-[14ch] tracking-tight mb-6">
+              Gérez votre{' '}
+              <span className="gold-underline text-[#FFD600]">boutique</span>{' '}
+              comme un pro.
             </h1>
-            <p className="max-w-[58ch] text-[#5e5b56] text-[1.08rem] leading-[1.75]">
-              TekkiPro est la solution SaaS tout-en-un pour les commerçants d'Afrique de l'Ouest.
-              Inventaire, ventes, rapports — tout est là.
+
+            <p className="text-white/65 text-[1.1rem] leading-[1.8] max-w-[52ch] mb-10 font-light">
+              TekkiPro réunit inventaire, caisse, rapports et gestion d'équipe dans une seule app pensée pour le commerce africain.
             </p>
-            <div className="flex flex-wrap gap-4 my-7">
-              <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold bg-gradient-to-br from-[#D32F2F] to-[#F4A020] text-white shadow-[0_14px_28px_rgba(211,47,47,0.22)] transition-all hover:-translate-y-0.5">
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4 mb-16">
+              <Link to="/register" className="flex items-center gap-2 px-7 py-4 rounded-full bg-[#FFD600] text-[#071C08] font-bold text-[0.95rem] hover:bg-[#FFC800] shadow-[0_8px_32px_rgba(255,214,0,0.35)] transition-all hover:-translate-y-0.5">
                 Commencer gratuitement
-                <FiArrowRight size={18} />
+                <FiArrowRight size={16} />
               </Link>
-              <a href="#screenshots" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold bg-transparent border border-[#1a1a2e]/20 text-[#1a1a1a] transition-all hover:-translate-y-0.5">
-                <FiPlay size={16} />
+              <a href="#screenshots" className="flex items-center gap-2 px-7 py-4 rounded-full border border-white/25 text-white/85 font-semibold text-[0.95rem] hover:bg-white/5 transition-all hover:-translate-y-0.5">
+                <FiPlay size={15} />
                 Voir la démo
               </a>
             </div>
-            <div className="flex items-center gap-6 mt-8 pt-7 border-t border-[#1a1a2e]/10 flex-wrap">
-              <div className="flex flex-col [&>strong]:text-[1.5rem] [&>strong]:font-extrabold [&>strong]:tracking-tight [&>strong]:text-[#1a1a1a] [&>span]:text-[0.82rem] [&>span]:text-[#5e5b56] [&>span]:mt-0.5">
-                <strong>{formatNumber(stats.boutiques)}</strong>
-                <span>Boutiques en Afrique</span>
-              </div>
-              <div className="w-px h-9 bg-[#1a1a2e]/10 shrink-0 hidden sm:block" />
-              <div className="flex flex-col [&>strong]:text-[1.5rem] [&>strong]:font-extrabold [&>strong]:tracking-tight [&>strong]:text-[#1a1a1a] [&>span]:text-[0.82rem] [&>span]:text-[#5e5b56] [&>span]:mt-0.5">
-                <strong>12</strong>
-                <span>Pays en Afrique</span>
-              </div>
-              <div className="w-px h-9 bg-[#1a1a2e]/10 shrink-0 hidden sm:block" />
-              <div className="flex flex-col [&>strong]:text-[1.5rem] [&>strong]:font-extrabold [&>strong]:tracking-tight [&>strong]:text-[#1a1a1a] [&>span]:text-[0.82rem] [&>span]:text-[#5e5b56] [&>span]:mt-0.5">
-                <strong>2M+</strong>
-                <span>Transactions traitées</span>
-              </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-x-10 gap-y-5 pt-8 border-t border-white/10">
+              {[
+                { value: formatNumber(stats.boutiques), label: 'Boutiques actives' },
+                { value: '12+', label: 'Pays en Afrique' },
+                { value: '2M+', label: 'Transactions' },
+                { value: '99.9%', label: 'Disponibilité' },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div className="font-display text-[1.9rem] font-extrabold text-[#FFD600] leading-none">{s.value}</div>
+                  <div className="text-white/50 text-[0.82rem] mt-1">{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="hero-visual">
-            <div className="rounded-3xl overflow-hidden border border-white/60 shadow-[0_28px_90px_rgba(27,94,32,0.16),0_0_0_1px_rgba(211,47,47,0.06)] bg-white/85 backdrop-blur-md">
-              <img src="/dashboard-preview.png" alt="TekkiPro Web Dashboard" />
+
+          {/* Geometric accent — kente-inspired diagonal bars */}
+          <div className="absolute right-0 top-0 h-full w-1/3 opacity-[0.04] pointer-events-none overflow-hidden" aria-hidden="true">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="absolute top-0 h-full w-8" style={{ left: `${i * 30}px`, background: i % 3 === 0 ? '#FFD600' : i % 3 === 1 ? '#1B5E20' : '#D32F2F', transform: 'skewX(-15deg)', transformOrigin: 'top' }} />
+            ))}
+          </div>
+        </section>
+
+        <KenteStrip />
+
+        {/* ══════════════════════ FEATURES ══════════════════════ */}
+        <section className="bg-[#FFFAF0] py-24" id="features">
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
+            <div className="text-center mb-14">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-[#1B5E20]/10 text-[#1B5E20] text-xs font-bold tracking-widest uppercase mb-4">Fonctionnalités</span>
+              <h2 className="font-display text-[clamp(1.9rem,3vw,2.8rem)] font-extrabold text-[#071C08] tracking-tight mb-3">
+                Tout ce dont votre boutique a besoin
+              </h2>
+              <p className="text-[#5e5b56] text-[1.05rem] max-w-[46ch] mx-auto leading-relaxed">
+                Une plateforme complète pensée pour les réalités du commerce africain.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {features.map((f, i) => {
+                const Icon = f.icon;
+                return (
+                  <div key={i} className="lp-card-hover bg-white rounded-2xl p-6 border border-[#1B5E20]/8 shadow-[0_2px_16px_rgba(7,28,8,0.05)]">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: `${f.accent}15` }}>
+                      <Icon size={22} style={{ color: f.accent === '#FFD600' ? '#B8950A' : f.accent }} />
+                    </div>
+                    <h3 className="font-display font-bold text-[#071C08] text-[1.08rem] mb-2">{f.title}</h3>
+                    <p className="text-[#6b6762] text-[0.93rem] leading-relaxed">{f.desc}</p>
+                    <div className="mt-4 h-0.5 w-10 rounded-full" style={{ background: f.accent === '#FFD600' ? '#FFD600' : f.accent }} />
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <KenteStrip />
+        {/* ══════════════════════ HOW IT WORKS ══════════════════════ */}
+        <section className="bg-[#071C08] py-24">
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
+            <div className="text-center mb-14">
+              <span className="inline-block px-4 py-1.5 rounded-full border border-[#FFD600]/30 bg-[#FFD600]/10 text-[#FFD600] text-xs font-bold tracking-widest uppercase mb-4">Comment ça marche</span>
+              <h2 className="font-display text-[clamp(1.9rem,3vw,2.8rem)] font-extrabold text-white tracking-tight mb-3">
+                Démarrez en 3 étapes simples
+              </h2>
+              <p className="text-white/55 text-[1.05rem] max-w-[44ch] mx-auto leading-relaxed">
+                Aucune formation requise. Aucune installation. Commencez immédiatement.
+              </p>
+            </div>
 
-      {/* ========== FEATURES ========== */}
-      <section className="relative py-20" id="features">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="max-w-[740px] mx-auto text-center mb-11">
-            <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.75rem] font-bold tracking-widest uppercase mb-4">Fonctionnalités</span>
-            <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Tout ce dont votre boutique a besoin</h2>
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Une plateforme complète pensée pour les réalités du commerce africain.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {steps.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <div key={i} className="relative p-7 rounded-2xl border border-white/8 bg-white/4 backdrop-blur-sm hover:bg-white/7 transition-colors">
+                    <div className="font-display text-[3.5rem] font-extrabold text-[#FFD600]/15 leading-none mb-4 select-none">{s.num}</div>
+                    <div className="w-11 h-11 rounded-xl bg-[#1B5E20]/40 flex items-center justify-center mb-4">
+                      <Icon size={20} className="text-[#FFD600]" />
+                    </div>
+                    <h3 className="font-display font-bold text-white text-[1.05rem] mb-2">{s.title}</h3>
+                    <p className="text-white/55 text-[0.92rem] leading-relaxed">{s.desc}</p>
+                    {i < steps.length - 1 && (
+                      <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-px bg-[#FFD600]/30" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <div className="relative overflow-hidden p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white/55 shadow-[0_10px_30px_rgba(27,94,32,0.06)] transition-all hover:-translate-y-1.5 hover:border-[#D32F2F]/20 hover:shadow-[0_18px_50px_rgba(27,94,32,0.1)] hover:bg-white/90 cursor-pointer" key={i}>
-                <div className="w-14 h-14 rounded-[18px] flex items-center justify-center text-xl mb-4" style={{ background: `${f.color}12`, color: f.color }}>
-                  {f.icon}
+        </section>
+
+        {/* ══════════════════════ PRICING ══════════════════════ */}
+        <section className="bg-[#071C08] py-24" id="pricing">
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
+            <div className="text-center mb-14">
+              <span className="inline-block px-4 py-1.5 rounded-full border border-[#FFD600]/30 bg-[#FFD600]/10 text-[#FFD600] text-xs font-bold tracking-widest uppercase mb-4">Tarifs</span>
+              <h2 className="font-display text-[clamp(1.9rem,3vw,2.8rem)] font-extrabold text-white tracking-tight mb-3">
+                Un prix simple, sans surprise
+              </h2>
+              <p className="text-white/55 text-[1.05rem] max-w-[44ch] mx-auto leading-relaxed">
+                Commencez gratuitement. Évoluez quand votre business grandit.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+              {plans.map((p, i) => (
+                <div
+                  key={i}
+                  className={`relative rounded-2xl p-7 transition-all duration-300 ${
+                    p.popular
+                      ? 'bg-[#FFFAF0] shadow-[0_20px_60px_rgba(255,214,0,0.15)] md:-translate-y-3'
+                      : 'bg-white/5 border border-white/10 hover:bg-white/8'
+                  }`}
+                >
+                  {p.popular && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-[#FFD600] text-[#071C08] text-xs font-extrabold uppercase tracking-wide whitespace-nowrap">
+                      Le plus populaire
+                    </div>
+                  )}
+
+                  <h3 className={`font-display font-extrabold text-[1.05rem] mb-1.5 ${p.popular ? 'text-[#071C08]' : 'text-white'}`}>{p.name}</h3>
+                  <p className={`text-[0.88rem] mb-6 ${p.popular ? 'text-[#5e5b56]' : 'text-white/45'}`}>{p.desc}</p>
+
+                  <div className="flex items-baseline gap-1.5 mb-6">
+                    <span className={`font-display text-[2.5rem] font-extrabold leading-none tracking-tight ${p.popular ? 'text-[#071C08]' : 'text-white'}`}>{p.price}</span>
+                    {p.period && <span className={`text-[0.85rem] ${p.popular ? 'text-[#5e5b56]' : 'text-white/40'}`}>{p.period}</span>}
+                  </div>
+
+                  <ul className="space-y-3 mb-8">
+                    {p.features.map((f, j) => (
+                      <li key={j} className={`flex items-start gap-2.5 text-[0.9rem] ${p.popular ? 'text-[#2d2a27]' : 'text-white/65'}`}>
+                        <FiCheck size={15} className={`mt-0.5 shrink-0 ${p.popular ? 'text-[#1B5E20]' : 'text-[#FFD600]'}`} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    to="/register"
+                    className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-full font-bold text-[0.9rem] transition-all hover:-translate-y-0.5 ${
+                      p.popular
+                        ? 'bg-[#071C08] text-[#FFD600] hover:bg-[#0D2B0F]'
+                        : 'border border-white/20 text-white hover:bg-white/8'
+                    }`}
+                  >
+                    {p.cta}
+                  </Link>
                 </div>
-                <h3 className="text-[1.15rem] mb-2 tracking-tight font-extrabold">{f.title}</h3>
-                <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">{f.desc}</p>
-                <div className="w-12 h-1 rounded-full mt-4" style={{ background: f.color }} />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ========== SHOWCASE ========== */}
-      <section className="relative py-20" id="screenshots">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="max-w-[740px] mx-auto text-center mb-11">
-            <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.75rem] font-bold tracking-widest uppercase mb-4">Aperçu de l'application</span>
-            <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Une interface pensée pour vous</h2>
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Découvrez les écrans clés de TekkiPro, conçus pour les commerçants d'Afrique de l'Ouest.</p>
-          </div>
-          <div className="flex gap-4 items-end justify-center flex-wrap">
-            {showcaseScreens.map((screen, i) => (
-              <button
-                key={i}
-                type="button"
-                className={`flex-1 min-w-0 max-w-[220px] flex flex-col items-center gap-3 p-0 bg-transparent border-none cursor-pointer transition-all duration-300 [&.active>div]:border-[#D32F2F] [&.active>div]:shadow-[0_16px_40px_rgba(232,98,58,0.2)] [&.active>div]:-translate-y-2 [&.active>span]:text-[#D32F2F] [&.active>span]:font-bold ${activeScreen === i ? 'active' : ''}`}
-                onClick={() => setActiveScreen(i)}
-                aria-pressed={activeScreen === i}
-                aria-label={`Afficher ${screen.label}`}
-              >
-                <div className="w-full rounded-2xl overflow-hidden border-2 border-[#1a1a2e]/10 shadow-[0_10px_30px_rgba(27,94,32,0.06)] transition-all duration-300 bg-white">
-                  <img src={screen.src} alt={screen.label} />
-                </div>
-                <span className="text-[0.82rem] font-semibold text-[#5e5b56] transition-colors duration-300">{screen.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+        <KenteStrip />
 
-      <KenteStrip />
+        {/* ══════════════════════ TESTIMONIALS ══════════════════════ */}
+        <section className="bg-[#FFFAF0] py-24" id="testimonials">
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
+            <div className="text-center mb-14">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-[#1B5E20]/10 text-[#1B5E20] text-xs font-bold tracking-widest uppercase mb-4">Témoignages</span>
+              <h2 className="font-display text-[clamp(1.9rem,3vw,2.8rem)] font-extrabold text-[#071C08] tracking-tight mb-3">
+                Ce que disent nos commerçants
+              </h2>
+              <p className="text-[#5e5b56] text-[1.05rem] max-w-[44ch] mx-auto leading-relaxed">
+                Des commerçants de toute l'Afrique de l'Ouest font confiance à TekkiPro chaque jour.
+              </p>
+            </div>
 
-      {/* ========== HOW IT WORKS ========== */}
-      <section className="relative py-20">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="max-w-[740px] mx-auto text-center mb-11">
-            <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.75rem] font-bold tracking-widest uppercase mb-4">Comment ça marche</span>
-            <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Démarrez en 3 étapes simples</h2>
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Aucune formation requise. Aucune installation. Commencez immédiatement.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {steps.map((s, i) => (
-              <div className="relative p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white/55 shadow-[0_10px_30px_rgba(27,94,32,0.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(27,94,32,0.1)]" key={i}>
-                <div className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#D32F2F]/10 text-[#D32F2F] text-[0.9rem] font-extrabold mb-4" style={{ background: s.color, color: '#fff' }}>{s.num}</div>
-                <div className="w-14 h-14 rounded-[18px] flex items-center justify-center bg-gradient-to-br from-[#D32F2F]/10 to-[#FFD600]/10 text-[#D32F2F] text-2xl mb-4" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
-                <h3 className="text-[1.15rem] mb-2 tracking-tight font-extrabold">{s.title}</h3>
-                <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">{s.desc}</p>
-                {i < steps.length - 1 && (
-                  <div className="mt-4 w-16 h-1 rounded-full bg-gradient-to-r from-[#D32F2F]/35 to-[#FFD600]/10" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== PRICING ========== */}
-      <section className="relative py-20" id="pricing">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="max-w-[740px] mx-auto text-center mb-11">
-            <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.75rem] font-bold tracking-widest uppercase mb-4">Tarifs</span>
-            <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Un prix simple, sans surprise</h2>
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Commencez gratuitement. Évoluez quand votre business grandit.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {plans.map((p, i) => (
-              <div className={`relative p-7 rounded-[26px] bg-white/70 backdrop-blur-md border border-white/55 shadow-[0_10px_30px_rgba(27,94,32,0.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(27,94,32,0.1)] cursor-pointer ${p.popular ? 'bg-[#1A1A2E] border-transparent shadow-[0_28px_90px_rgba(27,94,32,0.16)] -translate-y-2.5 text-white [&>div>h3]:text-white [&>div>.price-amount]:text-white [&>div>.pricing-desc]:text-slate-300 [&>div>.price-period]:text-slate-300 [&>ul>li]:text-slate-300 [&>ul>li>.check-icon]:text-[#4ade80]' : ''}`} key={i}>
-                {p.popular && <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#F4A020] text-white text-[0.74rem] font-bold uppercase tracking-widest">Recommandé</div>}
-                <div className="pricing-header">
-                  <h3 className="text-[1.15rem] mb-2 tracking-tight font-extrabold">{p.name}</h3>
-                  <p className="text-[#5e5b56] min-h-[46px] text-sm">{p.desc}</p>
-                </div>
-                <div className="flex items-baseline gap-1.5 my-5">
-                  <span className="text-[2.6rem] leading-none font-extrabold tracking-tight">{p.price}</span>
-                  <span className="text-[#5e5b56] text-[0.95rem]">{p.period}</span>
-                </div>
-                <ul className="grid gap-3 mb-6">
-                  {p.features.map((f, j) => (
-                    <li key={j}><FiCheck className="text-[#1B5E20] mt-1 shrink-0" /> {f}</li>
-                  ))}
-                </ul>
-                <Link to="/register" className={`inline-flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-full font-bold transition-all hover:-translate-y-0.5 ${p.popular ? 'bg-gradient-to-br from-[#D32F2F] to-[#F4A020] text-white shadow-[0_18px_30px_rgba(211,47,47,0.22)]' : 'bg-slate-50/5 border border-slate-400/20 text-[#1a1a1a]'}`}>
-                  {p.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== TESTIMONIALS ========== */}
-      <section className="relative py-20" id="testimonials">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="max-w-[740px] mx-auto text-center mb-11">
-            <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full bg-[#D32F2F]/10 border border-[#D32F2F]/10 text-[#D32F2F] text-[0.75rem] font-bold tracking-widest uppercase mb-4">Témoignages</span>
-            <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Ce que disent nos commerçants</h2>
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Découvrez ce que disent les commerçants qui utilisent TekkiPro au quotidien.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map((t, i) => (
-              <div className="relative p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white/55 shadow-[0_10px_30px_rgba(27,94,32,0.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(27,94,32,0.1)]" key={i}>
-                <div className="testimonial-stars" style={{ color: '#F4A020', marginBottom: '0.75rem' }}>
-                  {[...Array(5)].map((_, j) => <FiStar key={j} />)}
-                </div>
-                <p className="text-[#5e5b56] leading-[1.8] mt-1.5 min-h-[128px]">"{t.text}"</p>
-                <div className="flex items-center gap-4 mt-5">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#D32F2F] to-[#FFD600] text-white font-bold" style={{ background: t.color }}>{t.avatar}</div>
-                  <div>
-                    <div className="font-bold tracking-tight">{t.name}</div>
-                    <div className="text-[#5e5b56] text-[0.86rem]">{t.role}</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {testimonials.map((t, i) => (
+                <div key={i} className="lp-card-hover bg-white rounded-2xl p-6 border border-[#1B5E20]/8 shadow-[0_2px_16px_rgba(7,28,8,0.05)]">
+                  <div className="flex gap-0.5 mb-5">
+                    {[...Array(5)].map((_, j) => (
+                      <FiStar key={j} size={14} className="fill-[#FFD600] text-[#FFD600]" />
+                    ))}
+                  </div>
+                  <p className="text-[#4a4845] text-[0.93rem] leading-[1.8] min-h-[100px]">"{t.text}"</p>
+                  <div className="flex items-center gap-3 mt-5 pt-5 border-t border-[#1B5E20]/8">
+                    <div className="w-10 h-10 rounded-xl bg-[#071C08] flex items-center justify-center text-[#FFD600] font-bold text-sm font-display">
+                      {t.initials}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-[#071C08] text-[0.9rem]">{t.name}</div>
+                      <div className="text-[#8a8480] text-[0.8rem]">{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ========== CTA ========== */}
-      <section className="relative py-20">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto text-center">
-          <h2 className="text-[clamp(2rem,3vw,3rem)] leading-[1.1] tracking-tight mb-3 font-extrabold">Prêt à transformer votre commerce ?</h2>
-          <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">Rejoignez plus de 5 000 commerçants qui font confiance à TekkiPro.<br />Essai gratuit de 14 jours, sans engagement.</p>
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-            <Link to="/register" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold bg-gradient-to-br from-[#D32F2F] to-[#F4A020] text-white shadow-[0_14px_28px_rgba(211,47,47,0.22)] transition-all hover:-translate-y-0.5">
-              <FiZap size={16} />
-              Démarrer maintenant
-            </Link>
-            <a href="mailto:ibrahimadiallo0899@gmail.com" className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold bg-transparent border border-[#1a1a2e]/20 text-[#1a1a1a] transition-all hover:-translate-y-0.5">
-              Parler à un conseiller
-            </a>
+        {/* ══════════════════════ CTA ══════════════════════ */}
+        <section className="lp-hero-bg lp-grain relative overflow-hidden py-28">
+          <div className="relative z-10 w-[min(1180px,calc(100%-2rem))] mx-auto text-center">
+            <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-[#FFD600]/30 bg-[#FFD600]/10 text-[#FFD600] text-xs font-semibold tracking-wide uppercase">
+              <FiShield size={12} />
+              Essai gratuit 14 jours · Sans engagement
+            </div>
+            <h2 className="font-display text-[clamp(2rem,4vw,3.8rem)] font-extrabold text-white tracking-tight mb-4 max-w-[16ch] mx-auto leading-[1.05]">
+              Prêt à transformer votre commerce ?
+            </h2>
+            <p className="text-white/55 text-[1.05rem] max-w-[44ch] mx-auto mb-10 leading-relaxed">
+              Rejoignez des milliers de commerçants africains qui font confiance à TekkiPro.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link to="/register" className="flex items-center gap-2 px-8 py-4 rounded-full bg-[#FFD600] text-[#071C08] font-bold text-[0.95rem] hover:bg-[#FFC800] shadow-[0_8px_32px_rgba(255,214,0,0.35)] transition-all hover:-translate-y-0.5">
+                <FiZap size={16} />
+                Démarrer maintenant
+              </Link>
+              <a href="mailto:ibrahimadiallo0899@gmail.com" className="flex items-center gap-2 px-8 py-4 rounded-full border border-white/25 text-white/85 font-semibold text-[0.95rem] hover:bg-white/5 transition-all hover:-translate-y-0.5">
+                <FiMail size={15} />
+                Parler à un conseiller
+              </a>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ========== FOOTER ========== */}
-      <footer className="bg-[#FFFAF0] pt-16 pb-8 border-t border-slate-400/10">
-        <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr] gap-12 mb-12">
-            <div className="flex flex-col gap-4">
-              <div className="inline-flex items-center gap-3 text-[1.02rem] font-bold text-[#1a1a1a] relative z-20">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#D32F2F] to-[#FFD600] text-white font-extrabold shadow-[0_14px_28px_rgba(27,94,32,0.15)]">T</div>
-                <span>TekkiPro</span>
+        {/* ══════════════════════ FOOTER ══════════════════════ */}
+        <footer className="bg-[#030F04] border-t border-white/6 pt-16 pb-8">
+          <div className="w-[min(1180px,calc(100%-2rem))] mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_2fr] gap-12 mb-12">
+              {/* Brand */}
+              <div className="flex flex-col gap-5">
+                <Link to="/" className="flex items-center gap-2.5 w-fit">
+                  <div className="w-9 h-9 rounded-lg bg-[#FFD600] flex items-center justify-center">
+                    <span className="font-display text-[#071C08] font-extrabold text-lg leading-none">T</span>
+                  </div>
+                  <span className="font-display text-white font-bold text-lg tracking-tight">TekkiPro</span>
+                </Link>
+                <p className="text-white/40 text-[0.9rem] leading-relaxed max-w-[28ch]">
+                  La solution de gestion #1 pour les commerçants africains. Simple, rapide, efficace.
+                </p>
+                <div className="flex gap-3 mt-1">
+                  <a href="#" aria-label="Globe" className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/6 text-white/50 hover:bg-[#FFD600] hover:text-[#071C08] transition-colors"><FiGlobe size={16} /></a>
+                  <a href="mailto:ibrahimadiallo0899@gmail.com" aria-label="Mail" className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/6 text-white/50 hover:bg-[#FFD600] hover:text-[#071C08] transition-colors"><FiMail size={16} /></a>
+                  <a href="tel:+221768815972" aria-label="Phone" className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/6 text-white/50 hover:bg-[#FFD600] hover:text-[#071C08] transition-colors"><FiPhone size={16} /></a>
+                </div>
               </div>
-              <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">La solution de gestion #1 pour les commerçants africains. Simple, rapide, efficace.</p>
-              <div className="flex items-center gap-4 mt-2">
-                <a href="#" aria-label="Globe" className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-[#D32F2F] hover:text-white transition-colors"><FiGlobe size={18} /></a>
-                <a href="mailto:ibrahimadiallo0899@gmail.com" aria-label="Mail" className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-[#D32F2F] hover:text-white transition-colors"><FiMail size={18} /></a>
-                <a href="tel:+221768815972" aria-label="Phone" className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-[#D32F2F] hover:text-white transition-colors"><FiPhone size={18} /></a>
+
+              {/* Links */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                <div className="flex flex-col gap-3">
+                  <h4 className="font-semibold text-white text-[0.88rem] mb-1">Produit</h4>
+                  {['Fonctionnalités', 'Tarifs', 'Intégrations', 'Mises à jour'].map((l, i) => (
+                    <a key={i} href={i === 0 ? '#features' : i === 1 ? '#pricing' : '#'} className="text-white/40 text-[0.88rem] hover:text-white/80 transition-colors">{l}</a>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                  <h4 className="font-semibold text-white text-[0.88rem] mb-1">Entreprise</h4>
+                  {['À propos', 'Blog', 'Carrières'].map((l, i) => (
+                    <a key={i} href="#" className="text-white/40 text-[0.88rem] hover:text-white/80 transition-colors">{l}</a>
+                  ))}
+                  <a href="mailto:ibrahimadiallo0899@gmail.com" className="text-white/40 text-[0.88rem] hover:text-white/80 transition-colors">Contact</a>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <h4 className="font-semibold text-white text-[0.88rem] mb-1">Support</h4>
+                  {['Centre d\'aide', 'Documentation', 'Communauté'].map((l, i) => (
+                    <a key={i} href="#" className="text-white/40 text-[0.88rem] hover:text-white/80 transition-colors">{l}</a>
+                  ))}
+                  <a href="tel:+221768815972" className="text-white/40 text-[0.88rem] hover:text-white/80 transition-colors">+221 76 881 59 72</a>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              <div className="flex flex-col gap-3 [&>h4]:font-bold [&>h4]:mb-2 [&>a]:text-[#5e5b56] [&>a]:text-[0.95rem] [&>a]:font-medium hover:[&>a]:text-[#D32F2F] [&>a]:transition-colors">
-                <h4>Produit</h4>
-                <a href="#features">Fonctionnalités</a>
-                <a href="#pricing">Tarifs</a>
-                <a href="#">Intégrations</a>
-                <a href="#">Mises à jour</a>
-              </div>
-              <div className="flex flex-col gap-3 [&>h4]:font-bold [&>h4]:mb-2 [&>a]:text-[#5e5b56] [&>a]:text-[0.95rem] [&>a]:font-medium hover:[&>a]:text-[#D32F2F] [&>a]:transition-colors">
-                <h4>Entreprise</h4>
-                <a href="#">À propos</a>
-                <a href="#">Blog</a>
-                <a href="#">Carrières</a>
-                <a href="mailto:ibrahimadiallo0899@gmail.com">Contact</a>
-              </div>
-              <div className="flex flex-col gap-3 [&>h4]:font-bold [&>h4]:mb-2 [&>a]:text-[#5e5b56] [&>a]:text-[0.95rem] [&>a]:font-medium hover:[&>a]:text-[#D32F2F] [&>a]:transition-colors">
-                <h4>Support</h4>
-                <a href="#">Centre d'aide</a>
-                <a href="#">Documentation</a>
-                <a href="#">Communauté</a>
-                <a href="tel:+221768815972">+221 76 881 59 72</a>
+
+            <div className="pt-8 border-t border-white/6 flex flex-col md:flex-row items-center justify-between gap-3 text-[0.85rem] text-white/30">
+              <p>© {new Date().getFullYear()} TekkiPro. Tous droits réservés.</p>
+              <div className="flex gap-5">
+                <a href="#" className="hover:text-white/60 transition-colors">Conditions</a>
+                <a href="#" className="hover:text-white/60 transition-colors">Confidentialité</a>
               </div>
             </div>
           </div>
-          <div className="pt-8 border-t border-slate-400/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[0.9rem] text-[#5e5b56]">
-            <p className="text-[1.05rem] text-slate-600 leading-[1.7] max-w-[48rem] mx-auto">© {new Date().getFullYear()} TekkiPro. Tous droits réservés.</p>
-            <div className="flex gap-6 hover:[&>a]:text-[#D32F2F] [&>a]:font-medium">
-              <a href="#">Conditions</a>
-              <a href="#">Confidentialité</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-      </main>
-    </div>
+        </footer>
+        </main>
+      </div>
+    </>
   );
 }
