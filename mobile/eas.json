@@ -7,8 +7,8 @@
       "android": {
         "buildType": "apk",
         "env": {
-          "EXPO_PUBLIC_API_URL": "http://89.167.86.231/api",
-          "EXPO_PUBLIC_ALLOW_CLEARTEXT": "true"
+          "EXPO_PUBLIC_API_URL": "https://tekkipro.com/api",
+          "EXPO_PUBLIC_ALLOW_CLEARTEXT": "false"
         }
       }
     }
