@@ -49,11 +49,41 @@ const idParamValidation = (field, label) => [
     .toInt(),
 ];
 
-const productBodyValidation = ({ requireName }) => {
+const productBodyValidation = ({ requireName, requireStock = false }) => {
   const nameRule = body('nom')
     .trim()
     .isLength({ min: 2, max: 160 })
     .withMessage('Le nom du produit doit contenir entre 2 et 160 caractères');
+
+  const prixVenteRule = body('prixVente')
+    .notEmpty().withMessage('Le prix de vente est obligatoire')
+    .bail()
+    .custom((value) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0) throw new Error('Le prix de vente invalide');
+      return true;
+    });
+
+  const stockRule = requireStock
+    ? body('stock')
+        .notEmpty().withMessage('Le stock initial est obligatoire')
+        .bail()
+        .custom((value) => {
+          const parsed = Number(value);
+          if (!Number.isFinite(parsed) || parsed < 0) throw new Error('Le stock invalide');
+          return true;
+        })
+    : optionalNonNegativeNumber(body('stock'), 'Le stock');
+
+  const categorieRule = body('categorieId')
+    .notEmpty().withMessage('La catégorie est obligatoire')
+    .bail()
+    .custom((value) => {
+      const parsed = Number.parseInt(value, 10);
+      if (!Number.isInteger(parsed) || parsed < 1) throw new Error('Catégorie invalide');
+      return true;
+    })
+    .toInt();
 
   return [
     ...(requireName ? [nameRule] : [body('nom').optional({ values: 'falsy' }).trim().isLength({ min: 2, max: 160 }).withMessage('Le nom du produit doit contenir entre 2 et 160 caractères')]),
@@ -80,14 +110,14 @@ const productBodyValidation = ({ requireName }) => {
       .withMessage('Mode commercial invalide'),
     optionalStrictPositiveNumber(body('commercialSize'), 'La taille de conditionnement'),
     optionalNonNegativeNumber(body('commercialCount'), 'Le nombre de conditionnements'),
-    optionalNonNegativeNumber(body('prixVente'), 'Le prix de vente'),
-    optionalNonNegativeNumber(body('prixAchat'), 'Le prix d’achat'),
-    optionalNonNegativeNumber(body('prixAchatConditionnement'), 'Le prix d’achat du conditionnement'),
-    optionalNonNegativeNumber(body('prixVenteConditionnement'), 'Le prix de vente du conditionnement'),
-    optionalNonNegativeNumber(body('prixVenteDetail'), 'Le prix de vente au détail'),
-    optionalNonNegativeNumber(body('stock'), 'Le stock'),
-    optionalNonNegativeNumber(body('stockAlerte'), 'Le stock d’alerte'),
-    optionalPositiveInt(body('categorieId'), 'Catégorie'),
+    prixVenteRule,
+    optionalNonNegativeNumber(body(‘prixAchat’), ‘Le prix d’achat’),
+    optionalNonNegativeNumber(body(‘prixAchatConditionnement’), ‘Le prix d’achat du conditionnement’),
+    optionalNonNegativeNumber(body(‘prixVenteConditionnement’), ‘Le prix de vente du conditionnement’),
+    optionalNonNegativeNumber(body(‘prixVenteDetail’), ‘Le prix de vente au détail’),
+    stockRule,
+    optionalNonNegativeNumber(body(‘stockAlerte’), ‘Le stock d’alerte’),
+    categorieRule,
     optionalPositiveInt(body('fournisseurId'), 'Fournisseur'),
     body('datePeremption')
       .optional({ nullable: true })
@@ -138,8 +168,8 @@ const listProductsValidation = [
     .customSanitizer(normalizeBooleanLike),
 ];
 
-const createProductValidation = productBodyValidation({ requireName: true });
-const updateProductValidation = [...idParamValidation('id', 'Identifiant produit'), ...productBodyValidation({ requireName: false })];
+const createProductValidation = productBodyValidation({ requireName: true, requireStock: true });
+const updateProductValidation = [...idParamValidation('id', 'Identifiant produit'), ...productBodyValidation({ requireName: false, requireStock: false })];
 const productIdValidation = idParamValidation('id', 'Identifiant produit');
 const productUnitParentValidation = idParamValidation('produitId', 'Identifiant produit');
 const unitIdValidation = idParamValidation('uniteId', 'Identifiant unité');

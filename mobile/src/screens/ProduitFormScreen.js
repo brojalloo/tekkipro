@@ -499,8 +499,20 @@ export default function ProduitFormScreen({ navigation, route }) {
         Alert.alert(text.requiredField, text.requiredPackPurchase);
         return;
       }
-    } else if (form.prixVente === '') {
-      Alert.alert(text.requiredField, text.requiredSale);
+    } else {
+      if (form.prixVente === '') {
+        Alert.alert(text.requiredField, text.requiredSale);
+        return;
+      }
+
+      if (!isEditing && form.stock === '') {
+        Alert.alert(text.requiredField, text.requiredStock);
+        return;
+      }
+    }
+
+    if (!form.categorieId) {
+      Alert.alert(text.requiredField, text.requiredCategory);
       return;
     }
 

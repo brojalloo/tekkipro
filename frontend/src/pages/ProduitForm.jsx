@@ -73,6 +73,7 @@ export default function ProduitForm() {
   const [commercialSize, setCommercialSize] = useState(''); // e.g. poids en kg ou volume en L ou unités par carton
   const [commercialCount, setCommercialCount] = useState(''); // nombre de packs (sacs,bidons,cartons)
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     loadOptions();
@@ -208,6 +209,15 @@ export default function ProduitForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errors = {};
+    if (form.prixVente === '' || form.prixVente === null || form.prixVente === undefined) errors.prixVente = 'Le prix de vente est obligatoire';
+    if (!form.categorieId) errors.categorieId = 'La catégorie est obligatoire';
+    if (!isEdit && (stockQty === '' || stockQty === null || stockQty === undefined)) errors.stockQty = 'Le stock initial est obligatoire';
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
     setLoading(true);
     try {
       const stockBase = isEdit ? undefined : getStockBase();
@@ -347,12 +357,13 @@ export default function ProduitForm() {
                 <div className="space-y-2">
                   <label>
                     <FiLayers size={14} />
-                    Catégorie
+                    Catégorie <span className="text-red-500">*</span>
                   </label>
-                  <select className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" name="categorieId" value={form.categorieId} onChange={handleChange}>
+                  <select className={`w-full py-3 px-4 bg-white border-2 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 ${formErrors.categorieId ? 'border-red-400' : 'border-gray-100'}`} name="categorieId" value={form.categorieId} onChange={handleChange}>
                     <option value="">-- Aucune catégorie --</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                   </select>
+                  {formErrors.categorieId && <p className="text-xs text-red-500 mt-1">{formErrors.categorieId}</p>}
                 </div>
               </div>
 
@@ -463,11 +474,11 @@ export default function ProduitForm() {
                   <div className="space-y-2" style={{ flex: 2 }}>
                     <label>
                       <FiBarChart2 size={14} />
-                      Stock initial — quantité
+                      Stock initial — quantité <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
-  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
+  className={`w-full py-3 px-4 bg-white border-2 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 ${formErrors.stockQty ? 'border-red-400' : 'border-gray-100'}`}
                         type="number"
                         value={stockQty}
                         onChange={(e) => setStockQty(e.target.value)}
@@ -476,6 +487,7 @@ export default function ProduitForm() {
                         step="0.01"
                       />
                     </div>
+                    {formErrors.stockQty && <p className="text-xs text-red-500 mt-1">{formErrors.stockQty}</p>}
                   </div>
                   <div className="space-y-2" style={{ flex: 2 }}>
                     <label>
@@ -558,11 +570,11 @@ export default function ProduitForm() {
                 <div className="space-y-2">
                   <label>
                     <FiDollarSign size={14} />
-                    Prix de vente (CFA)
+                    Prix de vente (CFA) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
-  className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10"
+  className={`w-full py-3 px-4 bg-white border-2 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 ${formErrors.prixVente ? 'border-red-400' : 'border-gray-100'}`}
                       type="number"
                       name="prixVente"
                       value={form.prixVente}
@@ -572,6 +584,7 @@ export default function ProduitForm() {
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">CFA</span>
                   </div>
+                  {formErrors.prixVente && <p className="text-xs text-red-500 mt-1">{formErrors.prixVente}</p>}
                 </div>
                 <div className="space-y-2">
                   <label>
