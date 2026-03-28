@@ -89,9 +89,6 @@ const createCorsOptions = () => {
 
   return {
     origin(origin, callback) {
-      if (process.env.NODE_ENV !== 'production') {
-        return callback(null, true);
-      }
       callback(null, isOriginAllowed(origin, allowedOrigins));
     },
     credentials: true,

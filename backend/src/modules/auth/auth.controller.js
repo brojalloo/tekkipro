@@ -110,7 +110,7 @@ const register = async (req, res) => {
       : jwt.sign(
           { id: result.user.id, role: result.user.role, boutiqueId: result.boutique.id },
           process.env.JWT_SECRET,
-          { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+          { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
         );
 
     if (verificationToken) {
@@ -178,7 +178,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, boutiqueId: user.boutiqueId },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
 
     res.json({
@@ -385,7 +385,7 @@ const resendVerification = async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Ne pas révéler si l'email existe
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 100));
       return res.json({ success: true, message: 'Si cet email existe, un lien de vérification a été envoyé.' });
     }
 
