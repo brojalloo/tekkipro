@@ -73,62 +73,92 @@ const FROM_EMAIL = () => process.env.EMAIL_FROM || 'TekkiPro <noreply@tekkipro.c
 const APP_URL = () => process.env.APP_URL || 'http://localhost:5173';
 const SUPPORT_EMAIL = () => process.env.SUPPORT_EMAIL || 'support@tekkipro.com';
 
+// Bande kente décorative réutilisable
+const KENTE_STRIP = `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td style="background:#1B5E20;height:6px;"></td>
+      <td style="background:#FFD600;height:6px;"></td>
+      <td style="background:#D32F2F;height:6px;"></td>
+      <td style="background:#1B5E20;height:6px;"></td>
+      <td style="background:#FFD600;height:6px;"></td>
+      <td style="background:#D32F2F;height:6px;"></td>
+      <td style="background:#1B5E20;height:6px;"></td>
+      <td style="background:#FFD600;height:6px;"></td>
+      <td style="background:#D32F2F;height:6px;"></td>
+    </tr>
+  </table>`;
+
+// Header commun
+const emailHeader = (subtitle) => `
+  <div style="background:#071C08;padding:28px 32px;text-align:center;">
+    <div style="display:inline-block;background:#FFD600;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;font-family:Georgia,serif;font-weight:900;font-size:26px;color:#071C08;margin-bottom:12px;">T</div>
+    <div style="color:#fff;font-family:Georgia,serif;font-size:22px;font-weight:700;letter-spacing:1px;">TekkiPro</div>
+    <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:4px;">${subtitle}</div>
+  </div>
+  ${KENTE_STRIP}`;
+
+// Footer commun
+const emailFooter = () => `
+  ${KENTE_STRIP}
+  <div style="background:#071C08;padding:20px 32px;text-align:center;">
+    <p style="color:rgba(255,255,255,0.45);font-size:12px;margin:0;">
+      © ${new Date().getFullYear()} TekkiPro — Fait avec ♥ pour l’Afrique de l’Ouest
+    </p>
+    <p style="color:rgba(255,255,255,0.3);font-size:11px;margin:6px 0 0;">
+      Des questions ? <a href="mailto:support@tekkipro.com" style="color:#FFD600;text-decoration:none;">support@tekkipro.com</a>
+    </p>
+  </div>`;
+
+// Wrapper body commun
+const emailWrap = (content) => `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TekkiPro</title></head>
+<body style="margin:0;padding:0;background:#e8ede8;font-family:’Segoe UI’,Arial,sans-serif;">
+  <div style="max-width:580px;margin:40px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.15);">
+    ${content}
+  </div>
+</body>
+</html>`;
+
 // ─────────────────────────────────────────
 //  EMAIL DE VÉRIFICATION DE COMPTE
 // ─────────────────────────────────────────
 const buildVerificationEmail = (user, token) => {
   const verifyUrl = `${APP_URL()}/verify-email?token=${token}`;
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#6366f1,#818cf8);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:28px;">🛒 TekkiPro</h1>
-      <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Gestion de boutique intelligente</p>
-    </div>
-    <div style="padding:32px;">
-      <h2 style="color:#1a1a2e;margin:0 0 12px;">Bienvenue, ${user.prenom} !</h2>
-      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        L’adresse email <strong>${user.email}</strong> vient d’être utilisée pour créer un compte sur TekkiPro.
+  const html = emailWrap(`
+    ${emailHeader(‘Activation de votre compte’)}
+    <div style="background:#FFFAF0;padding:36px 32px;">
+      <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bienvenue, ${user.prenom} !</h2>
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
+        Votre adresse <strong>${user.email}</strong> a été utilisée pour créer un compte sur TekkiPro.
       </p>
-      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Si vous êtes bien à l’origine de cette inscription, cliquez sur le bouton ci-dessous pour activer votre compte et commencer à utiliser TekkiPro.
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 28px;font-size:15px;">
+        Cliquez sur le bouton ci-dessous pour activer votre compte et commencer à gérer votre boutique.
       </p>
       <div style="text-align:center;margin:32px 0;">
-        <a href="${verifyUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;font-size:16px;">
-          ✅ Activer mon compte
+        <a href="${verifyUrl}" style="display:inline-block;background:#FFD600;color:#071C08;text-decoration:none;padding:15px 44px;border-radius:8px;font-weight:700;font-size:16px;letter-spacing:0.3px;">
+          Activer mon compte
         </a>
       </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:20px 0;">
-        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
-          Si vous n’êtes pas à l’origine de cette demande, <strong>n’activez pas ce compte</strong>, n’appuyez pas sur le bouton et ignorez simplement cet email.
+      <div style="background:#fff;border-left:4px solid #1B5E20;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
+        <p style="color:#1B5E20;font-size:13px;line-height:1.6;margin:0;">
+          Si vous n’êtes pas à l’origine de cette inscription, ignorez simplement cet email.
         </p>
       </div>
-      <p style="color:#888;font-size:13px;line-height:1.5;">
-        Ce lien expire dans <strong>48 heures</strong>.
-      </p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:0 0 20px;">
-        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
-          Besoin d’aide ? Contactez le support TekkiPro à <a href="mailto:${SUPPORT_EMAIL()}" style="color:#6366f1;text-decoration:none;">${SUPPORT_EMAIL()}</a>.
-        </p>
-      </div>
-      <p style="color:#aaa;font-size:12px;text-align:center;">
-        Ou copiez ce lien : <a href="${verifyUrl}" style="color:#6366f1;">${verifyUrl}</a>
+      <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
+        Ce lien expire dans <strong>48 heures</strong>.<br>
+        <a href="${verifyUrl}" style="color:#1B5E20;font-size:12px;word-break:break-all;">${verifyUrl}</a>
       </p>
     </div>
-    <div style="background:#f8f9fa;padding:16px;text-align:center;">
-      <p style="color:#999;font-size:12px;margin:0;">© ${new Date().getFullYear()} TekkiPro — Fait avec ❤️ pour l'Afrique</p>
-    </div>
-  </div>
-</body>
-</html>`;
+    ${emailFooter()}
+  `);
 
   return {
-    subject: '✅ TekkiPro — Activez votre compte',
+    subject: ‘TekkiPro — Activez votre compte’,
     html,
   };
 };
@@ -150,56 +180,36 @@ const sendVerificationEmail = async (user, token) => {
 const buildPasswordResetEmail = (user, token) => {
   const resetUrl = `${APP_URL()}/reset-password?token=${token}`;
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#ef4444,#f97316);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:28px;">🔒 TekkiPro</h1>
-      <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Réinitialisation de mot de passe</p>
-    </div>
-    <div style="padding:32px;">
-      <h2 style="color:#1a1a2e;margin:0 0 12px;">Bonjour, ${user.prenom}</h2>
-      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Une demande de réinitialisation du mot de passe a été effectuée pour le compte associé à l’adresse email <strong>${user.email}</strong>.
+  const html = emailWrap(`
+    ${emailHeader(‘Réinitialisation de mot de passe’)}
+    <div style="background:#FFFAF0;padding:36px 32px;">
+      <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bonjour, ${user.prenom}</h2>
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
+        Une demande de réinitialisation de mot de passe a été effectuée pour le compte associé à <strong>${user.email}</strong>.
       </p>
-      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Si vous êtes bien à l’origine de cette demande, cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe sécurisé.
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 28px;font-size:15px;">
+        Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe sécurisé.
       </p>
       <div style="text-align:center;margin:32px 0;">
-        <a href="${resetUrl}" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;font-size:16px;">
-          🔑 Réinitialiser mon mot de passe
+        <a href="${resetUrl}" style="display:inline-block;background:#FFD600;color:#071C08;text-decoration:none;padding:15px 44px;border-radius:8px;font-weight:700;font-size:16px;letter-spacing:0.3px;">
+          Réinitialiser mon mot de passe
         </a>
       </div>
-      <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:16px;margin:20px 0;">
-        <p style="color:#9a3412;font-size:14px;line-height:1.6;margin:0;">
-          Si vous n’êtes pas à l’origine de cette demande, ne cliquez pas sur ce bouton et ignorez simplement cet email.
+      <div style="background:#fff;border-left:4px solid #D32F2F;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
+        <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:0;">
+          Si vous n’êtes pas à l’origine de cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.
         </p>
       </div>
-      <p style="color:#888;font-size:13px;line-height:1.5;">
-        Ce lien expire dans <strong>1 heure</strong>.
-      </p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin:0 0 20px;">
-        <p style="color:#334155;font-size:14px;line-height:1.6;margin:0;">
-          Besoin d’aide ? Contactez le support TekkiPro à <a href="mailto:${SUPPORT_EMAIL()}" style="color:#ef4444;text-decoration:none;">${SUPPORT_EMAIL()}</a>.
-        </p>
-      </div>
-      <p style="color:#aaa;font-size:12px;text-align:center;">
-        Ou copiez ce lien : <a href="${resetUrl}" style="color:#ef4444;">${resetUrl}</a>
+      <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
+        Ce lien expire dans <strong>1 heure</strong>.<br>
+        <a href="${resetUrl}" style="color:#D32F2F;font-size:12px;word-break:break-all;">${resetUrl}</a>
       </p>
     </div>
-    <div style="background:#f8f9fa;padding:16px;text-align:center;">
-      <p style="color:#999;font-size:12px;margin:0;">© ${new Date().getFullYear()} TekkiPro — Fait avec ❤️ pour l'Afrique</p>
-    </div>
-  </div>
-</body>
-</html>`;
+    ${emailFooter()}
+  `);
 
   return {
-    subject: '🔑 TekkiPro — Réinitialisez votre mot de passe',
+    subject: ‘TekkiPro — Réinitialisez votre mot de passe’,
     html,
   };
 };
@@ -219,44 +229,50 @@ const sendPasswordResetEmail = async (user, token) => {
 //  EMAIL DE CONFIRMATION DE PAIEMENT
 // ─────────────────────────────────────────
 const sendPaymentConfirmationEmail = async (user, boutique, plan, montant) => {
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#10b981,#059669);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:28px;">💳 TekkiPro</h1>
-      <p style="color:rgba(255,255,255,.85);margin:8px 0 0;font-size:14px;">Confirmation de paiement</p>
-    </div>
-    <div style="padding:32px;">
-      <h2 style="color:#1a1a2e;margin:0 0 12px;">Paiement confirmé !</h2>
-      <p style="color:#555;line-height:1.6;margin:0 0 24px;">
-        Merci ${user.prenom}, votre paiement pour <strong>${boutique.nom}</strong> a bien été reçu.
+  const montantFormate = montant?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const html = emailWrap(`
+    ${emailHeader('Confirmation de paiement')}
+    <div style="background:#FFFAF0;padding:36px 32px;">
+      <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Paiement confirme !</h2>
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 24px;font-size:15px;">
+        Merci <strong>${user.prenom}</strong>, votre paiement pour la boutique <strong>${boutique.nom}</strong> a bien ete recu.
       </p>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:20px 0;">
-        <table style="width:100%;color:#333;font-size:14px;">
-          <tr><td style="padding:6px 0;color:#888;">Plan</td><td style="text-align:right;font-weight:600;">${plan}</td></tr>
-          <tr><td style="padding:6px 0;color:#888;">Montant</td><td style="text-align:right;font-weight:600;">${montant?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} FCFA</td></tr>
-          <tr><td style="padding:6px 0;color:#888;">Date</td><td style="text-align:right;">${new Date().toLocaleDateString('fr-FR')}</td></tr>
-          <tr><td style="padding:6px 0;color:#888;">Boutique</td><td style="text-align:right;">${boutique.nom}</td></tr>
+      <div style="background:#fff;border:1px solid #d4e8d4;border-radius:10px;overflow:hidden;margin:24px 0;">
+        <div style="background:#1B5E20;padding:12px 20px;">
+          <span style="color:#FFD600;font-family:Georgia,serif;font-weight:700;font-size:14px;letter-spacing:0.5px;">RECAPITULATIF</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:12px 20px;color:#666;font-size:14px;">Plan</td>
+            <td style="padding:12px 20px;text-align:right;font-weight:700;color:#071C08;font-size:14px;">${plan}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:12px 20px;color:#666;font-size:14px;">Montant</td>
+            <td style="padding:12px 20px;text-align:right;font-weight:700;color:#071C08;font-size:14px;">${montantFormate} FCFA</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:12px 20px;color:#666;font-size:14px;">Date</td>
+            <td style="padding:12px 20px;text-align:right;color:#071C08;font-size:14px;">${new Date().toLocaleDateString('fr-FR')}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 20px;color:#666;font-size:14px;">Boutique</td>
+            <td style="padding:12px 20px;text-align:right;color:#071C08;font-size:14px;">${boutique.nom}</td>
+          </tr>
         </table>
       </div>
-      <p style="color:#888;font-size:13px;text-align:center;">
-        Votre abonnement est maintenant actif. Profitez de toutes les fonctionnalités !
-      </p>
+      <div style="background:#fff;border-left:4px solid #1B5E20;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
+        <p style="color:#1B5E20;font-size:13px;line-height:1.6;margin:0;">
+          Votre abonnement est maintenant actif. Profitez de toutes les fonctionnalites de votre plan !
+        </p>
+      </div>
     </div>
-    <div style="background:#f8f9fa;padding:16px;text-align:center;">
-      <p style="color:#999;font-size:12px;margin:0;">© ${new Date().getFullYear()} TekkiPro — Fait avec ❤️ pour l'Afrique</p>
-    </div>
-  </div>
-</body>
-</html>`;
+    ${emailFooter()}
+  `);
 
   await getTransporter().sendMail({
     from: FROM_EMAIL(),
     to: user.email,
-    subject: `💳 TekkiPro — Paiement confirmé (Plan ${plan})`,
+    subject: `TekkiPro — Paiement confirme (Plan ${plan})`,
     html,
   });
 };
@@ -265,40 +281,39 @@ const sendPaymentConfirmationEmail = async (user, boutique, plan, montant) => {
 //  EMAIL D'EXPIRATION D'ABONNEMENT
 // ─────────────────────────────────────────
 const sendSubscriptionExpiryEmail = async (user, boutique, daysLeft) => {
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:580px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:28px;">⏰ TekkiPro</h1>
-      <p style="color:rgba(255,255,255,.85);margin:8px 0 0;">Rappel d'abonnement</p>
-    </div>
-    <div style="padding:32px;">
-      <h2 style="color:#1a1a2e;margin:0 0 12px;">Votre abonnement expire bientôt</h2>
-      <p style="color:#555;line-height:1.6;">
-        Bonjour ${user.prenom},<br>
-        L'abonnement de <strong>${boutique.nom}</strong> expire dans <strong>${daysLeft} jour${daysLeft > 1 ? 's' : ''}</strong>.
-        Renouvelez-le pour continuer à profiter de toutes les fonctionnalités.
+  const urgence = daysLeft <= 3;
+  const html = emailWrap(`
+    ${emailHeader('Rappel d\'abonnement')}
+    <div style="background:#FFFAF0;padding:36px 32px;">
+      <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">
+        Votre abonnement expire ${daysLeft === 1 ? 'demain' : `dans ${daysLeft} jours`}
+      </h2>
+      <p style="color:#3d3d3d;line-height:1.7;margin:0 0 24px;font-size:15px;">
+        Bonjour <strong>${user.prenom}</strong>,<br>
+        L'abonnement de la boutique <strong>${boutique.nom}</strong> expire dans
+        <strong>${daysLeft} jour${daysLeft > 1 ? 's' : ''}</strong>.
+        Renouvelez-le maintenant pour ne pas interrompre votre activite.
       </p>
       <div style="text-align:center;margin:32px 0;">
-        <a href="${APP_URL()}/app/abonnement" style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:600;">
-          🔄 Renouveler maintenant
+        <a href="${APP_URL()}/app/abonnement" style="display:inline-block;background:#FFD600;color:#071C08;text-decoration:none;padding:15px 44px;border-radius:8px;font-weight:700;font-size:16px;letter-spacing:0.3px;">
+          Renouveler maintenant
         </a>
       </div>
+      <div style="background:#fff;border-left:4px solid #D32F2F;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
+        <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:0;">
+          ${urgence
+            ? 'Attention : votre acces sera suspendu tres prochainement. Renouvelez des maintenant pour eviter toute interruption.'
+            : 'Apres expiration, vous ne pourrez plus enregistrer de ventes ni acceder a vos donnees. Renouvelez avant la date limite.'}
+        </p>
+      </div>
     </div>
-    <div style="background:#f8f9fa;padding:16px;text-align:center;">
-      <p style="color:#999;font-size:12px;margin:0;">© ${new Date().getFullYear()} TekkiPro</p>
-    </div>
-  </div>
-</body>
-</html>`;
+    ${emailFooter()}
+  `);
 
   await getTransporter().sendMail({
     from: FROM_EMAIL(),
     to: user.email,
-    subject: `⏰ TekkiPro — Votre abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`,
+    subject: `TekkiPro — Votre abonnement expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`,
     html,
   });
 };
