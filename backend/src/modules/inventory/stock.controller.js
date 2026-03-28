@@ -251,11 +251,21 @@ const getInventaire = async (req, res) => {
     const totalValeur = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
     const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
 
-    const paginated = paginatedResponse(inventaire, total, page, limit);
-    paginated.data.totalValeurStock = totalValeur;
-    paginated.data.produitsEnAlerte = produitsEnAlerte;
-
-    res.json(paginated);
+    res.json({
+      success: true,
+      data: {
+        produits: inventaire,
+        totalProduits: total,
+        totalValeurStock: totalValeur,
+        produitsEnAlerte: produitsEnAlerte,
+      },
+      pagination: {
+        page, limit, total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error) {
     logger.error('Erreur getInventaire', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'INVENTORY_FETCH_FAILED' });
