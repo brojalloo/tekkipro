@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@tekkipro/shared': path.resolve(__dirname, '../packages/shared/src'),
+      '@tekkipro/shared': path.resolve(__dirname, './src/lib/shared'),
       '@': path.resolve(__dirname, './src'),
     },
   },
