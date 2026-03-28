@@ -48,8 +48,8 @@ export default function NouvelleVente() {
   const loadData = async () => {
     try {
       const [prodRes, clientRes] = await Promise.all([
-        api.get('/produits'),
-        api.get('/clients'),
+        api.get('/produits?limit=1000'),
+        api.get('/clients?limit=1000'),
       ]);
       setProduits(prodRes.data.data.filter(p => p.actif));
       setClients(clientRes.data.data);

@@ -60,8 +60,8 @@ export function AuthProvider({ children }) {
 
   const updatePlanUsage = useCallback((payload) => {
     setPlanUsage(prev => {
-      if (!prev) return prev;
-      const next = { ...prev };
+      const base = prev || { ventesParMois: {}, produits: {}, clients: {} };
+      const next = { ...base };
       if (payload.ventesUsed  !== undefined) next.ventesParMois = { ...next.ventesParMois, used: payload.ventesUsed };
       if (payload.ventesLimit !== undefined) next.ventesParMois = { ...next.ventesParMois, limit: payload.ventesLimit };
       if (payload.produitsUsed  !== undefined) next.produits = { ...next.produits, used: payload.produitsUsed };

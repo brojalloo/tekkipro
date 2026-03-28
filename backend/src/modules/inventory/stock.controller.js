@@ -247,8 +247,12 @@ const getInventaire = async (req, res) => {
       };
     });
 
-    // Totaux calculés sur la page courante (summary global disponible sans pagination)
-    const totalValeur = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
+    // Valeur totale du stock sur toutes les pages
+    const allStockValues = await prisma.produit.findMany({
+      where,
+      select: { stock: true, prixAchat: true },
+    });
+    const totalValeurStock = allStockValues.reduce((sum, p) => sum + p.stock * p.prixAchat, 0);
     const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
 
     res.json({
@@ -256,8 +260,8 @@ const getInventaire = async (req, res) => {
       data: {
         produits: inventaire,
         totalProduits: total,
-        totalValeurStock: totalValeur,
-        produitsEnAlerte: produitsEnAlerte,
+        totalValeurStock,
+        produitsEnAlerte,
       },
       pagination: {
         page, limit, total,
