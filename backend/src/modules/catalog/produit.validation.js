@@ -101,7 +101,7 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
       .optional({ values: 'falsy' })
       .trim()
       .isLength({ min: 1, max: 20 })
-      .withMessage('L’unité de base est invalide'),
+.withMessage("L'unité de base est invalide"),
     body('commercialMode')
       .optional({ values: 'falsy' })
       .trim()
@@ -111,12 +111,12 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
     optionalStrictPositiveNumber(body('commercialSize'), 'La taille de conditionnement'),
     optionalNonNegativeNumber(body('commercialCount'), 'Le nombre de conditionnements'),
     prixVenteRule,
-    optionalNonNegativeNumber(body(‘prixAchat’), ‘Le prix d’achat’),
-    optionalNonNegativeNumber(body(‘prixAchatConditionnement’), ‘Le prix d’achat du conditionnement’),
-    optionalNonNegativeNumber(body(‘prixVenteConditionnement’), ‘Le prix de vente du conditionnement’),
-    optionalNonNegativeNumber(body(‘prixVenteDetail’), ‘Le prix de vente au détail’),
+    optionalNonNegativeNumber(body('prixAchat'), "Le prix d'achat"),
+    optionalNonNegativeNumber(body('prixAchatConditionnement'), "Le prix d'achat du conditionnement"),
+    optionalNonNegativeNumber(body('prixVenteConditionnement'), 'Le prix de vente du conditionnement'),
+    optionalNonNegativeNumber(body('prixVenteDetail'), 'Le prix de vente au détail'),
     stockRule,
-    optionalNonNegativeNumber(body(‘stockAlerte’), ‘Le stock d’alerte’),
+    optionalNonNegativeNumber(body('stockAlerte'), "Le stock d'alerte"),
     categorieRule,
     optionalPositiveInt(body('fournisseurId'), 'Fournisseur'),
     body('datePeremption')
@@ -134,7 +134,7 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
         if (isEmptyValue(value)) return true;
         const parsed = Number.parseInt(value, 10);
         if (!Number.isInteger(parsed) || parsed < 0) {
-          throw new Error('Le seuil d’alerte de péremption est invalide');
+          throw new Error("Le seuil d'alerte de péremption est invalide");
         }
         return true;
       }),
@@ -179,7 +179,7 @@ const createUnitValidation = [
   body('nom')
     .trim()
     .isLength({ min: 1, max: 80 })
-    .withMessage('Le nom de l’unité doit contenir entre 1 et 80 caractères'),
+      .withMessage("Le nom de l'unité doit contenir entre 1 et 80 caractères"),
   optionalStrictPositiveNumber(body('facteurConversion'), 'Le facteur de conversion'),
   body('facteurConversion')
     .custom((value) => {
@@ -197,7 +197,7 @@ const createUnitValidation = [
       }
       return true;
     }),
-  optionalNonNegativeNumber(body('prixAchat'), 'Le prix d’achat'),
+  optionalNonNegativeNumber(body('prixAchat'), "Le prix d'achat"),
   body('estDefaut')
     .optional({ nullable: true })
     .custom((value) => {
@@ -215,10 +215,10 @@ const updateUnitValidation = [
     .optional({ values: 'falsy' })
     .trim()
     .isLength({ min: 1, max: 80 })
-    .withMessage('Le nom de l’unité doit contenir entre 1 et 80 caractères'),
+    .withMessage("Le nom de l'unité doit contenir entre 1 et 80 caractères"),
   optionalStrictPositiveNumber(body('facteurConversion'), 'Le facteur de conversion'),
   optionalStrictPositiveNumber(body('prix'), 'Le prix'),
-  optionalNonNegativeNumber(body('prixAchat'), 'Le prix d’achat'),
+  optionalNonNegativeNumber(body('prixAchat'), "Le prix d'achat"),
   body('estDefaut')
     .optional({ nullable: true })
     .custom((value) => {
