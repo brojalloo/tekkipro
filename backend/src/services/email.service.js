@@ -103,7 +103,7 @@ const emailFooter = () => `
   ${KENTE_STRIP}
   <div style="background:#071C08;padding:20px 32px;text-align:center;">
     <p style="color:rgba(255,255,255,0.45);font-size:12px;margin:0;">
-      © ${new Date().getFullYear()} TekkiPro — Fait avec ♥ pour l’Afrique de l’Ouest
+      © ${new Date().getFullYear()} TekkiPro — Fait avec ♥ pour l'Afrique de l'Ouest
     </p>
     <p style="color:rgba(255,255,255,0.3);font-size:11px;margin:6px 0 0;">
       Des questions ? <a href="mailto:support@tekkipro.com" style="color:#FFD600;text-decoration:none;">support@tekkipro.com</a>
@@ -116,7 +116,7 @@ const emailWrap = (content) => `
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TekkiPro</title></head>
-<body style="margin:0;padding:0;background:#e8ede8;font-family:’Segoe UI’,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#e8ede8;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:580px;margin:40px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.15);">
     ${content}
   </div>
@@ -130,7 +130,7 @@ const buildVerificationEmail = (user, token) => {
   const verifyUrl = `${APP_URL()}/verify-email?token=${token}`;
 
   const html = emailWrap(`
-    ${emailHeader(‘Activation de votre compte’)}
+    ${emailHeader('Activation de votre compte')}
     <div style="background:#FFFAF0;padding:36px 32px;">
       <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bienvenue, ${user.prenom} !</h2>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
@@ -146,7 +146,7 @@ const buildVerificationEmail = (user, token) => {
       </div>
       <div style="background:#fff;border-left:4px solid #1B5E20;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
         <p style="color:#1B5E20;font-size:13px;line-height:1.6;margin:0;">
-          Si vous n’êtes pas à l’origine de cette inscription, ignorez simplement cet email.
+          Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement cet email.
         </p>
       </div>
       <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
@@ -158,7 +158,7 @@ const buildVerificationEmail = (user, token) => {
   `);
 
   return {
-    subject: ‘TekkiPro — Activez votre compte’,
+    subject: 'TekkiPro — Activez votre compte',
     html,
   };
 };
@@ -181,7 +181,7 @@ const buildPasswordResetEmail = (user, token) => {
   const resetUrl = `${APP_URL()}/reset-password?token=${token}`;
 
   const html = emailWrap(`
-    ${emailHeader(‘Réinitialisation de mot de passe’)}
+    ${emailHeader('Réinitialisation de mot de passe')}
     <div style="background:#FFFAF0;padding:36px 32px;">
       <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bonjour, ${user.prenom}</h2>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
@@ -197,7 +197,7 @@ const buildPasswordResetEmail = (user, token) => {
       </div>
       <div style="background:#fff;border-left:4px solid #D32F2F;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
         <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:0;">
-          Si vous n’êtes pas à l’origine de cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.
+          Si vous n'êtes pas à l'origine de cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.
         </p>
       </div>
       <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
@@ -209,7 +209,7 @@ const buildPasswordResetEmail = (user, token) => {
   `);
 
   return {
-    subject: ‘TekkiPro — Réinitialisez votre mot de passe’,
+    subject: 'TekkiPro — Réinitialisez votre mot de passe',
     html,
   };
 };
