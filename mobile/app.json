@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.tekkipro.app",
-      "usesCleartextTraffic": false,
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#E8623A"
@@ -35,6 +35,11 @@
       ],
       "./plugins/withThermalPrinter",
       "expo-audio"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "393eb212-c587-4f8c-9555-29b7d63486de"
+      }
+    }
   }
 }

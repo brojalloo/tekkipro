@@ -2,16 +2,12 @@ const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
 const projectRoot = __dirname;
-const monorepoRoot = path.resolve(projectRoot, '..');
 
 const config = getDefaultConfig(projectRoot);
 
-// Watch the shared package outside the mobile directory
-config.watchFolders = [path.resolve(monorepoRoot, 'packages/shared')];
-
-// Resolve @tekkipro/shared to the local package
+// Resolve @tekkipro/shared to bundled local copy
 config.resolver.extraNodeModules = {
-  '@tekkipro/shared': path.resolve(monorepoRoot, 'packages/shared/src'),
+  '@tekkipro/shared': path.resolve(projectRoot, 'src/lib/shared'),
 };
 
 module.exports = config;
