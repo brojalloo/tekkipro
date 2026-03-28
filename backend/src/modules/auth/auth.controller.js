@@ -424,7 +424,8 @@ const forgotPassword = async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Ne pas révéler si l'email existe
+      // Délai constant pour éviter les timing attacks (énumération email)
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 100));
       return res.json({ success: true, message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
     }
 
