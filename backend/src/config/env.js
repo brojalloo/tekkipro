@@ -17,6 +17,7 @@ const assert = (condition, message) => {
 };
 
 const isLocalHostname = (hostname) => ['localhost', '127.0.0.1', '::1'].includes(hostname);
+const isIpAddress = (hostname) => /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
 
 const ensureAbsoluteUrl = (name) => {
   const value = process.env[name];
@@ -30,8 +31,9 @@ const ensureAbsoluteUrl = (name) => {
   }
 
   const isLocal = isLocalHostname(url.hostname);
+  const isIp = isIpAddress(url.hostname);
   assert(['http:', 'https:'].includes(url.protocol), `${name} doit utiliser http:// ou https://.`);
-  assert(!(isProduction() && !isLocal && url.protocol !== 'https:'), `${name} doit utiliser https:// en production.`);
+  assert(!(isProduction() && !isLocal && !isIp && url.protocol !== 'https:'), `${name} doit utiliser https:// en production.`);
 };
 
 const ensurePositiveIntegerIfDefined = (name) => {
