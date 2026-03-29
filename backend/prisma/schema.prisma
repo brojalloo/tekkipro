@@ -128,8 +128,9 @@ model User {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
-  boutique    Boutique @relation(fields: [boutiqueId], references: [id])
+  boutique    Boutique   @relation(fields: [boutiqueId], references: [id])
   ventes      Vente[]
+  auditLogs   AuditLog[]
 
   @@map("users")
 }
@@ -421,6 +422,7 @@ model AuditLog {
   action     AuditAction
   entite     String
   entiteId   Int?
+  message    String?
   avant      Json?
   apres      Json?
   userId     Int?
@@ -428,6 +430,7 @@ model AuditLog {
   createdAt  DateTime    @default(now())
 
   boutique Boutique @relation(fields: [boutiqueId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
 
   @@index([boutiqueId, createdAt])
   @@index([boutiqueId, entite])
