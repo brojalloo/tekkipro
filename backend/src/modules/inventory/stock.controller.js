@@ -4,6 +4,7 @@ const { badRequest, created, error: sendError, notFound } = require('../../commo
 const { getPeremptionStatus, hasPeremptionAlert } = require('../../common/utils/peremption');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
 const logger = require('../../common/utils/logger');
+const { logAudit } = require('../../common/utils/auditLog');
 
 const hasValue = (value) => value !== undefined && value !== null && value !== '';
 
@@ -164,7 +165,15 @@ const entreeStock = async (req, res) => {
       return entree;
     });
 
-    return created(res, result, 'Stock mis à jour');
+    logAudit(prisma, {
+      action: 'STOCK_ADJUST',
+      entite: 'stock',
+      entiteId: result.produitId,
+      message: `Entree stock: +${qtyUser} ${uniteNom} de "${produit.nom}"`,
+      userId: req.user?.id,
+      boutiqueId: req.boutiqueId,
+    });
+    return created(res, result, 'Stock mis a jour');
   } catch (error) {
     logger.error('Erreur entreeStock', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'STOCK_ENTRY_FAILED' });
