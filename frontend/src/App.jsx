@@ -27,6 +27,8 @@ const Abonnement = lazy(() => import('./pages/Abonnement'));
 const Boutiques = lazy(() => import('./pages/Boutiques'));
 const NouvelleBoutique = lazy(() => import('./pages/NouvelleBoutique'));
 const Activite = lazy(() => import('./pages/Activite'));
+const SuperAdminBoutiques = lazy(() => import('./pages/SuperAdminBoutiques'));
+const SuperAdminBoutique = lazy(() => import('./pages/SuperAdminBoutique'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -35,13 +37,14 @@ function RouteLoader() {
   return <div className="loading" role="status" aria-live="polite"><Button disabled>Chargement Shadcn...</Button></div>;
 }
 
-function PrivateRoute({ children, adminOnly = false }) {
+function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
   const { user, isAdmin, loading } = useAuth();
-  
+
   if (loading) return <div className="loading">Chargement...</div>;
   if (!user) return <Navigate to="/login" />;
   if (adminOnly && !isAdmin) return <Navigate to="/app" />;
-  
+  if (superAdminOnly && user.role !== 'SUPERADMIN') return <Navigate to="/app" />;
+
   return children;
 }
 
@@ -78,6 +81,8 @@ function AppRoutes() {
           <Route path="boutiques" element={<PrivateRoute adminOnly><Boutiques /></PrivateRoute>} />
           <Route path="boutiques/nouvelle" element={<PrivateRoute adminOnly><NouvelleBoutique /></PrivateRoute>} />
           <Route path="activite" element={<PrivateRoute adminOnly><Activite /></PrivateRoute>} />
+          <Route path="superadmin" element={<PrivateRoute superAdminOnly><SuperAdminBoutiques /></PrivateRoute>} />
+          <Route path="superadmin/:id" element={<PrivateRoute superAdminOnly><SuperAdminBoutique /></PrivateRoute>} />
         </Route>
       </Routes>
     </Suspense>
