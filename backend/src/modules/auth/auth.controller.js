@@ -501,4 +501,17 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, addEmployee, getEmployees, toggleEmployee, verifyEmail, resendVerification, forgotPassword, resetPassword };
+// Déconnexion — trace l'événement
+const logout = async (req, res) => {
+  logAudit(prisma, {
+    action: 'CANCEL',
+    entite: 'connexion',
+    entiteId: req.user.id,
+    message: "Deconnexion (" + req.user.email + ")",
+    userId: req.user.id,
+    boutiqueId: req.user.boutiqueId,
+  });
+  res.json({ success: true });
+};
+
+module.exports = { register, login, logout, getMe, addEmployee, getEmployees, toggleEmployee, verifyEmail, resendVerification, forgotPassword, resetPassword };

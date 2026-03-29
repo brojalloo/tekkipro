@@ -1,6 +1,6 @@
 // Routes Authentification
 const router = require('express').Router();
-const { register, login, getMe, addEmployee, getEmployees, toggleEmployee, verifyEmail, resendVerification, forgotPassword, resetPassword } = require('./auth.controller');
+const { register, login, logout, getMe, addEmployee, getEmployees, toggleEmployee, verifyEmail, resendVerification, forgotPassword, resetPassword } = require('./auth.controller');
 const { auth, adminOnly, checkPlanUtilisateurs } = require('../../middleware/auth.middleware');
 const { authRateLimiter, passwordResetRateLimiter } = require('../../middleware/security.middleware');
 const { handleValidationErrors } = require('../../middleware/validation.middleware');
@@ -21,6 +21,7 @@ router.post('/resend-verification', authRateLimiter, emailActionValidation, hand
 router.post('/forgot-password', passwordResetRateLimiter, emailActionValidation, handleValidationErrors, forgotPassword);
 router.post('/reset-password', passwordResetRateLimiter, resetPasswordValidation, handleValidationErrors, resetPassword);
 router.get('/me', auth, getMe);
+router.post('/logout', auth, logout);
 router.post('/employees', auth, adminOnly, checkPlanUtilisateurs, addEmployeeValidation, handleValidationErrors, addEmployee);
 router.get('/employees', auth, adminOnly, getEmployees);
 router.patch('/employees/:id/toggle', auth, adminOnly, toggleEmployeeValidation, handleValidationErrors, toggleEmployee);
