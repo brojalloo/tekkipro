@@ -71,7 +71,9 @@ export default function Layout() {
 
   const currentBoutiqueId = activeBoutique || boutique?.id;
 
-  const navItems = [
+  const navItems = user?.role === 'SUPERADMIN' ? [
+    { to: '/app/superadmin', icon: <FiShield />, label: 'Super-Admin' },
+  ] : [
     { to: '/app', icon: <FiHome />, label: 'Tableau de bord', end: true },
     { to: '/app/ventes/nouvelle', icon: <FiShoppingCart />, label: 'Nouvelle Vente', sectionBefore: 'Ventes' },
     { to: '/app/ventes', icon: <FiBarChart2 />, label: 'Ventes' },
@@ -86,9 +88,6 @@ export default function Layout() {
       { to: '/app/parametres', icon: <FiSettings />, label: 'Paramètres' },
       { to: '/app/abonnement', icon: <FiCreditCard />, label: 'Abonnement' },
       ...(isBusiness ? [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques' }] : [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques', locked: true }]),
-    ] : []),
-    ...(user?.role === 'SUPERADMIN' ? [
-      { to: '/app/superadmin', icon: <FiShield />, label: 'Super-Admin', sectionBefore: 'Super-Admin' },
     ] : []),
   ];
 
