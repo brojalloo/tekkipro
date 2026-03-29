@@ -21,6 +21,11 @@ const auth = async (req, res, next) => {
       return unauthorized(res, 'Utilisateur non trouvé ou désactivé', { code: 'USER_INACTIVE_OR_MISSING' });
     }
 
+    // Bloquer si boutique suspendue ou supprimée (sauf SUPERADMIN qui n'a pas de boutique)
+    if (user.boutique && (user.boutique.statut === 'SUSPENDUE' || user.boutique.deletedAt)) {
+      return forbidden(res, 'Boutique suspendue ou supprimée', { code: 'BOUTIQUE_INACTIVE' });
+    }
+
     req.user = user;
     req.boutiqueId = user.boutiqueId;
 
@@ -56,6 +61,14 @@ const auth = async (req, res, next) => {
 const adminOnly = (req, res, next) => {
   if (req.user.role !== 'ADMIN') {
     return forbidden(res, 'Accès réservé aux administrateurs', { code: 'ADMIN_ONLY' });
+  }
+  next();
+};
+
+// Middleware pour vérifier le rôle SUPERADMIN
+const superAdminOnly = (req, res, next) => {
+  if (req.user.role !== 'SUPERADMIN') {
+    return forbidden(res, 'Accès réservé au super-administrateur', { code: 'SUPERADMIN_ONLY' });
   }
   next();
 };
@@ -232,4 +245,4 @@ const checkPlanCategories = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, adminOnly, PLAN_LIMITS, requirePlan, checkPlanProduits, checkPlanUtilisateurs, checkPlanClients, checkPlanVentes, checkPlanCategories };
+module.exports = { auth, adminOnly, superAdminOnly, PLAN_LIMITS, requirePlan, checkPlanProduits, checkPlanUtilisateurs, checkPlanClients, checkPlanVentes, checkPlanCategories };
