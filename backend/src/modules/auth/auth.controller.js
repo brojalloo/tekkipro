@@ -194,22 +194,24 @@ const login = async (req, res) => {
           role: user.role,
           telephone: user.telephone,
         },
-        boutique: {
+        boutique: user.boutique ? {
           id: user.boutique.id,
           nom: user.boutique.nom,
           slug: user.boutique.slug,
           plan: user.boutique.plan,
-        },
+        } : null,
       },
     });
-    logAudit(prisma, {
-      action: 'CREATE',
-      entite: 'connexion',
-      entiteId: user.id,
-      message: 'Connexion reussie (' + user.email + ')',
-      userId: user.id,
-      boutiqueId: user.boutiqueId,
-    });
+    if (user.boutiqueId) {
+      logAudit(prisma, {
+        action: 'CREATE',
+        entite: 'connexion',
+        entiteId: user.id,
+        message: 'Connexion reussie (' + user.email + ')',
+        userId: user.id,
+        boutiqueId: user.boutiqueId,
+      });
+    }
   } catch (error) {
     logger.error('Erreur login', error);
     return sendError(res, 'Erreur lors de la connexion', 500, { code: 'LOGIN_FAILED' });
@@ -238,6 +240,12 @@ const getMe = async (req, res) => {
     });
 
     const boutiqueId = user.boutiqueId;
+
+    // SUPERADMIN n'a pas de boutique — pas de planUsage
+    if (!boutiqueId) {
+      return res.json({ success: true, data: { ...user, planUsage: null } });
+    }
+
     const plan = user.boutique?.plan || 'GRATUIT';
     const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.GRATUIT;
 
