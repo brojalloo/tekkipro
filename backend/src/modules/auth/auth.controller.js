@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const prisma = require('../../config/database');
 const logger = require('../../common/utils/logger');
+const { logAudit } = require('../../common/utils/auditLog');
 const {
   badRequest,
   conflict,
@@ -200,6 +201,14 @@ const login = async (req, res) => {
           plan: user.boutique.plan,
         },
       },
+    });
+    logAudit(prisma, {
+      action: 'CREATE',
+      entite: 'connexion',
+      entiteId: user.id,
+      message: 'Connexion reussie (' + user.email + ')',
+      userId: user.id,
+      boutiqueId: user.boutiqueId,
     });
   } catch (error) {
     logger.error('Erreur login', error);
