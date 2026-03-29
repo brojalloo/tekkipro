@@ -65,7 +65,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to={user ? '/app' : '/landing'} replace />} />
         
         <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
-          <Route index element={<Dashboard />} />
+          <Route index element={user?.role === 'SUPERADMIN' ? <Navigate to="/app/superadmin" replace /> : <Dashboard />} />
           <Route path="produits" element={<Produits />} />
           <Route path="produits/nouveau" element={<PrivateRoute adminOnly><ProduitForm /></PrivateRoute>} />
           <Route path="produits/:id/edit" element={<PrivateRoute adminOnly><ProduitForm /></PrivateRoute>} />
