@@ -126,7 +126,7 @@ export default function Layout() {
             )}
           </div>
 
-          {showExpandedSidebarContent && (
+          {showExpandedSidebarContent && user?.role !== 'SUPERADMIN' && (
             <div className={`sidebar-plan-badge plan-${normalizedPlan}`}>
               {planLabel}
             </div>
@@ -209,7 +209,7 @@ export default function Layout() {
               <div className="user-avatar">{user?.prenom?.[0] || user?.nom?.[0] || 'T'}</div>
               <div className="user-meta">
                 <div className="name">{user?.prenom} {user?.nom}</div>
-                <div className="role">{user?.role === 'ADMIN' ? <><FiShield size={12} /> Administrateur</> : <><FiUser size={12} /> Employé</>}</div>
+                <div className="role">{user?.role === 'SUPERADMIN' ? <><FiShield size={12} /> Super-Admin</> : user?.role === 'ADMIN' ? <><FiShield size={12} /> Administrateur</> : <><FiUser size={12} /> Employé</>}</div>
               </div>
             </div>
           )}
