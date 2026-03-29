@@ -140,8 +140,8 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const logout = () => {
-    api.post('/auth/logout').catch(() => {});
+  const logout = async () => {
+    try { await api.post('/auth/logout'); } catch {}
     clearStoredAuth();
     setUser(null);
     setBoutique(null);
