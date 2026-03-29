@@ -4,6 +4,7 @@ const { badRequest, created, error: sendError, notFound } = require('../../commo
 const { normalizePeremptionPayload } = require('../../common/utils/peremption');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
 const logger = require('../../common/utils/logger');
+const { logAudit } = require('../../common/utils/auditLog');
 
 const COMMERCIAL_MODES = {
   poids: {
@@ -311,7 +312,15 @@ const create = async (req, res) => {
       include: { unitesVente: { orderBy: { estDefaut: 'desc' } }, categorie: { select: { id: true, nom: true } } },
     });
 
-    return created(res, produit, 'Produit créé');
+    logAudit(prisma, {
+      action: 'CREATE',
+      entite: 'produit',
+      entiteId: produit.id,
+      message: `Produit "${produit.nom}" cree`,
+      userId: req.user.id,
+      boutiqueId: req.boutiqueId,
+    });
+    return created(res, produit, 'Produit cree');
   } catch (error) {
     logger.error('Erreur create produit', error);
     return sendError(res, 'Erreur lors de la création du produit', 500, { code: 'PRODUCT_CREATE_FAILED' });
@@ -375,7 +384,15 @@ const update = async (req, res) => {
       include: { unitesVente: { orderBy: { estDefaut: 'desc' } }, categorie: true },
     });
 
-    res.json({ success: true, message: 'Produit mis à jour', data: produit });
+    logAudit(prisma, {
+      action: 'UPDATE',
+      entite: 'produit',
+      entiteId: produit.id,
+      message: `Produit "${produit.nom}" modifie`,
+      userId: req.user.id,
+      boutiqueId: req.boutiqueId,
+    });
+    res.json({ success: true, message: 'Produit mis a jour', data: produit });
   } catch (error) {
     logger.error('Erreur update produit', error);
     return sendError(res, 'Erreur lors de la mise à jour', 500, { code: 'PRODUCT_UPDATE_FAILED' });
@@ -399,7 +416,15 @@ const remove = async (req, res) => {
       data: { actif: false },
     });
 
-    res.json({ success: true, message: 'Produit désactivé' });
+    logAudit(prisma, {
+      action: 'DELETE',
+      entite: 'produit',
+      entiteId: existing.id,
+      message: `Produit "${existing.nom}" supprime`,
+      userId: req.user.id,
+      boutiqueId: req.boutiqueId,
+    });
+    res.json({ success: true, message: 'Produit desactive' });
   } catch (error) {
     return sendError(res, 'Erreur serveur', 500, { code: 'PRODUCT_REMOVE_FAILED' });
   }
