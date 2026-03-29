@@ -5,6 +5,7 @@ const prisma = require('../../config/database');
 const { badRequest, created, error: sendError, notFound } = require('../../common/utils/response');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
 const logger = require('../../common/utils/logger');
+const { logAudit } = require('../../common/utils/auditLog');
 
 // Générer un numéro de vente unique
 const generateNumeroVente = () => {
@@ -162,7 +163,15 @@ const create = async (req, res) => {
       return vente;
     });
 
-    return created(res, result, 'Vente enregistrée');
+    logAudit(prisma, {
+      action: 'CREATE',
+      entite: 'vente',
+      entiteId: result.id,
+      message: `${result.user?.prenom || ''} ${result.user?.nom || ''} a cree une vente de ${result.montantTotal} CFA`.trim(),
+      userId: req.user.id,
+      boutiqueId: req.boutiqueId,
+    });
+    return created(res, result, 'Vente enregistree');
   } catch (error) {
     if (error instanceof BusinessError) {
       return badRequest(res, error.message, { code: 'SALE_CREATE_FAILED' });
@@ -307,7 +316,15 @@ const annuler = async (req, res) => {
       }
     });
 
-    res.json({ success: true, message: 'Vente annulée, stock restauré' });
+    logAudit(prisma, {
+      action: 'CANCEL',
+      entite: 'vente',
+      entiteId: parseInt(id),
+      message: `Vente #${id} annulee, stock restaure`,
+      userId: req.user.id,
+      boutiqueId: req.boutiqueId,
+    });
+    res.json({ success: true, message: 'Vente annulee, stock restaure' });
   } catch (error) {
     logger.error('Erreur annuler vente', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'SALE_CANCEL_FAILED' });
