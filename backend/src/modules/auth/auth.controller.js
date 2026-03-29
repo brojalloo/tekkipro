@@ -503,15 +503,21 @@ const resetPassword = async (req, res) => {
 
 // Déconnexion — trace l'événement
 const logout = async (req, res) => {
-  logAudit(prisma, {
-    action: 'CANCEL',
-    entite: 'connexion',
-    entiteId: req.user.id,
-    message: "Deconnexion (" + req.user.email + ")",
-    userId: req.user.id,
-    boutiqueId: req.user.boutiqueId,
-  });
   res.json({ success: true });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { email: true },
+    });
+    logAudit(prisma, {
+      action: 'CANCEL',
+      entite: 'connexion',
+      entiteId: req.user.id,
+      message: "Deconnexion (" + (user?.email || req.user.id) + ")",
+      userId: req.user.id,
+      boutiqueId: req.user.boutiqueId,
+    });
+  } catch {}
 };
 
 module.exports = { register, login, logout, getMe, addEmployee, getEmployees, toggleEmployee, verifyEmail, resendVerification, forgotPassword, resetPassword };
