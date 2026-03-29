@@ -8,7 +8,7 @@ import {
   FiHome, FiPackage, FiShoppingCart, FiUsers, FiTruck,
   FiDatabase, FiDollarSign, FiUserCheck, FiSettings, FiLogOut, FiShield, FiUser, FiCreditCard,
   FiGrid, FiChevronDown, FiCheck, FiLock, FiMenu, FiChevronsLeft, FiChevronsRight, FiX,
-  FiBarChart2, FiAlertTriangle
+  FiBarChart2, FiAlertTriangle, FiClock
 } from 'react-icons/fi';
 
 export default function Layout() {
@@ -82,6 +82,7 @@ export default function Layout() {
     ...(isAdmin ? [
       ...(isPro ? [{ to: '/app/fournisseurs', icon: <FiTruck />, label: 'Fournisseurs', sectionBefore: 'Administration' }] : [{ to: '/app/fournisseurs', icon: <FiTruck />, label: 'Fournisseurs', locked: true, sectionBefore: 'Administration' }]),
       ...(isPro ? [{ to: '/app/employes', icon: <FiUserCheck />, label: 'Employés' }] : [{ to: '/app/employes', icon: <FiUserCheck />, label: 'Employés', locked: true }]),
+      { to: '/app/activite', icon: <FiClock />, label: 'Activite' },
       { to: '/app/parametres', icon: <FiSettings />, label: 'Paramètres' },
       { to: '/app/abonnement', icon: <FiCreditCard />, label: 'Abonnement' },
       ...(isBusiness ? [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques' }] : [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques', locked: true }]),

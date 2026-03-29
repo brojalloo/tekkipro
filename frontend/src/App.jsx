@@ -26,6 +26,7 @@ const MobileLanding = lazy(() => import('./pages/MobileLanding'));
 const Abonnement = lazy(() => import('./pages/Abonnement'));
 const Boutiques = lazy(() => import('./pages/Boutiques'));
 const NouvelleBoutique = lazy(() => import('./pages/NouvelleBoutique'));
+const Activite = lazy(() => import('./pages/Activite'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -76,6 +77,7 @@ function AppRoutes() {
           <Route path="abonnement" element={<PrivateRoute adminOnly><Abonnement /></PrivateRoute>} />
           <Route path="boutiques" element={<PrivateRoute adminOnly><Boutiques /></PrivateRoute>} />
           <Route path="boutiques/nouvelle" element={<PrivateRoute adminOnly><NouvelleBoutique /></PrivateRoute>} />
+          <Route path="activite" element={<PrivateRoute adminOnly><Activite /></PrivateRoute>} />
         </Route>
       </Routes>
     </Suspense>
