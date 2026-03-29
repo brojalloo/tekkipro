@@ -16,6 +16,12 @@ enum Plan {
 enum Role {
   ADMIN
   EMPLOYE
+  SUPERADMIN
+}
+
+enum BoutiqueStatut {
+  ACTIVE
+  SUSPENDUE
 }
 
 enum ModePaiement {
@@ -85,7 +91,9 @@ model Boutique {
   email       String?  @unique
   logo        String?
   ninea       String?
-  plan        Plan     @default(GRATUIT)
+  plan        Plan            @default(GRATUIT)
+  statut      BoutiqueStatut  @default(ACTIVE)
+  deletedAt   DateTime?
   slug        String   @unique
   devise      String   @default("FCFA")
   parentBoutiqueId Int?
@@ -124,11 +132,11 @@ model User {
   tokenVerificationExp  DateTime?
   tokenResetPassword    String?  @unique
   tokenResetPasswordExp DateTime?
-  boutiqueId            Int
+  boutiqueId            Int?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
-  boutique    Boutique   @relation(fields: [boutiqueId], references: [id])
+  boutique    Boutique?  @relation(fields: [boutiqueId], references: [id])
   ventes      Vente[]
   auditLogs   AuditLog[]
 
