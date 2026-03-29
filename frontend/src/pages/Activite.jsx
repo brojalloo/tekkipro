@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiXCircle, FiPackage, FiLogIn, FiClock } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiXCircle, FiPackage, FiLogIn, FiLogOut, FiClock } from 'react-icons/fi';
 import api from '../services/api';
 
 const ACTION_CONFIG = {
@@ -10,10 +10,12 @@ const ACTION_CONFIG = {
   STOCK_ADJUST: { icon: <FiPackage />,  color: '#F9A825' },
 };
 
-const CONNEXION_CONFIG = { icon: <FiLogIn />, color: '#546E7A' };
-
 function getActionConfig(action, entite) {
-  if (entite === 'connexion') return CONNEXION_CONFIG;
+  if (entite === 'connexion') {
+    return action === 'CANCEL'
+      ? { icon: <FiLogOut />, color: '#546E7A' }
+      : { icon: <FiLogIn />,  color: '#546E7A' };
+  }
   return ACTION_CONFIG[action] || { icon: <FiClock />, color: '#888' };
 }
 
