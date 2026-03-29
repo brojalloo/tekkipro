@@ -12,6 +12,7 @@ const reportsRoutes     = require('../modules/reports');
 const abonnementRoutes  = require('../modules/abonnements');
 const paymentRoutes     = require('../modules/payments');
 const barcodeRoutes     = require('../modules/barcodes');
+const auditRoutes       = require('../modules/audit');
 
 function registerRoutes(app) {
   // Auth
@@ -46,6 +47,9 @@ function registerRoutes(app) {
 
   // Barcodes (nouveau module)
   app.use('/api/barcodes', barcodeRoutes);
+
+  // Audit logs
+  app.use('/api/audit', auditRoutes);
 
   // Health check
   app.get('/api/health', (req, res) => {
