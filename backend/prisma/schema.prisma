@@ -434,11 +434,11 @@ model AuditLog {
   avant      Json?
   apres      Json?
   userId     Int?
-  boutiqueId Int
+  boutiqueId Int?
   createdAt  DateTime    @default(now())
 
-  boutique Boutique @relation(fields: [boutiqueId], references: [id])
-  user     User?    @relation(fields: [userId], references: [id])
+  boutique Boutique? @relation(fields: [boutiqueId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id])
 
   @@index([boutiqueId, createdAt])
   @@index([boutiqueId, entite])
