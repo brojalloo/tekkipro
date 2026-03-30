@@ -347,6 +347,7 @@ const toggleEmployee = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { actif: !user.actif },
+      select: { id: true, nom: true, prenom: true, email: true, role: true, actif: true },
     });
 
     res.json({ success: true, message: `Employé ${updated.actif ? 'activé' : 'désactivé'}`, data: updated });
