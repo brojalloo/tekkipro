@@ -1,9 +1,18 @@
 // Contrôleur Super-Admin
 const prisma = require('../../config/database');
-const { success, notFound, error: sendError, badRequest } = require('../../common/utils/response');
+const bcrypt = require('bcryptjs');
+const { success, notFound, error: sendError, badRequest, conflict, created } = require('../../common/utils/response');
 const { parsePagination, paginatedResponse } = require('../../common/utils/pagination');
 const { logAudit } = require('../../common/utils/auditLog');
 const logger = require('../../common/utils/logger');
+
+const PASSWORD_MIN_LENGTH = 8;
+const isStrongPassword = (password) => {
+  if (typeof password !== 'string' || password.length < PASSWORD_MIN_LENGTH) return false;
+  return /[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
+};
+const getPasswordValidationMessage = () =>
+  `Le mot de passe doit contenir au moins ${PASSWORD_MIN_LENGTH} caractères, avec une minuscule, une majuscule, un chiffre et un caractère spécial`;
 
 // Inclure les données de base de chaque boutique
 const BOUTIQUE_INCLUDE = {
@@ -14,6 +23,34 @@ const BOUTIQUE_INCLUDE = {
     take: 1,
     select: { id: true, plan: true, dateDebut: true, dateFin: true, montant: true, statut: true },
   },
+};
+
+// GET /api/superadmin/stats
+const getStats = async (req, res) => {
+  try {
+    const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+    const [total, actives, suspendues, gratuit, pro, business, nouveauxCeMois] = await prisma.$transaction([
+      prisma.boutique.count({ where: { deletedAt: null } }),
+      prisma.boutique.count({ where: { deletedAt: null, statut: 'ACTIVE' } }),
+      prisma.boutique.count({ where: { deletedAt: null, statut: 'SUSPENDUE' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'GRATUIT' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'PRO' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'BUSINESS' } }),
+      prisma.boutique.count({ where: { deletedAt: null, createdAt: { gte: debutMois } } }),
+    ]);
+
+    return success(res, {
+      total,
+      actives,
+      suspendues,
+      parPlan: { GRATUIT: gratuit, PRO: pro, BUSINESS: business },
+      nouveauxCeMois,
+    });
+  } catch (err) {
+    logger.error('Erreur getStats superadmin', err);
+    return sendError(res, 'Erreur serveur', 500, { code: 'SUPERADMIN_STATS_FAILED' });
+  }
 };
 
 // GET /api/superadmin/boutiques
@@ -196,4 +233,128 @@ const softDelete = async (req, res) => {
   }
 };
 
-module.exports = { getBoutiques, getBoutique, changePlan, toggleStatut, softDelete };
+// POST /api/superadmin/admins
+const createAdmin = async (req, res) => {
+  try {
+    const { prenom, nom, email, password } = req.body;
+    if (!prenom || !nom || !email || !password) {
+      return badRequest(res, 'Tous les champs sont requis');
+    }
+    if (!isStrongPassword(password)) {
+      return badRequest(res, getPasswordValidationMessage(), { code: 'WEAK_PASSWORD' });
+    }
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return conflict(res, 'Cet email est déjà utilisé', { code: 'EMAIL_ALREADY_USED' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        prenom,
+        nom,
+        email,
+        password: hashedPassword,
+        role: 'SUPERADMIN',
+        actif: true,
+        emailVerifie: true,
+        boutiqueId: null,
+      },
+      select: { id: true, prenom: true, nom: true, email: true, role: true, createdAt: true },
+    });
+
+    logAudit(prisma, {
+      action: 'CREATE',
+      entite: 'user',
+      entiteId: user.id,
+      message: `Nouveau SUPERADMIN créé: ${email} (par superadmin id:${req.user.id})`,
+      userId: req.user.id,
+      boutiqueId: null,
+    });
+
+    return created(res, user, 'Compte SUPERADMIN créé');
+  } catch (err) {
+    logger.error('Erreur createAdmin superadmin', err);
+    return sendError(res, 'Erreur serveur', 500, { code: 'SUPERADMIN_CREATE_ADMIN_FAILED' });
+  }
+};
+
+// GET /api/superadmin/boutiques/export
+const exportBoutiques = async (req, res) => {
+  try {
+    const { plan, statut, q } = req.query;
+    const where = { deletedAt: null };
+    if (plan) where.plan = plan;
+    if (statut) where.statut = statut;
+    if (q) where.nom = { contains: q, mode: 'insensitive' };
+
+    const boutiques = await prisma.boutique.findMany({
+      where,
+      include: {
+        _count: { select: { users: true, ventes: true } },
+        abonnements: {
+          where: { statut: 'ACTIF' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { dateFin: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const header = 'id,nom,email,plan,statut,nbUsers,nbVentes,createdAt,abonnement_dateFin';
+    const rows = boutiques.map(b => {
+      const dateFin = b.abonnements[0]?.dateFin ? new Date(b.abonnements[0].dateFin).toISOString() : '';
+      const nom = `"${(b.nom || '').replace(/"/g, '""')}"`;
+      const email = `"${(b.email || '').replace(/"/g, '""')}"`;
+      return [b.id, nom, email, b.plan, b.statut, b._count.users, b._count.ventes, new Date(b.createdAt).toISOString(), dateFin].join(',');
+    });
+
+    const csv = [header, ...rows].join('\n');
+    const date = new Date().toISOString().slice(0, 10);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="boutiques-${date}.csv"`);
+    return res.send(csv);
+  } catch (err) {
+    logger.error('Erreur exportBoutiques superadmin', err);
+    return sendError(res, 'Erreur serveur', 500, { code: 'SUPERADMIN_EXPORT_FAILED' });
+  }
+};
+
+// GET /api/superadmin/audit-logs
+const getAuditLogs = async (req, res) => {
+  try {
+    const { page, limit, skip, take } = parsePagination(req.query);
+    const { boutiqueId, action, entite, from, to } = req.query;
+
+    const where = {};
+    if (boutiqueId) where.boutiqueId = parseInt(boutiqueId);
+    if (action) where.action = action;
+    if (entite) where.entite = entite;
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(from);
+      if (to) where.createdAt.lte = new Date(to);
+    }
+
+    const [logs, total] = await prisma.$transaction([
+      prisma.auditLog.findMany({
+        where,
+        include: {
+          boutique: { select: { id: true, nom: true } },
+          user: { select: { id: true, prenom: true, nom: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
+
+    res.json(paginatedResponse(logs, total, page, limit));
+  } catch (err) {
+    logger.error('Erreur getAuditLogs superadmin', err);
+    return sendError(res, 'Erreur serveur', 500, { code: 'SUPERADMIN_AUDIT_LOGS_FAILED' });
+  }
+};
+
+module.exports = { getBoutiques, getBoutique, changePlan, toggleStatut, softDelete, getStats, createAdmin, exportBoutiques, getAuditLogs };
