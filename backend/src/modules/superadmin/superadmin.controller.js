@@ -85,6 +85,7 @@ const getBoutiques = async (req, res) => {
 const getBoutique = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return badRequest(res, 'ID invalide');
     const boutique = await prisma.boutique.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -121,6 +122,7 @@ const getBoutique = async (req, res) => {
 const changePlan = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return badRequest(res, 'ID invalide');
     const { plan, dateFin, montant } = req.body;
 
     if (!plan || !['GRATUIT', 'PRO', 'BUSINESS'].includes(plan)) {
@@ -179,6 +181,7 @@ const changePlan = async (req, res) => {
 const toggleStatut = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return badRequest(res, 'ID invalide');
     const boutique = await prisma.boutique.findFirst({ where: { id, deletedAt: null } });
     if (!boutique) return notFound(res, 'Boutique introuvable');
 
@@ -205,6 +208,7 @@ const toggleStatut = async (req, res) => {
 const softDelete = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return badRequest(res, 'ID invalide');
     const boutique = await prisma.boutique.findFirst({ where: { id, deletedAt: null } });
     if (!boutique) return notFound(res, 'Boutique introuvable ou déjà supprimée');
 
