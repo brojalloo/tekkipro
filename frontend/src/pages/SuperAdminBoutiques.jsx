@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiShield, FiSearch } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const PLAN_COLORS = {
@@ -23,6 +24,11 @@ export default function SuperAdminBoutiques() {
   const [q, setQ] = useState('');
   const [filterPlan, setFilterPlan] = useState('');
   const [filterStatut, setFilterStatut] = useState('');
+  const [stats, setStats] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ prenom: '', nom: '', email: '', password: '' });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   const fetchBoutiques = useCallback(async (p = 1) => {
     setLoading(true);
@@ -46,6 +52,47 @@ export default function SuperAdminBoutiques() {
     fetchBoutiques(1);
   }, [fetchBoutiques]);
 
+  useEffect(() => {
+    api.get('/superadmin/stats')
+      .then(res => setStats(res.data.data))
+      .catch(() => {});
+  }, []);
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setCreateError('');
+    try {
+      await api.post('/superadmin/admins', createForm);
+      setShowCreateModal(false);
+      setCreateForm({ prenom: '', nom: '', email: '', password: '' });
+      toast.success('Compte SUPERADMIN créé');
+    } catch (err) {
+      setCreateError(err.response?.data?.message || 'Erreur lors de la création');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const params = {};
+      if (q) params.q = q;
+      if (filterPlan) params.plan = filterPlan;
+      if (filterStatut) params.statut = filterStatut;
+
+      const res = await api.get('/superadmin/boutiques/export', { params, responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `boutiques-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Erreur lors de l\'export');
+    }
+  };
+
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   return (
@@ -53,7 +100,37 @@ export default function SuperAdminBoutiques() {
       <div className="flex items-center gap-2 mb-6">
         <FiShield size={22} className="text-gray-600" />
         <h1 className="text-xl font-semibold text-gray-800">Super-Admin — Boutiques</h1>
-        <span className="ml-auto text-sm text-gray-500">{pagination.total} boutique{pagination.total !== 1 ? 's' : ''}</span>
+        <span className="text-sm text-gray-500">{pagination.total} boutique{pagination.total !== 1 ? 's' : ''}</span>
+        <button
+          onClick={() => navigate('/app/superadmin/logs')}
+          className="ml-auto px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+        >
+          Logs d&apos;audit
+        </button>
+        <button
+          onClick={() => { setCreateError(''); setShowCreateModal(true); }}
+          className="ml-2 px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+        >
+          + Nouveau SUPERADMIN
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Total boutiques', value: stats?.total, color: 'text-gray-800' },
+          { label: 'Actives', value: stats?.actives, color: 'text-green-700' },
+          { label: 'Suspendues', value: stats?.suspendues, color: 'text-red-600' },
+          { label: 'Nouveaux ce mois', value: stats?.nouveauxCeMois, color: 'text-green-800' },
+          { label: 'Starter', value: stats?.parPlan?.GRATUIT, color: 'text-gray-600' },
+          { label: 'Pro', value: stats?.parPlan?.PRO, color: 'text-blue-700' },
+          { label: 'Business', value: stats?.parPlan?.BUSINESS, color: 'text-yellow-700' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="bg-white border border-gray-200 rounded-lg p-3">
+            <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filtres */}
@@ -87,6 +164,12 @@ export default function SuperAdminBoutiques() {
           <option value="ACTIVE">Active</option>
           <option value="SUSPENDUE">Suspendue</option>
         </select>
+        <button
+          onClick={handleExport}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+        >
+          Exporter CSV
+        </button>
       </div>
 
       {/* Table */}
@@ -160,6 +243,77 @@ export default function SuperAdminBoutiques() {
           >
             Suivant
           </button>
+        </div>
+      )}
+
+      {/* Modal créer SUPERADMIN */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Nouveau compte SUPERADMIN</h2>
+            <form onSubmit={handleCreateAdmin} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Prénom</label>
+                  <input
+                    type="text"
+                    value={createForm.prenom}
+                    onChange={e => setCreateForm(f => ({ ...f, prenom: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Nom</label>
+                  <input
+                    type="text"
+                    value={createForm.nom}
+                    onChange={e => setCreateForm(f => ({ ...f, nom: e.target.value }))}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={createForm.email}
+                  onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                  required
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mot de passe</label>
+                <input
+                  type="password"
+                  value={createForm.password}
+                  onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                  required
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">Min. 8 caractères, majuscule, chiffre, caractère spécial</p>
+              </div>
+              {createError && <p className="text-sm text-red-600">{createError}</p>}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {creating ? 'Création...' : 'Créer'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiShield } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import AuditLogTable from '../components/AuditLogTable';
 
 const PLAN_COLORS = {
   GRATUIT:  { bg: '#E8F5E9', text: '#2E7D32' },
@@ -263,6 +264,12 @@ export default function SuperAdminBoutique() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Section 5 — Historique des actions */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mt-4">
+        <h2 className="text-sm font-semibold text-gray-600 mb-4">Historique des actions</h2>
+        <AuditLogTable boutiqueId={parseInt(id)} />
       </div>
     </div>
   );

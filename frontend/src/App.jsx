@@ -29,6 +29,7 @@ const NouvelleBoutique = lazy(() => import('./pages/NouvelleBoutique'));
 const Activite = lazy(() => import('./pages/Activite'));
 const SuperAdminBoutiques = lazy(() => import('./pages/SuperAdminBoutiques'));
 const SuperAdminBoutique = lazy(() => import('./pages/SuperAdminBoutique'));
+const SuperAdminLogs = lazy(() => import('./pages/SuperAdminLogs'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -82,6 +83,7 @@ function AppRoutes() {
           <Route path="boutiques/nouvelle" element={<PrivateRoute adminOnly><NouvelleBoutique /></PrivateRoute>} />
           <Route path="activite" element={<PrivateRoute adminOnly><Activite /></PrivateRoute>} />
           <Route path="superadmin" element={<PrivateRoute superAdminOnly><SuperAdminBoutiques /></PrivateRoute>} />
+          <Route path="superadmin/logs" element={<PrivateRoute superAdminOnly><SuperAdminLogs /></PrivateRoute>} />
           <Route path="superadmin/:id" element={<PrivateRoute superAdminOnly><SuperAdminBoutique /></PrivateRoute>} />
         </Route>
       </Routes>
