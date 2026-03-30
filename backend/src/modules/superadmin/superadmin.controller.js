@@ -164,7 +164,7 @@ const changePlan = async (req, res) => {
       action: 'UPDATE',
       entite: 'boutique',
       entiteId: id,
-      message: `Plan changé: ${ancienPlan} → ${plan} (par superadmin id:${req.user.id})`,
+      message: `Plan changé: ${ancienPlan} → ${plan} (par ${req.user.prenom} ${req.user.nom})`,
       userId: req.user.id,
       boutiqueId: id,
     });
@@ -192,7 +192,7 @@ const toggleStatut = async (req, res) => {
       action: 'UPDATE',
       entite: 'boutique',
       entiteId: id,
-      message: `Boutique ${nouveauStatut === 'SUSPENDUE' ? 'suspendue' : 'réactivée'} (par superadmin id:${req.user.id})`,
+      message: `Boutique ${nouveauStatut === 'SUSPENDUE' ? 'suspendue' : 'réactivée'} (par ${req.user.prenom} ${req.user.nom})`,
       userId: req.user.id,
       boutiqueId: id,
     });
@@ -218,7 +218,7 @@ const softDelete = async (req, res) => {
       action: 'DELETE',
       entite: 'boutique',
       entiteId: id,
-      message: `Boutique supprimée (soft delete) par superadmin id:${req.user.id}`,
+      message: `Boutique supprimée par ${req.user.prenom} ${req.user.nom}`,
       userId: req.user.id,
       boutiqueId: id,
     });
@@ -262,7 +262,7 @@ const createAdmin = async (req, res) => {
       action: 'CREATE',
       entite: 'user',
       entiteId: user.id,
-      message: `Nouveau SUPERADMIN créé: ${email} (par superadmin id:${req.user.id})`,
+      message: `Nouveau SUPERADMIN créé: ${email} (par ${req.user.prenom} ${req.user.nom})`,
       userId: req.user.id,
       boutiqueId: null,
     });

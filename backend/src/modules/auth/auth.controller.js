@@ -155,6 +155,14 @@ const login = async (req, res) => {
     }
 
     if (user.boutique && user.boutique.statut === 'SUSPENDUE') {
+      logAudit(prisma, {
+        action: 'CANCEL',
+        entite: 'connexion',
+        entiteId: user.id,
+        message: `Connexion refusée - boutique suspendue (${user.email})`,
+        userId: user.id,
+        boutiqueId: user.boutiqueId,
+      });
       return unauthorized(res, 'Cette boutique est suspendue. Contactez le support.', { code: 'BOUTIQUE_SUSPENDED' });
     }
 
