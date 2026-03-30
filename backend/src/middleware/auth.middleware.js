@@ -123,6 +123,7 @@ const PLAN_LIMITS = {
 const requirePlan = (...allowedPlans) => {
   return async (req, res, next) => {
     try {
+      if (!req.boutiqueId) return next();
       const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
       if (!allowedPlans.includes(boutique.plan)) {
         const planNames = allowedPlans.map(p => PLAN_LIMITS[p].nom).join(' ou ');
@@ -144,6 +145,7 @@ const getPlanDisplayName = (plan) => PLAN_LIMITS[plan]?.nom || plan;
 // Middleware pour vérifier les limites du plan (produits)
 const checkPlanProduits = async (req, res, next) => {
   try {
+    if (!req.boutiqueId) return next();
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].produits;
     const planName = getPlanDisplayName(boutique.plan);
@@ -163,6 +165,7 @@ const checkPlanProduits = async (req, res, next) => {
 // Middleware pour vérifier les limites du plan (utilisateurs)
 const checkPlanUtilisateurs = async (req, res, next) => {
   try {
+    if (!req.boutiqueId) return next();
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].utilisateurs;
     const planName = getPlanDisplayName(boutique.plan);
@@ -182,6 +185,7 @@ const checkPlanUtilisateurs = async (req, res, next) => {
 // Middleware pour vérifier les limites du plan (clients)
 const checkPlanClients = async (req, res, next) => {
   try {
+    if (!req.boutiqueId) return next();
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].clients;
     const planName = getPlanDisplayName(boutique.plan);
@@ -201,6 +205,7 @@ const checkPlanClients = async (req, res, next) => {
 // Middleware pour vérifier les limites du plan (ventes par mois)
 const checkPlanVentes = async (req, res, next) => {
   try {
+    if (!req.boutiqueId) return next();
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].ventesParMois;
     const planName = getPlanDisplayName(boutique.plan);
@@ -229,6 +234,7 @@ const checkPlanVentes = async (req, res, next) => {
 // Middleware pour vérifier les limites du plan (catégories)
 const checkPlanCategories = async (req, res, next) => {
   try {
+    if (!req.boutiqueId) return next();
     const boutique = await prisma.boutique.findUnique({ where: { id: req.boutiqueId } });
     const limite = PLAN_LIMITS[boutique.plan].categories;
     const planName = getPlanDisplayName(boutique.plan);
