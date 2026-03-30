@@ -2,9 +2,18 @@
 const router = require('express').Router();
 const ctrl = require('./superadmin.controller');
 const { auth, superAdminOnly } = require('../../middleware/auth.middleware');
+const { createRateLimiter } = require('../../middleware/security.middleware');
 const { validateBoutiqueId, validateChangePlan, validateCreateAdmin, validateAuditLogsQuery, validateBoutiquesQuery } = require('./superadmin.validation');
 
-router.use(auth, superAdminOnly);
+// Rate limiter spécifique aux routes super-admin (60 req/min par utilisateur)
+const superAdminRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: 'Trop de requêtes, réessayez dans une minute.',
+  keyGenerator: (req) => `superadmin:${req.user?.id || req.ip || 'anonymous'}`,
+});
+
+router.use(auth, superAdminOnly, superAdminRateLimiter);
 
 router.get('/stats',                  ctrl.getStats);
 router.get('/boutiques',              validateBoutiquesQuery, ctrl.getBoutiques);
