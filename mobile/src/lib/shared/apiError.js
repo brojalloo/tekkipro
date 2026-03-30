@@ -5,6 +5,8 @@ const CODE_MESSAGE_MAPS = Object.freeze({
     USER_INACTIVE_OR_MISSING: 'Votre compte n\u2019est plus actif.',
     INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
     ACCOUNT_DISABLED: 'Votre compte est désactivé.',
+    BOUTIQUE_SUSPENDED: 'Cette boutique est suspendue. Contactez le support.',
+    BOUTIQUE_INACTIVE: 'Cette boutique est suspendue. Contactez le support.',
     EMAIL_NOT_VERIFIED: 'Veuillez vérifier votre email avant de vous connecter.',
     EMAIL_REQUIRED: 'Email requis.',
     EMAIL_ALREADY_USED: 'Cet email est déjà utilisé.',
@@ -26,6 +28,8 @@ const CODE_MESSAGE_MAPS = Object.freeze({
     USER_INACTIVE_OR_MISSING: 'This account is no longer active.',
     INVALID_CREDENTIALS: 'Incorrect email or password.',
     ACCOUNT_DISABLED: 'Your account is disabled.',
+    BOUTIQUE_SUSPENDED: 'This store is suspended. Please contact support.',
+    BOUTIQUE_INACTIVE: 'This store is suspended. Please contact support.',
     EMAIL_NOT_VERIFIED: 'Please verify your email before signing in.',
     EMAIL_REQUIRED: 'Email is required.',
     EMAIL_ALREADY_USED: 'This email is already in use.',
@@ -64,6 +68,8 @@ const SESSION_ERROR_CODES = new Set([
   'INVALID_TOKEN',
   'USER_INACTIVE_OR_MISSING',
   'UNAUTHORIZED',
+  'BOUTIQUE_INACTIVE',
+  'BOUTIQUE_SUSPENDED',
 ]);
 
 function resolveLanguage(language) {
