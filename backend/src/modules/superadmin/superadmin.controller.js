@@ -333,7 +333,7 @@ const getAuditLogs = async (req, res) => {
     if (from || to) {
       where.createdAt = {};
       if (from) where.createdAt.gte = new Date(from);
-      if (to) where.createdAt.lte = new Date(to);
+      if (to) where.createdAt.lte = new Date(to + 'T23:59:59.999Z');
     }
 
     const [logs, total] = await prisma.$transaction([
