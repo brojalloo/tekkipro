@@ -154,6 +154,10 @@ const login = async (req, res) => {
       return unauthorized(res, 'Votre compte est désactivé', { code: 'ACCOUNT_DISABLED' });
     }
 
+    if (user.boutique && user.boutique.statut === 'SUSPENDUE') {
+      return unauthorized(res, 'Cette boutique est suspendue. Contactez le support.', { code: 'BOUTIQUE_SUSPENDED' });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return unauthorized(res, 'Email ou mot de passe incorrect', { code: 'INVALID_CREDENTIALS' });
