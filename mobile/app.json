@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#E8623A"
+      "backgroundColor": "#071C08"
     },
     "ios": {
       "supportsTablet": true,
@@ -17,10 +17,10 @@
     },
     "android": {
       "package": "com.tekkipro.app",
-      "usesCleartextTraffic": true,
+      "usesCleartextTraffic": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#E8623A"
+        "backgroundColor": "#071C08"
       }
     },
     "web": {
