@@ -116,7 +116,18 @@ const applySecurityHeaders = (req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()');
   const appUrl = process.env.APP_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000' : '');
   const cspSelf = appUrl ? `'self' ${appUrl}` : "'self'";
-  res.setHeader('Content-Security-Policy', `default-src ${cspSelf}; connect-src ${cspSelf}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`);
+  const csp = [
+    `default-src 'none'`,
+    `connect-src ${cspSelf}`,
+    `script-src 'none'`,
+    `style-src 'none'`,
+    `img-src 'none'`,
+    `font-src 'none'`,
+    `frame-ancestors 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+  ].join('; ');
+  res.setHeader('Content-Security-Policy', csp);
 
   const forwardedProto = getForwardedProto(req);
   if (req.secure || forwardedProto === 'https') {

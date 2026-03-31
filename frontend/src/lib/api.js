@@ -7,9 +7,9 @@ import { callPlanUsageUpdater } from '../services/planUsageStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Avertissement si HTTP utilisé en production
-if (import.meta.env.PROD && API_URL.startsWith('http://')) {
-  console.error('[Security] API_URL utilise HTTP en production. HTTPS requis.');
+// Bloquer si HTTP utilisé en production
+if (import.meta.env.PROD && !API_URL.startsWith('https://')) {
+  throw new Error('[Security] VITE_API_URL doit utiliser HTTPS en production.');
 }
 
 const api = axios.create({
