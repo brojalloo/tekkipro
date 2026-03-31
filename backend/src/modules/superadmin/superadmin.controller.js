@@ -46,6 +46,78 @@ const getStats = async (req, res) => {
   }
 };
 
+// GET /api/superadmin/dashboard
+const getDashboard = async (req, res) => {
+  try {
+    const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const now = new Date();
+    const debut12Mois = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+    const [
+      total, actives, suspendues, gratuit, pro, business, nouveauxCeMois,
+      usersTotal, usersActifs, usersAdmin, usersEmploye,
+      encaisseTotal, encaissePro, encaisseBusiness,
+    ] = await prisma.$transaction([
+      prisma.boutique.count({ where: { deletedAt: null } }),
+      prisma.boutique.count({ where: { deletedAt: null, statut: 'ACTIVE' } }),
+      prisma.boutique.count({ where: { deletedAt: null, statut: 'SUSPENDUE' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'GRATUIT' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'PRO' } }),
+      prisma.boutique.count({ where: { deletedAt: null, plan: 'BUSINESS' } }),
+      prisma.boutique.count({ where: { deletedAt: null, createdAt: { gte: debutMois } } }),
+      prisma.user.count({ where: { role: { not: 'SUPERADMIN' } } }),
+      prisma.user.count({ where: { role: { not: 'SUPERADMIN' }, actif: true } }),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
+      prisma.user.count({ where: { role: 'EMPLOYE' } }),
+      prisma.paiementAbonnement.aggregate({ where: { statut: 'CONFIRME' }, _sum: { montant: true } }),
+      prisma.paiementAbonnement.aggregate({ where: { statut: 'CONFIRME', abonnement: { plan: 'PRO' } }, _sum: { montant: true } }),
+      prisma.paiementAbonnement.aggregate({ where: { statut: 'CONFIRME', abonnement: { plan: 'BUSINESS' } }, _sum: { montant: true } }),
+    ]);
+
+    const parMoisRaw = await prisma.$queryRaw`
+      SELECT
+        TO_CHAR(p."createdAt", 'YYYY-MM') as mois,
+        SUM(p.montant)::float as montant
+      FROM paiements_abonnement p
+      WHERE p.statut = 'CONFIRME'
+        AND p."createdAt" >= ${debut12Mois}
+      GROUP BY mois
+      ORDER BY mois ASC
+    `;
+
+    const MRR_PRO = 5000;
+    const MRR_BUSINESS = 10000;
+
+    return success(res, {
+      boutiques: {
+        total,
+        actives,
+        suspendues,
+        parPlan: { GRATUIT: gratuit, PRO: pro, BUSINESS: business },
+        nouveauxCeMois,
+      },
+      utilisateurs: {
+        total: usersTotal,
+        actifs: usersActifs,
+        parRole: { ADMIN: usersAdmin, EMPLOYE: usersEmploye },
+      },
+      revenus: {
+        totalEncaisse: encaisseTotal._sum.montant || 0,
+        parPlan: {
+          PRO: encaissePro._sum.montant || 0,
+          BUSINESS: encaisseBusiness._sum.montant || 0,
+        },
+        mrr: (pro * MRR_PRO) + (business * MRR_BUSINESS),
+        mrrParPlan: { PRO: pro * MRR_PRO, BUSINESS: business * MRR_BUSINESS },
+        parMois: parMoisRaw.map(r => ({ mois: r.mois, montant: Number(r.montant) })),
+      },
+    });
+  } catch (err) {
+    logger.error('Erreur getDashboard superadmin', err);
+    return sendError(res, 'Erreur serveur', 500, { code: 'SUPERADMIN_DASHBOARD_FAILED' });
+  }
+};
+
 // GET /api/superadmin/boutiques
 const getBoutiques = async (req, res) => {
   try {
@@ -354,4 +426,4 @@ const getAuditLogs = async (req, res) => {
   }
 };
 
-module.exports = { getBoutiques, getBoutique, changePlan, toggleStatut, softDelete, getStats, createAdmin, exportBoutiques, getAuditLogs };
+module.exports = { getBoutiques, getBoutique, changePlan, toggleStatut, softDelete, getStats, getDashboard, createAdmin, exportBoutiques, getAuditLogs };
