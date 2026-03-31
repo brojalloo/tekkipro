@@ -20,7 +20,7 @@ async function lookupByBarcode(req, res) {
       },
     });
 
-    if (entry) {
+    if (entry && entry.produit?.actif) {
       return res.json({
         success: true,
         source: 'product_barcodes',

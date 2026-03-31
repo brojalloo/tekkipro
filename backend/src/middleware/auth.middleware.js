@@ -11,7 +11,7 @@ const auth = async (req, res, next) => {
       return unauthorized(res, 'Accès non autorisé', { code: 'AUTH_REQUIRED' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { maxAge: process.env.JWT_EXPIRES_IN || '1d' });
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       include: { boutique: { include: { childBoutiques: { select: { id: true, nom: true, slug: true } } } } },
@@ -39,6 +39,8 @@ const auth = async (req, res, next) => {
         const allowed = await prisma.boutique.findFirst({
           where: {
             id: targetId,
+            deletedAt: null,
+            statut: 'ACTIVE',
             OR: [
               { id: mainBoutiqueId },
               { parentBoutiqueId: mainBoutiqueId },
