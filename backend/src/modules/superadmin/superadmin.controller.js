@@ -49,8 +49,8 @@ const getStats = async (req, res) => {
 // GET /api/superadmin/dashboard
 const getDashboard = async (req, res) => {
   try {
-    const debutMois = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const now = new Date();
+    const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
     const debut12Mois = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
     const [
@@ -74,6 +74,7 @@ const getDashboard = async (req, res) => {
       prisma.paiementAbonnement.aggregate({ where: { statut: 'CONFIRME', abonnement: { plan: 'BUSINESS' } }, _sum: { montant: true } }),
     ]);
 
+    // Table name must match @@map("paiements_abonnement") in schema.prisma
     const parMoisRaw = await prisma.$queryRaw`
       SELECT
         TO_CHAR(p."createdAt", 'YYYY-MM') as mois,
@@ -102,10 +103,10 @@ const getDashboard = async (req, res) => {
         parRole: { ADMIN: usersAdmin, EMPLOYE: usersEmploye },
       },
       revenus: {
-        totalEncaisse: encaisseTotal._sum.montant || 0,
+        totalEncaisse: encaisseTotal._sum.montant ?? 0,
         parPlan: {
-          PRO: encaissePro._sum.montant || 0,
-          BUSINESS: encaisseBusiness._sum.montant || 0,
+          PRO: encaissePro._sum.montant ?? 0,
+          BUSINESS: encaisseBusiness._sum.montant ?? 0,
         },
         mrr: (pro * MRR_PRO) + (business * MRR_BUSINESS),
         mrrParPlan: { PRO: pro * MRR_PRO, BUSINESS: business * MRR_BUSINESS },
