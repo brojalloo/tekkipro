@@ -101,12 +101,20 @@ export default function SuperAdminBoutiques() {
         <FiShield size={22} className="text-gray-600" />
         <h1 className="text-xl font-semibold text-gray-800">Super-Admin — Boutiques</h1>
         <span className="text-sm text-gray-500">{pagination.total} boutique{pagination.total !== 1 ? 's' : ''}</span>
-        <button
-          onClick={() => navigate('/app/superadmin/logs')}
-          className="ml-auto px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
-        >
-          Logs d&apos;audit
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => navigate('/app/superadmin/stats')}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+          >
+            Tableau de bord
+          </button>
+          <button
+            onClick={() => navigate('/app/superadmin/logs')}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+          >
+            Logs d&apos;audit
+          </button>
+        </div>
         <button
           onClick={() => { setCreateError(''); setShowCreateModal(true); }}
           className="ml-2 px-3 py-1.5 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700"
