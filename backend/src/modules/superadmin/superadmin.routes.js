@@ -16,6 +16,7 @@ const superAdminRateLimiter = createRateLimiter({
 router.use(auth, superAdminOnly, superAdminRateLimiter);
 
 router.get('/stats',                  ctrl.getStats);
+router.get('/dashboard',              ctrl.getDashboard);
 router.get('/boutiques',              validateBoutiquesQuery, ctrl.getBoutiques);
 router.get('/boutiques/export',       validateBoutiquesQuery, ctrl.exportBoutiques);
 router.get('/audit-logs',             validateAuditLogsQuery, ctrl.getAuditLogs);
