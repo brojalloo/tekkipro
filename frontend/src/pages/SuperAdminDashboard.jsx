@@ -42,7 +42,7 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     api.get('/superadmin/dashboard')
       .then(res => setData(res.data.data))
-      .catch(() => {})
+      .catch((err) => console.error('[SuperAdminDashboard]', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -50,7 +50,7 @@ export default function SuperAdminDashboard() {
     <div className="p-4 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <FiShield size={22} className="text-gray-600" />
-        <h1 className="text-xl font-semibold text-gray-800">Super-Admin &mdash; Tableau de bord</h1>
+        <h1 className="text-xl font-semibold text-gray-800">Super-Admin — Tableau de bord</h1>
       </div>
       <div className="text-gray-500">Chargement...</div>
     </div>
@@ -63,7 +63,7 @@ export default function SuperAdminDashboard() {
     <div className="p-4 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <FiShield size={22} className="text-gray-600" />
-        <h1 className="text-xl font-semibold text-gray-800">Super-Admin &mdash; Tableau de bord</h1>
+        <h1 className="text-xl font-semibold text-gray-800">Super-Admin — Tableau de bord</h1>
         <div className="ml-auto flex gap-2">
           <button
             onClick={() => navigate('/app/superadmin')}
@@ -117,7 +117,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-        Revenus encaisses &mdash; 12 derniers mois
+        Revenus encaisses — 12 derniers mois
       </p>
       <div className="bg-white border border-gray-200 rounded-xl p-4">
         <ResponsiveContainer width="100%" height={260}>
