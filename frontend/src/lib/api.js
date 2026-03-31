@@ -7,8 +7,8 @@ import { callPlanUsageUpdater } from '../services/planUsageStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Bloquer si HTTP utilisé en production
-if (import.meta.env.PROD && !API_URL.startsWith('https://')) {
+// Bloquer si HTTP explicite utilisé en production (les URLs relatives /api sont autorisées)
+if (import.meta.env.PROD && API_URL.startsWith('http://')) {
   throw new Error('[Security] VITE_API_URL doit utiliser HTTPS en production.');
 }
 
