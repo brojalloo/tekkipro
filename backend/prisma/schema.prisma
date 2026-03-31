@@ -132,6 +132,7 @@ model User {
   tokenVerificationExp  DateTime?
   tokenResetPassword    String?  @unique
   tokenResetPasswordExp DateTime?
+  tokenVersion          Int      @default(0)
   boutiqueId            Int?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

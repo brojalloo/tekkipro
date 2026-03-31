@@ -21,6 +21,10 @@ const auth = async (req, res, next) => {
       return unauthorized(res, 'Utilisateur non trouvé ou désactivé', { code: 'USER_INACTIVE_OR_MISSING' });
     }
 
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return unauthorized(res, 'Session expirée. Reconnectez-vous.', { code: 'SESSION_INVALIDATED' });
+    }
+
     // Bloquer si boutique suspendue ou supprimée (sauf SUPERADMIN qui n'a pas de boutique)
     if (user.boutique && (user.boutique.statut === 'SUSPENDUE' || user.boutique.deletedAt)) {
       return forbidden(res, 'Boutique suspendue ou supprimée', { code: 'BOUTIQUE_INACTIVE' });

@@ -7,6 +7,7 @@ const CODE_MESSAGE_MAPS = Object.freeze({
     ACCOUNT_DISABLED: 'Votre compte est désactivé.',
     BOUTIQUE_SUSPENDED: 'Cette boutique est suspendue. Contactez le support.',
     BOUTIQUE_INACTIVE: 'Cette boutique est suspendue. Contactez le support.',
+    SESSION_INVALIDATED: 'Votre session a été déconnectée. Reconnectez-vous.',
     EMAIL_NOT_VERIFIED: 'Veuillez vérifier votre email avant de vous connecter.',
     EMAIL_REQUIRED: 'Email requis.',
     EMAIL_ALREADY_USED: 'Cet email est déjà utilisé.',
@@ -70,6 +71,7 @@ const SESSION_ERROR_CODES = new Set([
   'UNAUTHORIZED',
   'BOUTIQUE_INACTIVE',
   'BOUTIQUE_SUSPENDED',
+  'SESSION_INVALIDATED',
 ]);
 
 function resolveLanguage(language) {

@@ -177,7 +177,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, boutiqueId: user.boutiqueId },
+      { id: user.id, role: user.role, boutiqueId: user.boutiqueId, tokenVersion: user.tokenVersion },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
@@ -500,6 +500,7 @@ const resetPassword = async (req, res) => {
         password: hashedPassword,
         tokenResetPassword: null,
         tokenResetPasswordExp: null,
+        tokenVersion: { increment: 1 },
       },
     });
 
@@ -510,12 +511,13 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Déconnexion — trace l'événement
+// Déconnexion — invalide tous les tokens sur tous les appareils
 const logout = async (req, res) => {
   res.json({ success: true });
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.update({
       where: { id: req.user.id },
+      data: { tokenVersion: { increment: 1 } },
       select: { email: true },
     });
     logAudit(prisma, {
