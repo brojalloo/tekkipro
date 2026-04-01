@@ -7,6 +7,8 @@ BRANCH=${1:-main}
 APP_DIR=/opt/tekkipro
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
+git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+
 log "=== Deploy started (branch: $BRANCH) ==="
 
 cd "$APP_DIR"
