@@ -38,9 +38,6 @@ jobs:
 
   frontend:
     runs-on: [self-hosted, linux, x64]
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,17 +47,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: rm -rf node_modules && npm ci
+      - name: Install dependencies (root workspace)
+        run: rm -rf node_modules frontend/node_modules mobile/node_modules && npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint -w frontend
 
       - name: Test
-        run: npm test
+        run: npm run test -w frontend
 
       - name: Build
-        run: npm run build
+        run: npm run build -w frontend
 
   deploy:
     name: Deploy to VPS
