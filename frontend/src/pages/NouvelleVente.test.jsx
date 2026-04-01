@@ -1162,8 +1162,10 @@ describe('NouvelleVente page', () => {
     expect(container.querySelector('.nv-item-price').textContent).toBe('350 FCFA × 1');
 
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Produit Lait frais ajouté à la vente.'));
-
+    await waitFor(() => {
+      expect(toastSuccess).toHaveBeenCalledWith('Produit Lait frais ajouté à la vente.');
+      expect(Array.from(container.querySelectorAll('.nv-item-price'))).toHaveLength(2);
+    });
     expect(Array.from(container.querySelectorAll('.nv-item-price')).map((node) => node.textContent)).toEqual([
       '350 FCFA × 1',
       '1 800 FCFA × 1',
