@@ -65,5 +65,20 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Deploy
-        run: bash /opt/tekkipro/deploy.sh main
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync code to production
+        run: |
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='*/node_modules' \
+            --exclude='frontend/dist' \
+            --exclude='*.env' \
+            --exclude='.env*' \
+            "$GITHUB_WORKSPACE/" /opt/tekkipro/
+
+      - name: Restart containers
+        working-directory: /opt/tekkipro/infra
+        run: docker compose up -d --build
