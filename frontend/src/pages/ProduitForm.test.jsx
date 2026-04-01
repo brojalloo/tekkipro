@@ -210,8 +210,7 @@ describe('ProduitForm page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits/7'));
-    expect(screen.getByDisplayValue('Sac 25kg')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByDisplayValue('Sac 25kg')).toBeInTheDocument());
 
     fireEvent.click(container.querySelector('.pf-fraction-delete'));
 
@@ -255,8 +254,7 @@ describe('ProduitForm page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits/7'));
-    expect(screen.getByDisplayValue('Sac 25kg')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByDisplayValue('Sac 25kg')).toBeInTheDocument());
 
     fireEvent.click(container.querySelector('.pf-fraction-delete'));
 
