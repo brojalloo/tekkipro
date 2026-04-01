@@ -18,13 +18,14 @@ export default function Produits() {
   const [loading, setLoading] = useState(true);
   const [filterAlerte, setFilterAlerte] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadProduits(); }, []);
 
   const loadProduits = async () => {
     try {
       const res = await api.get('/produits', { params: { search: search || undefined } });
       setProduits(res.data.data);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur chargement produits');
     } finally {
       setLoading(false);
@@ -40,9 +41,9 @@ export default function Produits() {
     if (!window.confirm(`Désactiver le produit "${nom}" ?`)) return;
     try {
       await api.delete(`/produits/${id}`);
-      toast.success('Produit désactivé');
+      toast.success('Produit désactivé avec succès.');
       loadProduits();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur');
     }
   };
@@ -224,7 +225,7 @@ export default function Produits() {
                         <Link to={`/app/produits/${p.id}/edit`} className="w-9 h-9 flex items-center justify-center border border-[#1B5E20]/20 rounded-[10px] bg-[#1B5E20]/5 text-[#1B5E20] transition-all hover:bg-[#1B5E20]/15 hover:border-[#1B5E20]/35" title="Modifier">
                           <FiEdit size={15} />
                         </Link>
-                        <button className="w-9 h-9 flex items-center justify-center border border-destructive/20 rounded-[10px] bg-destructive/5 text-destructive transition-all hover:bg-destructive/15 hover:border-destructive/35" onClick={() => handleDelete(p.id, p.nom)} title="Désactiver">
+                        <button className="w-9 h-9 flex items-center justify-center border border-destructive/20 rounded-[10px] bg-destructive/5 text-destructive transition-all hover:bg-destructive/15 hover:border-destructive/35" onClick={() => handleDelete(p.id, p.nom)} title={`Désactiver le produit ${p.nom}`}>
                           <FiTrash2 size={15} />
                         </button>
                       </div>

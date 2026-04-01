@@ -13,7 +13,7 @@ import {
 import UpgradeBanner, { FeaturePreview } from '../components/UpgradeBanner';
 
 export default function Fournisseurs() {
-  const { isPro, plan } = useAuth();
+  const { isPro, _plan } = useAuth();
   const [fournisseurs, setFournisseurs] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -100,7 +100,7 @@ export default function Fournisseurs() {
           title="Gérez vos fournisseurs"
           featureLabel="les fournisseurs"
           requiredPlan="PRO"
-          description="Centralisez contacts, livraisons et réapprovisionnements depuis une seule page."
+          description="Transformez vos achats en réseau fiable"
         />
       </div>
     );

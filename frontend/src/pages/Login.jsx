@@ -46,6 +46,20 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
+  const handleResend = async () => {
+    setResendLoading(true);
+    try {
+      const res = await api.post('/auth/resend-verification', { email });
+      const message = res.data.message || 'Email renvoyé.';
+      toast.success(message);
+      setActivationNotice(message);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, { fallback: 'Erreur lors du renvoi' }));
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-[#FFFAF0] text-[#1A1C23] font-sans">
       <div className="flex w-full min-h-screen bg-white md:bg-transparent">
@@ -95,7 +109,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-5 text-left w-full">
-              <label className="block text-[0.9rem] font-bold text-gray-700 mb-2 pl-1" htmlFor="login-email">Adresse email</label>
+              <label className="block text-[0.9rem] font-bold text-gray-700 mb-2 pl-1" htmlFor="login-email">Email</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiMail size={18} /></span>
                 <input id="login-email" type="email" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={email}
@@ -114,7 +128,7 @@ export default function Login() {
                     onChange={(e) => { setPassword(e.target.value); if (submitError) setSubmitError(''); }}
                     placeholder="••••••••" required />
                 </div>
-                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 cursor-pointer p-1 transition-colors hover:text-[#D32F2F]" onClick={() => setShowPassword(p => !p)}>
+                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 cursor-pointer p-1 transition-colors hover:text-[#D32F2F]" aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"} onClick={() => setShowPassword(p => !p)}>
                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
@@ -128,12 +142,12 @@ export default function Login() {
               <Link to="/forgot-password" className="text-[0.9rem] font-bold text-[#D32F2F] no-underline hover:underline">Mot de passe oublié ?</Link>
             </div>
 
-            {activationNotice && <div className="p-4 rounded-xl text-[0.95rem] font-semibold mb-6 flex items-center gap-3 bg-[#1B5E20]/10 text-[#1b5e20] border-l-4 border-[#1B5E20] text-left"><FiAlertCircle /> {activationNotice}</div>}
-            {submitError && <div className="p-4 rounded-xl text-[0.95rem] font-semibold mb-6 flex items-center gap-3 bg-[#D32F2F]/10 text-[#b71c1c] border-l-4 border-[#D32F2F] text-left"><FiAlertCircle /> {submitError}</div>}
+            {activationNotice && <div role="status" className="p-4 rounded-xl text-[0.95rem] font-semibold mb-6 flex items-center gap-3 bg-[#1B5E20]/10 text-[#1b5e20] border-l-4 border-[#1B5E20] text-left"><FiAlertCircle /> {activationNotice}</div>}
+            {submitError && <div role="alert" className="p-4 rounded-xl text-[0.95rem] font-semibold mb-6 flex items-center gap-3 bg-[#D32F2F]/10 text-[#b71c1c] border-l-4 border-[#D32F2F] text-left"><FiAlertCircle /> {submitError}</div>}
 
             {showResendActivation && (
-              <button type="button" className="w-full p-4 rounded-2xl text-[1.05rem] font-extrabold font-sans cursor-pointer transition-all flex items-center justify-center gap-3 bg-white text-[#1A1C23] border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300" onClick={() => {}} disabled={resendLoading}>
-                {resendLoading ? 'Renvoi...' : 'Renvoyer l\'activation'}
+              <button type="button" className="w-full p-4 rounded-2xl text-[1.05rem] font-extrabold font-sans cursor-pointer transition-all flex items-center justify-center gap-3 bg-white text-[#1A1C23] border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300" onClick={handleResend} disabled={resendLoading}>
+                {resendLoading ? 'Renvoi...' : 'Renvoyer l’email d’activation'}
               </button>
             )}
 

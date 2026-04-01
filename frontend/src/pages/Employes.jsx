@@ -9,7 +9,7 @@ import UpgradeBanner, { FeaturePreview } from '../components/UpgradeBanner';
 import PageHeader from '../components/PageHeader';
 
 export default function Employes() {
-  const { isPro, plan } = useAuth();
+  const { isPro, _plan } = useAuth();
   const [employes, setEmployes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ nom: '', prenom: '', email: '', password: '', telephone: '' });
@@ -74,7 +74,7 @@ export default function Employes() {
           title="Structurez votre équipe"
           featureLabel="la gestion d’équipe"
           requiredPlan="PRO"
-          description="Invitez vos collaborateurs et gérez leurs accès depuis un seul endroit."
+          description="Structurez votre équipe sans perdre le contrôle"
         />
       </div>
     );
@@ -88,7 +88,7 @@ export default function Employes() {
         subtitle="Gérez vos employés et leurs accès"
         action={
           <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-[#1B5E20] text-white font-bold text-[0.85rem] rounded-xl hover:-translate-y-0.5 transition-all border-none cursor-pointer">
-            <FiPlus size={16} /> Inviter un employé
+            <FiPlus size={16} /> Ajouter un employé
           </button>
         }
       />
@@ -135,14 +135,14 @@ export default function Employes() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-[1000] p-6 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
+        <div className="modal fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-[1000] p-6 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
           <div className="bg-gradient-to-b from-white to-slate-50 border border-border/80 rounded-[28px] w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3.5 p-6 border-b border-border bg-gradient-to-b from-[#1B5E20]/5 to-transparent">
               <div className="w-11 h-11 flex items-center justify-center bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white rounded-xl shadow-md shrink-0">
                 <FiUser size={22} />
               </div>
               <div>
-                <h3 className="text-[1.1rem] font-extrabold text-foreground m-0" style={{fontFamily:'Sora,sans-serif'}}>Inviter un employé</h3>
+                <h3 className="text-[1.1rem] font-extrabold text-foreground m-0" style={{fontFamily:'Sora,sans-serif'}}>Ajouter un employé</h3>
                 <p className="text-[0.78rem] font-medium text-muted-foreground m-0 mt-1">Nouveau membre de l'équipe</p>
               </div>
               <button type="button" className="w-9 h-9 flex items-center justify-center bg-muted border-none rounded-xl text-muted-foreground cursor-pointer transition-all hover:bg-muted/80 hover:text-foreground shrink-0 ml-auto" onClick={() => setShowModal(false)}>
@@ -177,7 +177,7 @@ export default function Employes() {
               <div className="flex items-center justify-end gap-2.5 p-5 border-t border-border bg-gradient-to-b from-slate-50/98 to-slate-100/90">
                 <button type="button" className="px-5 py-2.5 bg-white border border-border rounded-xl text-muted-foreground text-[0.85rem] font-semibold cursor-pointer transition-all hover:bg-muted hover:text-foreground" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white border-none rounded-xl text-[0.85rem] font-bold cursor-pointer transition-all shadow-[0_6px_20px_rgba(27,94,32,0.3)] hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none" style={{fontFamily:'Sora,sans-serif'}} disabled={submitting}>
-                  {submitting ? 'Invitation...' : 'Inviter'}
+                  {submitting ? 'Ajout en cours...' : 'Ajouter'}
                 </button>
               </div>
             </form>

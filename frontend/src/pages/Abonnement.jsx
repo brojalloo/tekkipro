@@ -111,6 +111,7 @@ export default function Abonnement() {
       toast.error('Paiement annulé ou échoué.');
       setSearchParams({});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAbonnement, paymentStatus, refreshBoutique, sessionId, setSearchParams]);
 
   const handleSouscrire = (plan) => {

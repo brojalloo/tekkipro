@@ -38,7 +38,7 @@ describe('Auth secondary error flows', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'boss@tekki.test' } });
+    fireEvent.change(screen.getByLabelText(/adresse email/i), { target: { value: 'boss@tekki.test' } });
     fireEvent.click(screen.getByRole('button', { name: /envoyer le lien/i }));
 
     await waitFor(() => {

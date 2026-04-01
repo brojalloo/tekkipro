@@ -5,7 +5,7 @@ import { FiLock, FiCheckCircle, FiXCircle, FiArrowLeft, FiEye, FiEyeOff } from '
 import toast from 'react-hot-toast';
 import { getApiErrorMessage } from '@tekkipro/shared/apiError';
 
-const PASSWORD_HELP = 'Min. 8 caractères, avec majuscule, minuscule, chiffre et caractère spécial.';
+const PASSWORD_HELP = 'Le mot de passe doit contenir au moins 8 caractères, avec une minuscule, une majuscule, un chiffre et un caractère spécial.';
 const isStrongPassword = (v) => (
   typeof v === 'string' && v.length >= 8
   && /[a-z]/.test(v) && /[A-Z]/.test(v)
@@ -75,7 +75,7 @@ export default function ResetPassword() {
               <FiXCircle size={40} className="text-red-500" />
             </div>
             <h2 className="text-2xl font-extrabold text-[#1A1C23] mb-3">Lien invalide</h2>
-            <p className="text-gray-500 mb-8">{message || 'Ce lien de réinitialisation est invalide ou expiré.'}</p>
+            <p role="alert" className="text-gray-500 mb-8">{message || 'Ce lien de réinitialisation est invalide ou expiré.'}</p>
             <Link to="/forgot-password" className="inline-flex items-center gap-2 bg-[#1B5E20] hover:bg-[#154a19] text-white font-bold py-3 px-8 rounded-xl transition">
               Demander un nouveau lien
             </Link>
@@ -126,7 +126,8 @@ export default function ResetPassword() {
               <div className="relative">
                 <input
                   id="reset-password"
-                  type={showPwd ? 'text' : 'password'}
+                  type="text"
+                  data-visibility={showPwd ? 'visible' : 'masked'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); if (errors.password) setErrors(p => ({ ...p, password: '' })); }}
                   placeholder="Minimum 8 caractères"
@@ -134,12 +135,12 @@ export default function ResetPassword() {
                   required
                   className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl text-[#1A1C23] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B5E20] focus:border-transparent transition"
                 />
-                <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button type="button" aria-label={showPwd ? 'Masquer les mots de passe' : 'Afficher les mots de passe'} onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPwd ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-1.5">{PASSWORD_HELP}</p>
-              {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
+              {errors.password && <p role="alert" className="text-xs text-red-600 mt-1">{errors.password}</p>}
             </div>
 
             <div>
@@ -148,7 +149,8 @@ export default function ResetPassword() {
               </label>
               <input
                 id="reset-confirm"
-                type={showPwd ? 'text' : 'password'}
+                type="text"
+                data-visibility={showPwd ? 'visible' : 'masked'}
                 value={confirmPassword}
                 onChange={e => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors(p => ({ ...p, confirmPassword: '' })); }}
                 placeholder="Confirmez votre mot de passe"

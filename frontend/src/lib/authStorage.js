@@ -24,9 +24,7 @@ const migrateLegacyLocalStorage = () => {
 
   const sessionToken = readKey(sessionStorageRef, STORAGE_KEYS.token);
   const legacyToken = readKey(localStorageRef, STORAGE_KEYS.token);
-  const isValidJwtFormat = (t) => typeof t === 'string' && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(t);
-
-  if (!sessionToken && legacyToken && isValidJwtFormat(legacyToken)) {
+  if (!sessionToken && legacyToken) {
     Object.values(STORAGE_KEYS).forEach((key) => {
       const value = readKey(localStorageRef, key);
       if (value != null) {

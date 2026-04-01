@@ -23,21 +23,21 @@ describe('authStorage', () => {
   });
 
   it('migre automatiquement les anciennes données localStorage', () => {
-    localStorage.setItem('tekkipro_token', 'legacy-token');
+    localStorage.setItem('tekkipro_token', 'eyJhbGciOiJIUzI1NiJ9.eyJpZCI6Mn0.testtoken');
     localStorage.setItem('tekkipro_user', JSON.stringify({ id: 2, email: 'legacy@tekki.test' }));
     localStorage.setItem('tekkipro_boutique', JSON.stringify({ id: 8, nom: 'Legacy', plan: 'BUSINESS' }));
 
     const auth = getStoredAuthData();
 
-    expect(auth.token).toBe('legacy-token');
+    expect(auth.token).toBe('eyJhbGciOiJIUzI1NiJ9.eyJpZCI6Mn0.testtoken');
     expect(auth.user).toMatchObject({ email: 'legacy@tekki.test' });
-    expect(sessionStorage.getItem('tekkipro_token')).toBe('legacy-token');
+    expect(sessionStorage.getItem('tekkipro_token')).toBe('eyJhbGciOiJIUzI1NiJ9.eyJpZCI6Mn0.testtoken');
     expect(localStorage.getItem('tekkipro_token')).toBeNull();
   });
 
   it('efface la session des deux stockages', () => {
     sessionStorage.setItem('tekkipro_token', 'session-token');
-    localStorage.setItem('tekkipro_token', 'legacy-token');
+    localStorage.setItem('tekkipro_token', 'eyJhbGciOiJIUzI1NiJ9.eyJpZCI6Mn0.testtoken');
 
     clearStoredAuth();
 

@@ -31,14 +31,12 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!acceptCgu) {
-      toast.error('Veuillez accepter les CGU');
-      return;
-    }
+
     setLoading(true);
     try {
       const response = await register(form);
       if (response?.data?.requiresEmailVerification) {
+        toast.success(response.message);
         navigate('/login', { replace: true, state: { activationMessage: response.message, activationEmail: form.email } });
         return;
       }
@@ -99,52 +97,52 @@ export default function Register() {
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="mb-5 text-left w-full">
-                <label>Prénom</label>
+                <label htmlFor="r-prenom">Prénom</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiUser size={18} /></span>
-                  <input type="text" name="prenom" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.prenom} onChange={handleChange} placeholder="Amadou" required />
+                  <input id="r-prenom" type="text" name="prenom" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.prenom} onChange={handleChange} placeholder="Amadou" required />
                 </div>
               </div>
               <div className="mb-5 text-left w-full">
-                <label>Nom</label>
-                <input type="text" name="nom" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.nom} onChange={handleChange} placeholder="Diallo" required />
+                <label htmlFor="r-nom">Nom</label>
+                <input id="r-nom" type="text" name="nom" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.nom} onChange={handleChange} placeholder="Diallo" required />
               </div>
             </div>
 
             <div className="mb-5 text-left w-full">
-              <label>Adresse email</label>
+              <label htmlFor="r-email">Email</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiMail size={18} /></span>
-                <input type="email" name="email" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.email} onChange={handleChange} placeholder="amadou@exemple.com" required />
+                <input id="r-email" type="email" name="email" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.email} onChange={handleChange} placeholder="amadou@exemple.com" required />
               </div>
             </div>
 
             <div className="mb-5 text-left w-full">
-              <label>Téléphone</label>
+              <label htmlFor="r-tel">Téléphone</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiPhone size={18} /></span>
-                <input type="tel" name="telephone" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.telephone} onChange={handleChange} placeholder="+221 77 123 45 67" />
+                <input id="r-tel" type="tel" name="telephone" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.telephone} onChange={handleChange} placeholder="+221 77 123 45 67" />
               </div>
             </div>
 
             <div className="mb-5 text-left w-full">
-              <label>Nom de la boutique</label>
+              <label htmlFor="r-boutique">Nom de la boutique</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiShoppingBag size={18} /></span>
-                <input type="text" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.nomBoutique} onChange={handleBoutiqueNameChange} placeholder="Ma Boutique" required />
+                <input type="text" className="w-full py-3.5 pr-5 pl-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" id="r-boutique" value={form.nomBoutique} onChange={handleBoutiqueNameChange} placeholder="Ma Boutique" required />
               </div>
               {form.slug && <span style={{ fontSize: 13, color: 'var(--auth-primary)', fontWeight: 700, marginTop: 4, display: 'block' }}>{form.slug}.tekkipro.com</span>}
             </div>
 
             <div className="mb-5 text-left w-full">
-              <label>Mot de passe</label>
+              <label htmlFor="r-password">Mot de passe</label>
               <div className="relative">
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex pointer-events-none"><FiLock size={18} /></span>
-                  <input type={showPassword ? 'text' : 'password'} name="password" 
+                  <input id="r-password" type={showPassword ? 'text' : 'password'} name="password" 
                     className="w-full py-3.5 pl-12 pr-12 bg-white border-2 border-gray-100 rounded-xl font-sans text-base font-semibold text-[#1A1C23] transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 hover:shadow-sm" value={form.password} onChange={handleChange} placeholder="Min. 8 caractères" required />
                 </div>
-                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 cursor-pointer p-1 transition-colors hover:text-[#D32F2F]" onClick={() => setShowPassword(p => !p)}>
+                <button type="button" aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-400 cursor-pointer p-1 transition-colors hover:text-[#D32F2F]" onClick={() => setShowPassword(p => !p)}>
                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
@@ -158,7 +156,7 @@ export default function Register() {
             {submitError && <div className="p-4 rounded-xl text-[0.95rem] font-semibold mb-6 flex items-center gap-3 bg-[#D32F2F]/10 text-[#b71c1c] border-l-4 border-[#D32F2F] text-left"><FiAlertCircle /> {submitError}</div>}
 
             <button type="submit" className="w-full p-4 rounded-2xl text-[1rem] font-extrabold cursor-pointer transition-all border-none flex items-center justify-center gap-3 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white shadow-lg shadow-[#1B5E20]/25 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#1B5E20]/35 disabled:opacity-70" style={{fontFamily:'Sora,sans-serif'}} disabled={loading}>
-              {loading ? 'Création...' : <><span>Créer mon compte</span><FiArrowRight size={20} /></>}
+              {loading ? 'Création...' : <><span>Créer ma boutique</span><FiArrowRight size={20} /></>}
             </button>
           </form>
 

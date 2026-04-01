@@ -236,7 +236,7 @@ export default function Dettes() {
       {/* Modal remboursement */}
       {showModal && selectedDette && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={() => setShowModal(false)}
         >
           <div

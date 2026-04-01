@@ -76,15 +76,10 @@ export function AuthProvider({ children }) {
     registerPlanUsageUpdater(updatePlanUsage);
   }, [updatePlanUsage]);
 
-  // Charger planUsage au démarrage si l'utilisateur est déjà connecté (session restaurée)
+  // Charger planUsage et rafraîchir auth au démarrage si l'utilisateur est déjà connecté
   useEffect(() => {
     if (!user) return;
-    api.get('/auth/me')
-      .then(res => {
-        const data = res.data.data;
-        if (data?.planUsage) setPlanUsage(data.planUsage);
-      })
-      .catch(() => {});
+    refreshBoutique();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Une seule fois au montage
 
@@ -141,7 +136,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    try { await api.post('/auth/logout'); } catch {}
+    try { await api.post('/auth/logout'); } catch (_err) { /* ignore logout errors */ }
     clearStoredAuth();
     setUser(null);
     setBoutique(null);

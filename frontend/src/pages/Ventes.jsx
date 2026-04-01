@@ -329,6 +329,7 @@ function VentesTable({ displayed, isPro, isAdmin, voirFacture, annulerVente }) {
   );
 
   // Reset to page 0 whenever the list changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(0); setExpanded(null); }, [displayed]);
 
   if (displayed.length === 0) {
@@ -486,7 +487,8 @@ function VentesTable({ displayed, isPro, isAdmin, voirFacture, annulerVente }) {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
-                          title={isPro ? `Facture PDF — ${v.numero}` : 'PDF réservé au plan Pro'}
+                          title={isPro ? `Voir la facture PDF de la vente ${v.numero}` : `Facture PDF indisponible pour la vente ${v.numero}`}
+                          aria-label={isPro ? `Voir la facture PDF de la vente ${v.numero}` : `Facture PDF indisponible pour la vente ${v.numero}`}
                           onClick={() => voirFacture(v.id)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.73rem] font-bold border transition-all
                             ${!isPro
@@ -498,7 +500,8 @@ function VentesTable({ displayed, isPro, isAdmin, voirFacture, annulerVente }) {
                         {isAdmin && v.statut !== 'ANNULEE' && (
                           <button
                             type="button"
-                            title={`Annuler ${v.numero}`}
+                            title={`Annuler la vente ${v.numero}`}
+                            aria-label={`Annuler la vente ${v.numero}`}
                             onClick={() => annulerVente(v.id)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.73rem] font-bold border bg-white border-[#D32F2F]/20 text-[#D32F2F] hover:bg-[#D32F2F] hover:text-white hover:border-[#D32F2F] hover:shadow-[0_4px_12px_rgba(211,47,47,0.2)] transition-all">
                             <FiX size={13} />

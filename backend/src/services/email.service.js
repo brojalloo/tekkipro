@@ -106,7 +106,7 @@ const emailFooter = () => `
       © ${new Date().getFullYear()} TekkiPro — Fait avec ♥ pour l'Afrique de l'Ouest
     </p>
     <p style="color:rgba(255,255,255,0.3);font-size:11px;margin:6px 0 0;">
-      Des questions ? <a href="mailto:support@tekkipro.com" style="color:#FFD600;text-decoration:none;">support@tekkipro.com</a>
+      Besoin d’aide ? <a href="mailto:support@tekkipro.com" style="color:#FFD600;text-decoration:none;">support@tekkipro.com</a>
     </p>
   </div>`;
 
@@ -134,7 +134,7 @@ const buildVerificationEmail = (user, token) => {
     <div style="background:#FFFAF0;padding:36px 32px;">
       <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bienvenue, ${user.prenom} !</h2>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
-        Votre adresse <strong>${user.email}</strong> a été utilisée pour créer un compte sur TekkiPro.
+        Votre adresse <strong>${user.email}</strong> vient d’être utilisée pour créer un compte sur TekkiPro.
       </p>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 28px;font-size:15px;">
         Cliquez sur le bouton ci-dessous pour activer votre compte et commencer à gérer votre boutique.
@@ -146,7 +146,10 @@ const buildVerificationEmail = (user, token) => {
       </div>
       <div style="background:#fff;border-left:4px solid #1B5E20;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
         <p style="color:#1B5E20;font-size:13px;line-height:1.6;margin:0;">
-          Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement cet email.
+          Si vous êtes bien à l’origine de cette inscription, cliquez sur le bouton ci-dessus pour activer votre compte.
+        </p>
+        <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:8px 0 0;">
+          Si vous n’êtes pas à l’origine de cette demande, n’activez pas ce compte.
         </p>
       </div>
       <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
@@ -158,7 +161,7 @@ const buildVerificationEmail = (user, token) => {
   `);
 
   return {
-    subject: 'TekkiPro — Activez votre compte',
+    subject: '✅ TekkiPro — Activez votre compte',
     html,
   };
 };
@@ -185,7 +188,7 @@ const buildPasswordResetEmail = (user, token) => {
     <div style="background:#FFFAF0;padding:36px 32px;">
       <h2 style="font-family:Georgia,serif;color:#071C08;margin:0 0 16px;font-size:22px;">Bonjour, ${user.prenom}</h2>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 16px;font-size:15px;">
-        Une demande de réinitialisation de mot de passe a été effectuée pour le compte associé à <strong>${user.email}</strong>.
+        Une demande de réinitialisation du mot de passe a été effectuée pour le compte associé à <strong>${user.email}</strong>.
       </p>
       <p style="color:#3d3d3d;line-height:1.7;margin:0 0 28px;font-size:15px;">
         Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe sécurisé.
@@ -196,8 +199,11 @@ const buildPasswordResetEmail = (user, token) => {
         </a>
       </div>
       <div style="background:#fff;border-left:4px solid #D32F2F;border-radius:0 8px 8px 0;padding:14px 16px;margin:24px 0;">
-        <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:0;">
-          Si vous n'êtes pas à l'origine de cette demande, ignorez cet email. Votre mot de passe ne sera pas modifié.
+        <p style="color:#1B5E20;font-size:13px;line-height:1.6;margin:0;">
+          Si vous êtes bien à l’origine de cette demande, cliquez sur le bouton ci-dessus.
+        </p>
+        <p style="color:#D32F2F;font-size:13px;line-height:1.6;margin:8px 0 0;">
+          Si vous n’êtes pas à l’origine de cette demande, ne cliquez pas sur ce bouton. Votre mot de passe ne sera pas modifié.
         </p>
       </div>
       <p style="color:#888;font-size:13px;text-align:center;margin:16px 0 0;">
@@ -209,7 +215,7 @@ const buildPasswordResetEmail = (user, token) => {
   `);
 
   return {
-    subject: 'TekkiPro — Réinitialisez votre mot de passe',
+    subject: '🔑 TekkiPro — Réinitialisez votre mot de passe',
     html,
   };
 };

@@ -184,7 +184,7 @@ const entreeStock = async (req, res) => {
 const getHistorique = async (req, res) => {
   try {
     const { produitId, fournisseurId, dateDebut, dateFin } = req.query;
-    const { page, limit, skip, take } = parsePagination(req.query);
+    const { page, limit, skip, take } = parsePagination(req.query || {});
 
     const where = { boutiqueId: req.boutiqueId };
     if (produitId) where.produitId = parseInt(produitId);
@@ -195,7 +195,7 @@ const getHistorique = async (req, res) => {
       if (dateFin) where.createdAt.lte = new Date(dateFin + 'T23:59:59.999Z');
     }
 
-    const [entrees, total] = await prisma.$transaction([
+    const [entrees, total] = await Promise.all([
       prisma.entreeStock.findMany({
         where,
         include: {
@@ -219,10 +219,10 @@ const getHistorique = async (req, res) => {
 // Inventaire complet (paginé)
 const getInventaire = async (req, res) => {
   try {
-    const { page, limit, skip, take } = parsePagination(req.query);
+    const { page, limit, skip, take } = parsePagination(req.query || {});
     const where = { boutiqueId: req.boutiqueId, actif: true };
 
-    const [produits, total] = await prisma.$transaction([
+    const [produits, total] = await Promise.all([
       prisma.produit.findMany({
         where,
         select: {
@@ -256,12 +256,7 @@ const getInventaire = async (req, res) => {
       };
     });
 
-    // Valeur totale du stock sur toutes les pages
-    const allStockValues = await prisma.produit.findMany({
-      where,
-      select: { stock: true, prixAchat: true },
-    });
-    const totalValeurStock = allStockValues.reduce((sum, p) => sum + p.stock * p.prixAchat, 0);
+        const totalValeurStock = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
     const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
 
     res.json({

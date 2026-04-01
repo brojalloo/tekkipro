@@ -133,7 +133,7 @@ export default function Stock() {
         subtitle="Gestion des entrées et de l'inventaire"
         action={
           <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-[#1B5E20] text-white font-bold text-[0.85rem] rounded-xl hover:-translate-y-0.5 transition-all border-none cursor-pointer">
-            <FiPlus size={16} /> Entrée stock
+            <FiPlus size={16} /> Entrée de stock
           </button>
         }
       />
@@ -372,7 +372,7 @@ export default function Stock() {
       {/* Modal entrée stock */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-[1000] p-6 animate-in fade-in duration-200" aria-hidden="true" onClick={() => setShowModal(false)}>
-          <div className="bg-gradient-to-b from-white to-slate-50 border border-border/80 rounded-[28px] w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title" onClick={(e) => e.stopPropagation()}>
+          <div className="stk-modal bg-gradient-to-b from-white to-slate-50 border border-border/80 rounded-[28px] w-full max-w-[500px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3.5 p-6 border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
               <div className="w-11 h-11 flex items-center justify-center bg-gradient-to-br from-primary to-secondary text-white rounded-xl shadow-md shrink-0">
                 <FiArrowDownCircle size={22} />

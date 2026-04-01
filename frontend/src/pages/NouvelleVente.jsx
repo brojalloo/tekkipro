@@ -151,8 +151,8 @@ export default function NouvelleVente() {
               <button onClick={() => {
                 toast.dismiss(t.id);
                 navigate(`/app/produits/nouveau?${new URLSearchParams({ codeBarre: code, returnTo: 'vente' })}`);
-              }} className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors">Créer</button>
-              <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-muted text-muted-foreground text-xs font-bold rounded-lg hover:bg-muted/80 transition-colors">Fermer</button>
+              }} className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors">Créer le produit</button>
+              <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1.5 bg-muted text-muted-foreground text-xs font-bold rounded-lg hover:bg-muted/80 transition-colors">Annuler</button>
             </div>
           </div>
         ), { duration: 8000 });
@@ -232,21 +232,24 @@ export default function NouvelleVente() {
 
           <div className="flex items-center gap-3 px-4 py-3 bg-white border border-[#1B5E20]/15 rounded-[18px] mb-6 focus-within:border-[#1B5E20]/40 focus-within:shadow-[0_0_0_3px_rgba(27,94,32,0.08)] transition-all shadow-sm">
             <FiSearch size={18} className="text-[#1B5E20]/50 shrink-0" />
-            <input type="text" className="flex-1 bg-transparent border-none outline-none text-[0.92rem] font-medium text-foreground placeholder:text-muted-foreground" placeholder="Rechercher par nom ou code-barres…"
+            <input type="text" className="flex-1 bg-transparent border-none outline-none text-[0.92rem] font-medium text-foreground placeholder:text-muted-foreground" placeholder="Rechercher un produit…"
               value={search} onChange={(e) => setSearch(e.target.value)} />
 
-            <div
+            <button
+              type="button"
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer transition-all ${scanMode ? 'bg-[#1B5E20] text-white shadow-sm shadow-[#1B5E20]/25' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
               onClick={() => setScanMode(v => !v)}
               title={scanMode ? 'Désactiver le scanner' : 'Activer le scanner'}
+              aria-label={scanMode ? 'Scanner ON' : 'Scanner OFF'}
             >
               <div className={`relative flex items-center justify-center ${scanMode ? 'animate-pulse' : ''}`}>
                 {scanLoading ? <FiZap size={16} /> : <FiWifi size={16} />}
               </div>
-              <span className="text-xs font-bold">{scanMode ? 'HID ON' : 'HID OFF'}</span>
-            </div>
+              <span className="text-xs font-bold">{scanMode ? 'Scanner ON' : 'Scanner OFF'}</span>
+            </button>
           </div>
 
+          <div className="flex justify-end mb-2 px-1"><span className="text-xs text-muted-foreground">{filteredProduits.length} produit{filteredProduits.length > 1 ? 's' : ''}</span></div>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
             {filteredProduits.map(p => {
               const isAlert = p.stock <= p.stockAlerte;
@@ -276,7 +279,7 @@ export default function NouvelleVente() {
                     <div className="flex flex-wrap gap-1.5 mt-auto" onClick={(e) => e.stopPropagation()}>
                       {p.unitesVente.map(u => (
                         <button key={u.id} className="flex-1 min-w-[80px] p-2 bg-[#1B5E20]/6 border border-[#1B5E20]/15 rounded-xl text-[0.72rem] font-bold text-[#1B5E20] hover:bg-[#1B5E20] hover:text-white hover:border-[#1B5E20] transition-all" onClick={() => addUniteToCart(p, u)}>
-                          {u.nom}<br/><span className="font-mono">{formatCFA(u.prix)}</span>
+                          1 {u.nom}<br/><span className="font-mono">{formatCFA(u.prix)}</span>
                         </button>
                       ))}
                     </div>
@@ -327,19 +330,20 @@ export default function NouvelleVente() {
               <>
                 <div className="flex-1 overflow-y-auto py-2">
                   {cart.map((item, idx) => (
-                    <div key={idx} className="px-5 py-3.5 flex items-center gap-3 border-b border-[#1B5E20]/8 last:border-0 hover:bg-[#1B5E20]/4 transition-colors">
+                    <div key={idx} className="nv-cart-item px-5 py-3.5 flex items-center gap-3 border-b border-[#1B5E20]/8 last:border-0 hover:bg-[#1B5E20]/4 transition-colors">
                       <div className="flex flex-col flex-1 min-w-0">
                         <strong className="text-[0.88rem] font-semibold text-foreground truncate">{item.nom}</strong>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="px-2 py-0.5 bg-[#FFD600]/15 text-[#B8860B] border border-[#FFD600]/25 rounded-md text-[0.68rem] font-bold">{item.uniteNom}</span>
-                          <span className="text-muted-foreground text-[0.75rem] font-mono">{formatCFA(item.prixUnitaire)} / u</span>
+                          <span className="nv-item-price text-muted-foreground text-[0.75rem] font-mono">{formatCFA(item.prixUnitaire)} × {item.quantite}</span>
+          <span className="nv-item-total text-muted-foreground text-[0.75rem] font-mono">{formatCFA(item.prixUnitaire * item.quantite)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button className="w-7 h-7 rounded-lg bg-[#1B5E20]/8 border border-[#1B5E20]/15 flex items-center justify-center text-[#1B5E20] hover:bg-[#1B5E20] hover:text-white transition-all" onClick={() => updateQuantite(idx, -1)}><FiMinus size={12} /></button>
+                        <button className="nv-qty-btn w-7 h-7 rounded-lg bg-[#1B5E20]/8 border border-[#1B5E20]/15 flex items-center justify-center text-[#1B5E20] hover:bg-[#1B5E20] hover:text-white transition-all" onClick={() => updateQuantite(idx, -1)}><FiMinus size={12} /></button>
                         <span className="w-6 text-center text-sm font-extrabold">{item.quantite}</span>
-                        <button className="w-7 h-7 rounded-lg bg-[#1B5E20]/8 border border-[#1B5E20]/15 flex items-center justify-center text-[#1B5E20] hover:bg-[#1B5E20] hover:text-white transition-all" onClick={() => updateQuantite(idx, 1)}><FiPlus size={12} /></button>
-                        <button className="w-7 h-7 rounded-lg bg-red-50 border border-red-200/60 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all ml-1" onClick={() => removeFromCart(idx)}>
+                        <button className="nv-qty-btn w-7 h-7 rounded-lg bg-[#1B5E20]/8 border border-[#1B5E20]/15 flex items-center justify-center text-[#1B5E20] hover:bg-[#1B5E20] hover:text-white transition-all" onClick={() => updateQuantite(idx, 1)}><FiPlus size={12} /></button>
+                        <button className="nv-remove-btn w-7 h-7 rounded-lg bg-red-50 border border-red-200/60 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all ml-1" onClick={() => removeFromCart(idx)}>
                           <FiTrash2 size={12} />
                         </button>
                       </div>
@@ -350,7 +354,7 @@ export default function NouvelleVente() {
                 <div className="p-5 px-6 bg-gradient-to-br from-[#071C08] to-[#0D2710] text-white flex justify-between items-center shrink-0">
                   <div>
                     <span className="text-[0.68rem] font-bold text-white/50 uppercase tracking-widest block">Total à payer</span>
-                    <span className="text-[1.45rem] font-extrabold font-mono text-[#FFD600]" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(total)}</span>
+                    <span className="nv-total-amount text-[1.45rem] font-extrabold font-mono text-[#FFD600]" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(total)}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[0.68rem] font-bold text-white/50 uppercase tracking-widest block">Articles</span>
@@ -389,17 +393,17 @@ export default function NouvelleVente() {
                   <div style={{ padding: '0 1.5rem 1.25rem' }}>
                     <input type="number" className="flex w-full items-center justify-between rounded-xl border border-input bg-card px-4 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all" style={{ width: '100%', marginBottom: '0.5rem' }} 
                       value={montantPaye} onChange={(e) => setMontantPaye(e.target.value)}
-                      placeholder="Montant encaissé..." />
+                      placeholder="0" />
                     {parsedMontantPaye !== null && (
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <FiAlertCircle size={14} /> Reste à payer: {formatCFA(total - normalizedMontantPaye)}
+                      <div className="nv-credit-info" style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <FiAlertCircle size={14} /> Crédit restant: {formatCFA(total - normalizedMontantPaye)}
                       </div>
                     )}
                   </div>
                 )}
 
                 <button className="mx-6 mb-6 p-4 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] text-white rounded-2xl font-extrabold text-base shadow-[0_8px_24px_rgba(27,94,32,0.25)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(27,94,32,0.35)] transition-all flex justify-center items-center gap-2 shrink-0" style={{fontFamily:'Sora,sans-serif'}} onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Traitement...' : 'Finaliser la Vente'}
+                  {loading ? 'Traitement...' : 'Valider la vente'}
                   {!loading && <FiCheck size={20} style={{ marginLeft: '0.5rem' }} />}
                 </button>
               </>

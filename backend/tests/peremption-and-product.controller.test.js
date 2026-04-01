@@ -6,6 +6,11 @@ const { normalizePeremptionPayload, getPeremptionStatus } = require('../src/comm
 const { create, update, addUniteVente, removeUniteVente, updateUniteVente } = require('../src/modules/catalog/produit.controller');
 const { getInventaire } = require('../src/modules/inventory/stock.controller');
 
+// Global mock: getInventaire uses Promise.all([findMany, count])
+const _origCountPeremption = prisma.produit.count;
+prisma.produit.count = async () => 0;
+
+
 const createMockResponse = () => {
   let statusCode = 200;
   let payload = null;
@@ -66,6 +71,7 @@ test('create persiste la péremption et son seuil dans le contrôleur catalogue'
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Café Maxwell',
       prixVente: '300',
@@ -99,6 +105,7 @@ test('create interprète correctement estDefaut en chaîne dans les unités manu
   const res = createMockResponse();
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Riz local',
       prixVente: '300',
@@ -137,6 +144,7 @@ test('create remet categorieId et fournisseurId à null quand ils sont vides', a
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Thé vert',
       prixVente: '500',
@@ -167,6 +175,7 @@ test('create retourne une erreur serveur si la création échoue', async (t) => 
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Café soluble',
       prixVente: '300',
@@ -197,6 +206,7 @@ test('update efface la péremption quand la date est envoyée vide', async (t) =
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: { datePeremption: '', alertePeremptionJours: '' },
   }, res);
@@ -223,6 +233,7 @@ test('update remet categorieId et fournisseurId à null quand ils sont vidés', 
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: { categorieId: '', fournisseurId: null },
   }, res);
@@ -250,6 +261,7 @@ test('update retourne une erreur serveur si la mise à jour échoue', async (t) 
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: { nom: 'Café soluble' },
   }, res);
@@ -264,6 +276,7 @@ test('create refuse un produit automatique sans nombre de conditionnements', asy
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Riz 50kg',
       commercialMode: 'poids',
@@ -284,6 +297,7 @@ test('create refuse un produit automatique avec une taille de conditionnement in
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton soda',
       commercialMode: 'carton',
@@ -304,6 +318,7 @@ test('create refuse un produit automatique carton avec un prixVenteDetail négat
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton soda',
       commercialMode: 'carton',
@@ -337,6 +352,7 @@ test('create automatique met stockAlerte à 0 quand il est absent', async (t) =>
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton sucre',
       commercialMode: 'carton',
@@ -370,6 +386,7 @@ test('create génère correctement les données d’un produit automatique carto
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton soda',
       commercialMode: 'carton',
@@ -411,6 +428,7 @@ test('create automatique ignore des unités manuelles parasites et garde les uni
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton spray',
       uniteBase: 'kg',
@@ -451,6 +469,7 @@ test('create applique un prixVenteDetail explicite pour un produit automatique c
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton biscuits',
       commercialMode: 'carton',
@@ -490,6 +509,7 @@ test('create conserve 4 décimales sur prixVente mais arrondit à 2 décimales l
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton bonbons',
       commercialMode: 'carton',
@@ -526,6 +546,7 @@ test('create dérive et arrondit correctement le prix détail d’un carton sans
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Carton jus',
       commercialMode: 'carton',
@@ -565,6 +586,7 @@ test('create génère correctement les données d’un produit automatique poids
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Sac farine',
       commercialMode: 'poids',
@@ -607,6 +629,7 @@ test('create génère correctement les données d’un produit automatique volum
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Sirop',
       commercialMode: 'volume',
@@ -650,6 +673,7 @@ test('create gère aussi les prix de conditionnement décimaux en automatique vo
 
   await create({
     boutiqueId: 3,
+    user: { id: 0 },
     body: {
       nom: 'Huile fine',
       commercialMode: 'volume',
@@ -692,6 +716,7 @@ test('update régénère correctement les unités d’un produit automatique vol
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       commercialMode: 'volume',
@@ -736,6 +761,7 @@ test('update automatique ignore des unités manuelles parasites et régénère u
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       commercialMode: 'volume',
@@ -781,6 +807,7 @@ test('update bascule un produit manuel vers un carton automatique avec prixVente
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       stock: '999',
@@ -828,6 +855,7 @@ test('update conserve le stock manuel quand un produit automatique est mis à jo
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       stock: '1450',
@@ -870,6 +898,7 @@ test('update laisse le stock inchangé quand un produit automatique est mis à j
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       commercialMode: 'volume',
@@ -910,6 +939,7 @@ test('update automatique ignore stockAlerte vide au lieu de le convertir en 0', 
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       commercialMode: 'volume',
@@ -943,6 +973,7 @@ test('update ignore le stock manuel quand un produit automatique reçoit un nomb
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       stock: '9999',
@@ -985,6 +1016,7 @@ test('update poids automatique arrondit correctement les unités dérivées sur 
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       commercialMode: 'poids',
@@ -1024,6 +1056,7 @@ test('update applique les champs manuels sans régénérer les unités quand auc
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       nom: 'Huile manuelle',
@@ -1062,6 +1095,7 @@ test('update ignore les champs numériques vides en mode manuel', async (t) => {
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       prixVente: '',
@@ -1098,6 +1132,7 @@ test('update autorise une bascule partielle d’un produit automatique vers un m
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       nom: 'Huile semi-manuelle',
@@ -1133,6 +1168,7 @@ test('update bascule un produit manuel vers un volume automatique sans commercia
 
   await update({
     boutiqueId: 3,
+    user: { id: 0 },
     params: { id: '64' },
     body: {
       stock: '321',

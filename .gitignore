@@ -47,3 +47,12 @@ SESSION_*.md
 
 # Local
 *.local
+
+# Env files
+.env
+.env.*
+backend/.env.test
+infra/.env
+
+# Nested repo
+/tekkipro/

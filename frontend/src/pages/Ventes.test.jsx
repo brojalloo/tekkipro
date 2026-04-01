@@ -66,7 +66,7 @@ describe('Ventes page', () => {
   it('bloque l’ouverture PDF pour un plan non Pro', async () => {
     render(<Ventes />);
 
-    await waitFor(() => expect(screen.getByText('VNT-001')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('VNT-001')[0]).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Facture PDF indisponible pour la vente VNT-001/i }));
 
     expect(toastError).toHaveBeenCalledWith('Export PDF réservé au plan Pro. Passez à un plan supérieur.');
@@ -75,7 +75,7 @@ describe('Ventes page', () => {
   it('annule une vente puis recharge la liste', async () => {
     render(<Ventes />);
 
-    await waitFor(() => expect(screen.getByText('VNT-001')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('VNT-001')[0]).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Annuler la vente VNT-001/i }));
 
     await waitFor(() => {
@@ -90,7 +90,7 @@ describe('Ventes page', () => {
 
     render(<Ventes />);
 
-    await waitFor(() => expect(screen.getByText('VNT-001')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('VNT-001')[0]).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Annuler la vente VNT-001/i }));
 
     await waitFor(() => {
@@ -122,7 +122,7 @@ describe('Ventes page', () => {
 
     render(<Ventes />);
 
-    await waitFor(() => expect(screen.getByText('VNT-001')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText('VNT-001')[0]).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /Voir la facture PDF de la vente VNT-001/i }));
 
     await waitFor(() => {

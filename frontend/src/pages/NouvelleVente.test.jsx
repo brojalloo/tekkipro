@@ -60,7 +60,7 @@ describe('NouvelleVente page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -69,7 +69,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') {
+      if (url === '/clients?limit=1000') {
         return {
           data: {
             data: [{ id: 2, prenom: 'Awa', nom: 'Ndiaye', telephone: '771234567' }],
@@ -127,8 +127,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.click(screen.getByRole('button', { name: /Valider la vente/i }));
 
@@ -143,15 +143,15 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     expect(screen.getByText('Panier vide')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Valider la vente/i })).not.toBeInTheDocument();
   });
 
   it('affiche une erreur quand le chargement initial des données échoue', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') throw new Error('network down');
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/produits?limit=1000') throw new Error('network down');
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -161,15 +161,15 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/clients'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/clients?limit=1000'));
     await waitFor(() => expect(toastError).toHaveBeenCalledWith('Erreur de chargement des données'));
     expect(screen.getByText('Panier vide')).toBeInTheDocument();
   });
 
   it('filtre la liste des produits via la recherche par nom ou code-barres', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -179,7 +179,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -189,7 +189,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     const searchInput = screen.getByPlaceholderText('Rechercher un produit…');
 
     fireEvent.change(searchInput, { target: { value: '222' } });
@@ -211,7 +211,7 @@ describe('NouvelleVente page', () => {
     const lookupPromise = new Promise((resolve) => { resolveLookup = resolve; });
 
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -220,7 +220,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       if (url === '/barcodes/lookup/111') return lookupPromise;
       throw new Error(`Unexpected GET ${url}`);
     });
@@ -231,7 +231,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     apiGet.mockClear();
 
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
@@ -268,7 +268,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     expect(screen.getByText('Scanner ON')).toBeInTheDocument();
     expect(screen.getByText('scanner-active')).toBeInTheDocument();
 
@@ -292,7 +292,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -304,7 +304,7 @@ describe('NouvelleVente page', () => {
 
   it('ajoute aussi le produit scanné quand le lookup renvoie directement le produit sans wrapper', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -313,7 +313,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       if (url === '/barcodes/lookup/111') {
         return {
           data: {
@@ -345,7 +345,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -365,7 +365,7 @@ describe('NouvelleVente page', () => {
 
   it('ajoute en unité de base quand le lookup scan ne renvoie aucune unité de vente', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -374,7 +374,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       if (url === '/barcodes/lookup/111') {
         return {
           data: {
@@ -406,7 +406,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -427,7 +427,7 @@ describe('NouvelleVente page', () => {
 
   it('utilise l’unité par défaut quand le lookup scan ne renvoie pas de uniteId', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -436,7 +436,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       if (url === '/barcodes/lookup/111') {
         return {
           data: {
@@ -471,7 +471,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -496,7 +496,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan unknown/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/999'));
@@ -518,13 +518,13 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
   });
 
   it('ajoute automatiquement au panier le produit retrouvé via le code-barres de reprise', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -543,7 +543,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -553,7 +553,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     await waitFor(() => expect(screen.getByText('Pack')).toBeInTheDocument());
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
 
@@ -571,7 +571,7 @@ describe('NouvelleVente page', () => {
 
   it('n’auto-ajoute rien quand le code-barres de reprise ne correspond à aucun produit actif', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -590,7 +590,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -600,7 +600,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
     expect(screen.queryByText('Lait frais')).not.toBeInTheDocument();
     expect(screen.getByText('Panier vide')).toBeInTheDocument();
@@ -610,7 +610,7 @@ describe('NouvelleVente page', () => {
 
   it('n’auto-ajoute rien quand le produit repris via code-barres est actif mais sans stock', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -629,7 +629,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -639,7 +639,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
     expect(screen.getByText('Lait frais')).toBeInTheDocument();
     expect(screen.getByText('0 Pack')).toBeInTheDocument();
@@ -650,7 +650,7 @@ describe('NouvelleVente page', () => {
 
   it('reprend avec une unité vendable plus petite quand l’unité par défaut dépasse le stock disponible', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -672,7 +672,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -682,7 +682,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     await waitFor(() => expect(screen.getByText('Unité')).toBeInTheDocument());
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
 
@@ -700,7 +700,7 @@ describe('NouvelleVente page', () => {
 
   it('privilégie encore l’unité par défaut quand plusieurs unités vendables sont disponibles', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -723,7 +723,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -733,7 +733,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     await waitFor(() => expect(screen.getByText('Pack')).toBeInTheDocument());
     expect(screen.getByPlaceholderText('Rechercher un produit…').value).toBe('111');
 
@@ -756,7 +756,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan unknown/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/999'));
@@ -787,7 +787,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan unknown/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/999'));
@@ -817,7 +817,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan invalid/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/444'));
@@ -831,7 +831,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan error/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/500'));
@@ -845,7 +845,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -869,10 +869,10 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     apiGet.mockClear();
 
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Valider la vente/i }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/ventes', {
@@ -883,14 +883,14 @@ describe('NouvelleVente page', () => {
     }));
 
     await waitFor(() => {
-      expect(apiGet.mock.calls.map((call) => call[0])).toEqual(expect.arrayContaining(['/produits', '/clients']));
+      expect(apiGet.mock.calls.map((call) => call[0])).toEqual(expect.arrayContaining(['/produits?limit=1000', '/clients?limit=1000']));
       expect(screen.getByText('Panier vide')).toBeInTheDocument();
     });
   });
 
   it('valide une vente multi-produits en envoyant chaque ligne du panier', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -900,7 +900,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') {
+      if (url === '/clients?limit=1000') {
         return {
           data: {
             data: [{ id: 2, prenom: 'Awa', nom: 'Ndiaye', telephone: '771234567' }],
@@ -936,7 +936,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getAllByRole('button', { name: /1 piece/i })[1]);
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
@@ -962,7 +962,7 @@ describe('NouvelleVente page', () => {
 
   it('garde des lignes distinctes pour le même produit vendu en base et en unité dérivée', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -984,7 +984,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       throw new Error(`Unexpected GET ${url}`);
     });
 
@@ -994,9 +994,9 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /1 Unité/i }));
-    fireEvent.click(screen.getByRole('button', { name: /1 Pack/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /1 Pack/i }));
 
     expect(container.querySelectorAll('.nv-cart-item')).toHaveLength(2);
     expect(Array.from(container.querySelectorAll('.nv-item-price')).map((node) => node.textContent)).toEqual([
@@ -1026,7 +1026,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
 
@@ -1050,7 +1050,7 @@ describe('NouvelleVente page', () => {
 
   it('additionne aussi la même unité dérivée ajoutée plusieurs fois depuis le bouton produit', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -1071,7 +1071,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') return { data: { data: [] } };
+      if (url === '/clients?limit=1000') return { data: { data: [] } };
       if (url === '/barcodes/lookup/999') throw { response: { status: 404 } };
       if (url === '/barcodes/lookup/444') return { data: { data: { produit: { nom: 'Produit fantôme' } } } };
       if (url === '/barcodes/lookup/500') throw { response: { status: 500 } };
@@ -1084,9 +1084,9 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 Pack/i }));
-    fireEvent.click(screen.getByRole('button', { name: /1 Pack/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 Pack/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /1 Pack/i }));
 
     expect(container.querySelectorAll('.nv-cart-item')).toHaveLength(1);
     expect(container.querySelector('.nv-item-price').textContent).toBe('1 800 FCFA × 2');
@@ -1111,8 +1111,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -1121,7 +1121,7 @@ describe('NouvelleVente page', () => {
     fireEvent.click(container.querySelectorAll('.nv-remove-btn')[0]);
     expect(container.querySelector('.nv-item-price').textContent).toBe('1 800 FCFA × 1');
 
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
 
     expect(Array.from(container.querySelectorAll('.nv-item-price')).map((node) => node.textContent)).toEqual([
       '1 800 FCFA × 1',
@@ -1151,8 +1151,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -1192,8 +1192,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Mock scan known/i }));
 
     await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/barcodes/lookup/111'));
@@ -1224,8 +1224,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
@@ -1253,8 +1253,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
 
@@ -1278,8 +1278,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '0' } });
@@ -1304,8 +1304,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '-15' } });
@@ -1330,8 +1330,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: 'abc' } });
@@ -1356,8 +1356,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '100.75' } });
@@ -1382,8 +1382,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '100' } });
     expect(screen.getByDisplayValue('100')).toBeInTheDocument();
@@ -1410,8 +1410,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /MoMo/i }));
 
     expect(screen.queryByPlaceholderText('0')).not.toBeInTheDocument();
@@ -1434,8 +1434,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
 
     expect(screen.getByText('350 FCFA × 1')).toBeInTheDocument();
     expect(container.querySelector('.nv-total-amount').textContent).toBe('350 FCFA');
@@ -1461,8 +1461,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
 
     fireEvent.click(container.querySelectorAll('.nv-qty-btn')[0]);
 
@@ -1473,7 +1473,7 @@ describe('NouvelleVente page', () => {
 
   it('supprime seulement la ligne ciblée dans un panier multi-produits', async () => {
     apiGet.mockImplementation(async (url) => {
-      if (url === '/produits') {
+      if (url === '/produits?limit=1000') {
         return {
           data: {
             data: [
@@ -1483,7 +1483,7 @@ describe('NouvelleVente page', () => {
           },
         };
       }
-      if (url === '/clients') {
+      if (url === '/clients?limit=1000') {
         return { data: { data: [{ id: 2, prenom: 'Awa', nom: 'Ndiaye', telephone: '771234567' }] } };
       }
       throw new Error(`Unexpected GET ${url}`);
@@ -1495,7 +1495,7 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
     fireEvent.click(screen.getAllByRole('button', { name: /1 piece/i })[0]);
     fireEvent.click(screen.getAllByRole('button', { name: /1 piece/i })[1]);
 
@@ -1514,8 +1514,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
@@ -1535,8 +1535,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '350' } });
@@ -1563,8 +1563,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '999' } });
@@ -1591,8 +1591,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Crédit/i }));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2' } });
     fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '350.99' } });
@@ -1617,8 +1617,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
 
     expect(container.querySelector('.nv-cart-item strong').textContent).toBe('Lait frais');
     fireEvent.click(container.querySelector('.nv-remove-btn'));
@@ -1645,8 +1645,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Valider la vente/i }));
 
     await waitFor(() => {
@@ -1675,8 +1675,8 @@ describe('NouvelleVente page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits'));
-    fireEvent.click(screen.getByRole('button', { name: /1 piece/i }));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/produits?limit=1000'));
+    fireEvent.click(await screen.findByRole('button', { name: /1 piece/i }));
     fireEvent.click(screen.getByRole('button', { name: /Valider la vente/i }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledWith('[500] Stock verrouillé', { duration: 8000 }));

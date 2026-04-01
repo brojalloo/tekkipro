@@ -228,7 +228,7 @@ const getAll = async (req, res) => {
       prisma.produit.findMany({
         where,
         include: {
-          categorie: { select: { id: true, nom: true } },
+          categorie: true,
           fournisseur: { select: { id: true, nom: true } },
           unitesVente: { orderBy: { estDefaut: 'desc' } },
         },
@@ -532,23 +532,13 @@ const updateUniteVente = async (req, res) => {
 // on récupère les IDs via SQL raw, puis on charge les données complètes avec les includes.
 const getAlertesStock = async (req, res) => {
   try {
-    const alertIds = await prisma.$queryRaw`
-      SELECT id FROM produits
-      WHERE "boutiqueId" = ${req.boutiqueId} AND actif = true AND stock <= "stockAlerte"
-      ORDER BY stock ASC
-    `.then(rows => rows.map(r => Number(r.id)));
-
-    if (alertIds.length === 0) {
-      return res.json({ success: true, data: [] });
-    }
-
     const produits = await prisma.produit.findMany({
-      where: { id: { in: alertIds } },
+      where: { boutiqueId: req.boutiqueId, actif: true },
       include: { categorie: { select: { nom: true } }, unitesVente: true },
       orderBy: { stock: 'asc' },
     });
-
-    res.json({ success: true, data: produits });
+    const alertes = produits.filter(p => p.stock <= p.stockAlerte);
+    res.json({ success: true, data: alertes });
   } catch (error) {
     logger.error('Erreur getAlertesStock', error);
     return sendError(res, 'Erreur serveur', 500, { code: 'STOCK_ALERTS_FETCH_FAILED' });

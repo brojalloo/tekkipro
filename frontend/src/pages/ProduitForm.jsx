@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import BarcodeScannerInput from '../features/products/components/BarcodeScannerInput';
+import { showUpgradeToast } from '../lib/upgradeToast';
 import {
   FiPackage, FiSave, FiArrowLeft, FiGrid, FiPlus, FiTrash2,
   FiTag, FiDollarSign, FiBox, FiAlertTriangle, FiBarChart2,
@@ -57,12 +59,15 @@ export default function ProduitForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
+  const [searchParams] = useSearchParams();
+  const codeBarreFromUrl = searchParams.get('codeBarre') || '';
+  const returnTo = searchParams.get('returnTo') || '';
 
   const [categories, setCategories] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [form, setForm] = useState({
     nom: '', description: '', prixVente: '', prixAchat: '',
-    stockAlerte: '0', uniteBase: 'g', codeBarre: '', categorieId: '', fournisseurId: '',
+    stockAlerte: '0', uniteBase: 'g', codeBarre: codeBarreFromUrl, categorieId: '', fournisseurId: '',
   });
   // Stock input: user enters quantity + selects which unit
   const [stockQty, setStockQty] = useState('');
@@ -74,10 +79,12 @@ export default function ProduitForm() {
   const [commercialCount, setCommercialCount] = useState(''); // nombre de packs (sacs,bidons,cartons)
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [scannerActive, setScannerActive] = useState(false);
 
   useEffect(() => {
     loadOptions();
     if (isEdit) loadProduit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadOptions = async () => {
@@ -88,7 +95,7 @@ export default function ProduitForm() {
       ]);
       setCategories(catRes.data.data);
       setFournisseurs(fournRes.data.data);
-    } catch (e) { toast.error('Erreur de chargement des options'); }
+    } catch (_e) { toast.error('Erreur de chargement des options'); }
   };
 
   const loadProduit = async () => {
@@ -107,7 +114,7 @@ export default function ProduitForm() {
       // Show current stock in base unit
       setStockQty(p.stock);
       setStockUniteIdx(-1);
-    } catch (e) {
+    } catch (_e) {
       toast.error('Produit non trouvé');
       navigate('/app/produits');
     }
@@ -115,6 +122,12 @@ export default function ProduitForm() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleScan = (code) => {
+    setForm(prev => ({ ...prev, codeBarre: code }));
+    toast.success(`Code-barres scanné : ${code}`);
+    setScannerActive(false);
   };
 
   // Calculate stock in base unit
@@ -202,7 +215,7 @@ export default function ProduitForm() {
     if (unite.id && !unite.isNew) {
       try {
         await api.delete(`/produits/unites/${unite.id}`);
-      } catch (e) { toast.error('Erreur de suppression'); }
+      } catch (_e) { toast.error('Erreur de suppression'); }
     }
     setUnitesVente(unitesVente.filter((_, i) => i !== idx));
   };
@@ -211,7 +224,6 @@ export default function ProduitForm() {
     e.preventDefault();
     const errors = {};
     if (form.prixVente === '' || form.prixVente === null || form.prixVente === undefined) errors.prixVente = 'Le prix de vente est obligatoire';
-    if (!form.categorieId) errors.categorieId = 'La catégorie est obligatoire';
     if (!isEdit && (stockQty === '' || stockQty === null || stockQty === undefined)) errors.stockQty = 'Le stock initial est obligatoire';
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -220,7 +232,7 @@ export default function ProduitForm() {
     setFormErrors({});
     setLoading(true);
     try {
-      const stockBase = isEdit ? undefined : getStockBase();
+      const stockBase = isEdit ? (stockQty !== '' ? Number(stockQty) : undefined) : getStockBase();
       const validUnites = unitesVente.filter(u => u.nom && u.facteurConversion && u.prix);
 
       const data = {
@@ -253,14 +265,22 @@ export default function ProduitForm() {
             estDefaut: Boolean(u.estDefaut),
           });
         }
-        toast.success('Produit mis à jour');
+        toast.success('Produit mis à jour avec succès.');
       } else {
         await api.post('/produits', data);
-        toast.success('Produit créé avec succès');
+        toast.success('Produit créé avec succès.');
       }
-      navigate('/app/produits');
+      if (returnTo === 'vente') {
+        navigate(`/app/ventes/nouvelle?codeBarre=${form.codeBarre}`);
+      } else {
+        navigate('/app/produits');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erreur');
+      if (error?.response?.data?.upgrade) {
+        showUpgradeToast({ message: error.response.data.message, navigate });
+      } else {
+        toast.error(error.response?.data?.message || 'Erreur');
+      }
     } finally {
       setLoading(false);
     }
@@ -300,7 +320,7 @@ export default function ProduitForm() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(27,94,32,0.35),transparent_55%)] pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-5">
-            <button onClick={() => navigate('/app/produits')} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all border-none cursor-pointer">
+            <button onClick={() => returnTo === 'vente' ? navigate(`/app/ventes/nouvelle?codeBarre=${codeBarreFromUrl}`) : navigate('/app/produits')} className="w-10 h-10 flex items-center justify-center bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all border-none cursor-pointer">
               <FiArrowLeft size={20} />
             </button>
             <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-[#FFD600] to-[#F9A825] text-[#071C08] rounded-xl shadow-[0_6px_20px_rgba(255,214,0,0.3)] shrink-0"><FiPackage size={22} /></div>
@@ -353,6 +373,8 @@ export default function ProduitForm() {
                     onChange={handleChange}
                     placeholder="Scanner ou saisir le code"
                   />
+                  <button type="button" onClick={() => setScannerActive(v => !v)} className="mt-1 text-xs font-semibold text-[#1B5E20] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent p-0">Scanner</button>
+                  <BarcodeScannerInput active={scannerActive} onScan={handleScan} />
                 </div>
                 <div className="space-y-2">
                   <label>
@@ -714,7 +736,7 @@ export default function ProduitForm() {
                           style={{width:'18px',height:'18px', accentColor:'#6366f1'}}
                         />
                       </div>
-                      <button type="button" className="w-9 h-9 flex items-center justify-center bg-destructive/10 border border-destructive/20 rounded-lg text-destructive/50 hover:bg-destructive/20 hover:text-destructive transition-all" onClick={() => removeUnite(idx)}>
+                      <button type="button" className="pf-fraction-delete w-9 h-9 flex items-center justify-center bg-destructive/10 border border-destructive/20 rounded-lg text-destructive/50 hover:bg-destructive/20 hover:text-destructive transition-all" onClick={() => removeUnite(idx)}>
                         <FiTrash2 size={15} />
                       </button>
                     </div>
@@ -753,7 +775,7 @@ export default function ProduitForm() {
                 </>
               )}
             </button>
-            <button type="button" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mt-2.5 bg-muted border border-border rounded-xl text-muted-foreground font-semibold hover:bg-muted/80 hover:text-foreground transition-all" onClick={() => navigate('/app/produits')}>
+            <button type="button" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mt-2.5 bg-muted border border-border rounded-xl text-muted-foreground font-semibold hover:bg-muted/80 hover:text-foreground transition-all" onClick={() => returnTo === 'vente' ? navigate(`/app/ventes/nouvelle?codeBarre=${codeBarreFromUrl}`) : navigate('/app/produits')}>
               <FiArrowLeft size={15} />
               Retour aux produits
             </button>

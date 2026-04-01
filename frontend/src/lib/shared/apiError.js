@@ -21,7 +21,6 @@ const CODE_MESSAGE_MAPS = Object.freeze({
     SALE_ALREADY_CANCELLED: 'Cette vente est déjà annulée.',
     ADMIN_ONLY: 'Accès réservé aux administrateurs.',
     LAST_ADMIN_PROTECTION: 'Impossible de désactiver le seul administrateur actif.',
-    PLAN_UPGRADE_REQUIRED: 'Cette fonctionnalité nécessite un plan supérieur.',
   }),
   en: Object.freeze({
     AUTH_REQUIRED: 'Your session has expired. Please sign in again.',
@@ -44,7 +43,6 @@ const CODE_MESSAGE_MAPS = Object.freeze({
     SALE_ALREADY_CANCELLED: 'This sale is already cancelled.',
     ADMIN_ONLY: 'Access restricted to administrators.',
     LAST_ADMIN_PROTECTION: 'Cannot disable the only active administrator.',
-    PLAN_UPGRADE_REQUIRED: 'This feature requires a higher plan.',
   }),
 });
 

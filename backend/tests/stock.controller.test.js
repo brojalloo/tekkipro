@@ -4,6 +4,10 @@ const assert = require('node:assert/strict');
 const prisma = require('../src/config/database');
 const { entreeStock, getInventaire } = require('../src/modules/inventory/stock.controller');
 
+// Global mock: getInventaire uses Promise.all([findMany, count])
+prisma.produit.count = async () => 0;
+
+
 const createMockResponse = () => {
   let statusCode = 200;
   let payload = null;

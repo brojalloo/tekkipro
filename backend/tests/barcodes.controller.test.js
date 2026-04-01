@@ -22,7 +22,7 @@ test('barcode.lookup trouve dans product_barcodes en priorité', async (t) => {
   prisma.productBarcode.findFirst = async () => ({
     barcode: '1234567890',
     uniteId: 2,
-    produit: { id: 10, nom: 'Riz 5kg', unitesVente: [] },
+    produit: { id: 10, nom: 'Riz 5kg', actif: true, unitesVente: [] },
   });
   t.after(() => { prisma.productBarcode.findFirst = orig; });
 

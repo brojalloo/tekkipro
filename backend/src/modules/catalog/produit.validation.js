@@ -55,14 +55,7 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
     .isLength({ min: 2, max: 160 })
     .withMessage('Le nom du produit doit contenir entre 2 et 160 caractères');
 
-  const prixVenteRule = body('prixVente')
-    .notEmpty().withMessage('Le prix de vente est obligatoire')
-    .bail()
-    .custom((value) => {
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed) || parsed < 0) throw new Error('Le prix de vente invalide');
-      return true;
-    });
+  const prixVenteRule = optionalNonNegativeNumber(body('prixVente'), 'Le prix de vente');
 
   const stockRule = requireStock
     ? body('stock')
@@ -75,15 +68,7 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
         })
     : optionalNonNegativeNumber(body('stock'), 'Le stock');
 
-  const categorieRule = body('categorieId')
-    .notEmpty().withMessage('La catégorie est obligatoire')
-    .bail()
-    .custom((value) => {
-      const parsed = Number.parseInt(value, 10);
-      if (!Number.isInteger(parsed) || parsed < 1) throw new Error('Catégorie invalide');
-      return true;
-    })
-    .toInt();
+  const categorieRule = optionalPositiveInt(body('categorieId'), 'Catégorie').toInt();
 
   return [
     ...(requireName ? [nameRule] : [body('nom').optional({ values: 'falsy' }).trim().isLength({ min: 2, max: 160 }).withMessage('Le nom du produit doit contenir entre 2 et 160 caractères')]),
@@ -168,7 +153,7 @@ const listProductsValidation = [
     .customSanitizer(normalizeBooleanLike),
 ];
 
-const createProductValidation = productBodyValidation({ requireName: true, requireStock: true });
+const createProductValidation = productBodyValidation({ requireName: true, requireStock: false });
 const updateProductValidation = [...idParamValidation('id', 'Identifiant produit'), ...productBodyValidation({ requireName: false, requireStock: false })];
 const productIdValidation = idParamValidation('id', 'Identifiant produit');
 const productUnitParentValidation = idParamValidation('produitId', 'Identifiant produit');

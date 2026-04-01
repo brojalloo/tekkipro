@@ -5,6 +5,15 @@ const prisma = require('../src/config/database');
 const produitController = require('../src/modules/catalog/produit.controller');
 const venteController = require('../src/modules/sales/vente.controller');
 
+// Override $transaction for array (read-only parallel): use Promise.all instead of real DB tx
+const _origTx = prisma.$transaction.bind(prisma);
+prisma.$transaction = async (arrOrFn) => {
+  if (Array.isArray(arrOrFn)) return Promise.all(arrOrFn);
+  return _origTx(arrOrFn);
+};
+
+
+
 const createMockResponse = () => {
   let statusCode = 200;
   let payload = null;
@@ -20,12 +29,14 @@ const createMockResponse = () => {
 test('produit.getAll filtre les produits en alerte stock quand alerteStock=true', async (t) => {
   const originalFindMany = prisma.produit.findMany;
 
+  const originalCount40 = prisma.produit.count;
   prisma.produit.findMany = async () => ([
     { id: 1, nom: 'Riz', stock: 2, stockAlerte: 5 },
     { id: 2, nom: 'Sucre', stock: 10, stockAlerte: 3 },
   ]);
+  prisma.produit.count = async () => 2;
 
-  t.after(() => { prisma.produit.findMany = originalFindMany; });
+  t.after(() => { prisma.produit.findMany = originalFindMany; prisma.produit.count = originalCount40; });
 
   const res = createMockResponse();
   await produitController.getAll({ boutiqueId: 4, query: { alerteStock: 'true' } }, res);
@@ -40,12 +51,14 @@ test('produit.getAll retourne une liste vide quand aucun produit ne correspond',
   const originalFindMany = prisma.produit.findMany;
   let findArgs = null;
 
+  const originalCount41 = prisma.produit.count;
   prisma.produit.findMany = async (args) => {
     findArgs = args;
     return [];
   };
+  prisma.produit.count = async () => 0;
 
-  t.after(() => { prisma.produit.findMany = originalFindMany; });
+  t.after(() => { prisma.produit.findMany = originalFindMany; prisma.produit.count = originalCount41; });
 
   const res = createMockResponse();
   await produitController.getAll({ boutiqueId: 4, query: { search: 'inconnu' } }, res);
@@ -68,6 +81,8 @@ test('produit.getAll retourne une liste vide quand aucun produit ne correspond',
       unitesVente: { orderBy: { estDefaut: 'desc' } },
     },
     orderBy: { nom: 'asc' },
+    skip: 0,
+    take: 20,
   });
 });
 
@@ -83,7 +98,10 @@ test('produit.getAll combine recherche, catégorie et alerte de stock', async (t
     ];
   };
 
-  t.after(() => { prisma.produit.findMany = originalFindMany; });
+  const originalCount42 = prisma.produit.count;
+  prisma.produit.count = async () => 2;
+
+  t.after(() => { prisma.produit.findMany = originalFindMany; prisma.produit.count = originalCount42; });
 
   const res = createMockResponse();
   await produitController.getAll({ boutiqueId: 4, query: { search: 'huile', categorieId: '8', alerteStock: 'true' } }, res);
@@ -124,15 +142,16 @@ test('produit.getAlertesStock retourne seulement les produits sous le seuil', as
   const originalFindMany = prisma.produit.findMany;
   let findArgs = null;
 
+  const origQR44 = prisma.$queryRaw;
+  prisma.$queryRaw = async () => [{ id: 1 }];
   prisma.produit.findMany = async (args) => {
     findArgs = args;
     return [
-      { id: 1, nom: 'Riz', stock: 2, stockAlerte: 5 },
-      { id: 2, nom: 'Sucre', stock: 8, stockAlerte: 3 },
+      { id: 1, nom: 'Riz', stock: 2, stockAlerte: 5, categorie: null, unitesVente: [] },
     ];
   };
 
-  t.after(() => { prisma.produit.findMany = originalFindMany; });
+  t.after(() => { prisma.produit.findMany = originalFindMany; prisma.$queryRaw = origQR44; });
 
   const res = createMockResponse();
   await produitController.getAlertesStock({ boutiqueId: 4 }, res);
@@ -150,7 +169,9 @@ test('produit.getAlertesStock retourne seulement les produits sous le seuil', as
 
 test('produit.getAlertesStock retourne une liste vide sans alerte stock', async (t) => {
   const originalFindMany = prisma.produit.findMany;
+  const origQR45 = prisma.$queryRaw;
 
+  prisma.$queryRaw = async () => [];
   prisma.produit.findMany = async () => ([
     { id: 1, nom: 'Riz', stock: 10, stockAlerte: 5 },
     { id: 2, nom: 'Sucre', stock: 8, stockAlerte: 3 },
@@ -197,7 +218,7 @@ test('produit.remove effectue une désactivation logique', async (t) => {
   });
 
   const res = createMockResponse();
-  await produitController.remove({ boutiqueId: 4, params: { id: '7' } }, res);
+  await produitController.remove({ boutiqueId: 4, params: { id: '7' }, user: { id: 0 } }, res);
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.payload.success, true);
@@ -496,6 +517,7 @@ test('vente.create enregistre une dette quand le montant payé est partiel', asy
   let movementArgs = null;
 
   prisma.$transaction = async (callback) => callback({
+    client: { findFirst: async () => ({ id: 3, boutiqueId: 4 }) },
     produit: {
       findFirst: async () => ({ id: 11, nom: 'Lait', stock: 20, prixVente: 300, uniteBase: 'piece', unitesVente: [] }),
       update: async () => null,

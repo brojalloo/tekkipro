@@ -88,7 +88,7 @@ function KenteStrip() {
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [activeScreen, setActiveScreen] = useState(2);
+  const [_activeScreen, setActiveScreen] = useState(2);
   const [stats, setStats] = useState({ boutiques: 0, ventes: 0, produits: 0, utilisateurs: 0 });
 
   useEffect(() => {
