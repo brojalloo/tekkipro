@@ -5,7 +5,7 @@ set -e
 
 BRANCH=${1:-main}
 APP_DIR=/opt/tekkipro
-LOG_FILE=/var/log/tekkipro-deploy.log
+LOG_FILE=/opt/tekkipro/deploy.log
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"; }
 
