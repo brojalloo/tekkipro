@@ -1,3 +1,4 @@
+require('./instrument');
 // Tekkipro - Serveur principal v2.0 — Architecture modulaire
 require('dotenv').config();
 const { validateEnvironment } = require('./config/env');
