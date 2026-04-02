@@ -1,3 +1,4 @@
+const { metricsHandler } = require('../modules/metrics/metrics.controller');
 // Tekkipro — Point d'entrée centralisé des routes
 // Chaque module expose ses propres routes
 
@@ -60,6 +61,8 @@ function registerRoutes(app) {
     res.json({ status: 'OK', app: 'Tekkipro API', version: '2.0.0' });
   });
 }
+
+  app.get('/api/metrics', metricsHandler);
 
 module.exports = { registerRoutes };
 
