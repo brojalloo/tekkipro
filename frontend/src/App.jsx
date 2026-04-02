@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { usePageView } from './hooks/usePageView';
 import './App.css';
 
 const Layout = lazy(() => import('./components/Layout'));
@@ -51,6 +52,7 @@ function PrivateRoute({ children, adminOnly = false, superAdminOnly = false }) {
 }
 
 function AppRoutes() {
+  usePageView();
   const { user } = useAuth();
 
   return (
