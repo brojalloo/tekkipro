@@ -56,3 +56,6 @@ infra/.env
 
 # Nested repo
 /tekkipro/
+
+# PgBouncer (contains plaintext password)
+infra/pgbouncer/userlist.txt
