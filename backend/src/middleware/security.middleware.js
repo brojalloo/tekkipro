@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { forbidden, tooManyRequests } = require('../common/utils/response');
+const { redisIncr, redisTtl } = require('../common/utils/redis');
 
 const DEV_ALLOWED_ORIGINS = [
   'http://localhost',
@@ -143,9 +144,8 @@ const createRateLimiter = ({
   message = 'Trop de tentatives. Réessayez plus tard.',
   keyGenerator = (req) => `${req.ip}:${req.route?.path || req.path || 'unknown'}`,
 } = {}) => {
+  // Fallback in-memory store (used when Redis is unavailable)
   const buckets = new Map();
-
-  // Nettoyage périodique des entrées expirées pour éviter la fuite mémoire
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of buckets) {
@@ -153,27 +153,39 @@ const createRateLimiter = ({
     }
   }, windowMs).unref();
 
-  // Exposer pour les tests
-  const middleware = (req, res, next) => {
+  const middleware = async (req, res, next) => {
     const now = Date.now();
-    const key = keyGenerator(req);
+    const key = `rl:${keyGenerator(req)}`;
+    const ttlSeconds = Math.ceil(windowMs / 1000);
+
+    // Try Redis first
+    const redisCount = await redisIncr(key, ttlSeconds);
+    if (redisCount !== null) {
+      const ttl = await redisTtl(key);
+      const remaining = Math.max(0, max - redisCount);
+      res.setHeader('Retry-After', Math.max(1, ttl > 0 ? ttl : ttlSeconds));
+      res.setHeader('X-RateLimit-Limit', String(max));
+      res.setHeader('X-RateLimit-Remaining', String(remaining));
+      if (redisCount > max) {
+        return tooManyRequests(res, message, { code: 'RATE_LIMIT_EXCEEDED' });
+      }
+      return next();
+    }
+
+    // Fallback: in-memory
     const existing = buckets.get(key);
     const entry = !existing || existing.resetAt <= now
       ? { count: 0, resetAt: now + windowMs }
       : existing;
-
     entry.count += 1;
     buckets.set(key, entry);
-
     const remaining = Math.max(0, max - entry.count);
     res.setHeader('Retry-After', Math.max(1, Math.ceil((entry.resetAt - now) / 1000)));
     res.setHeader('X-RateLimit-Limit', String(max));
     res.setHeader('X-RateLimit-Remaining', String(remaining));
-
     if (entry.count > max) {
       return tooManyRequests(res, message, { code: 'RATE_LIMIT_EXCEEDED' });
     }
-
     next();
   };
 

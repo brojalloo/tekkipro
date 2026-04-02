@@ -52,6 +52,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-TekkiPro <noreply@tekkipro.com>}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       WAVE_API_KEY: ${WAVE_API_KEY:-}
       WAVE_WEBHOOK_SECRET: ${WAVE_WEBHOOK_SECRET:-}
@@ -62,12 +63,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:5000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
+    networks:
+      - tekkipro_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: tekkipro_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - '127.0.0.1:6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - tekkipro_net
 
