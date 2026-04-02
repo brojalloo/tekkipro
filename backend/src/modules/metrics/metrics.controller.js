@@ -7,8 +7,7 @@ async function metricsHandler(req, res) {
     res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
     res.send(metrics);
   } catch (err) {
-    res.status(500).send('# Error collecting metrics
-');
+    res.status(500).send('# Error collecting metrics');
   }
 }
 
