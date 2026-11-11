@@ -203,6 +203,10 @@ model UniteVente {
   produitId         Int
   createdAt         DateTime @default(now())
 
+  // Colonnes conservées pour les anciennes fractions. Les nouvelles unités ne les utilisent pas.
+  legacyContenance Float   @default(1) @map("contenance") @ignore
+  legacyUnite      String? @map("unite") @ignore
+
   produit Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
 
   @@index([produitId])
