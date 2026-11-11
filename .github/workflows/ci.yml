@@ -58,9 +58,6 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,16 +68,16 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefix frontend
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint --prefix frontend
 
       - name: Test
-        run: npm test
+        run: npm test --prefix frontend
 
       - name: Build
-        run: npm run build
+        run: npm run build --prefix frontend
 
   deploy:
     name: Deploy to VPS
