@@ -67,7 +67,6 @@ test('auth refuse un token passé uniquement dans la query string', async (t) =>
 });
 
 test('vente.annuler restaure le stock et supprime les dettes liées', async (t) => {
-  const originalFindFirst = prisma.vente.findFirst;
   const originalTransaction = prisma.$transaction;
   const produitUpdates = [];
   const stockUpserts = [];
@@ -76,20 +75,20 @@ test('vente.annuler restaure le stock et supprime les dettes liées', async (t) 
   const remboursementDeletes = [];
   const detteDeletes = [];
 
-  prisma.vente.findFirst = async () => ({
+  const vente = {
     id: 21,
     statut: 'EN_CREDIT',
     details: [
       { produitId: 5, quantite: 1, quantiteBase: 3, uniteNom: 'Pack', prixUnitaire: 1200 },
       { produitId: 6, quantite: 2, quantiteBase: 2, uniteNom: 'Pièce', prixUnitaire: 300 },
     ],
-  });
+  };
 
   prisma.$transaction = async (callback) => callback({
     produit: {
       update: async (args) => {
         produitUpdates.push(args);
-        return args;
+        return { stock: 10 };
       },
     },
     stockBalance: {
@@ -105,9 +104,10 @@ test('vente.annuler restaure le stock et supprime les dettes liées', async (t) 
       },
     },
     vente: {
-      update: async (args) => {
+      findFirst: async () => vente,
+      updateMany: async (args) => {
         venteUpdates.push(args);
-        return args;
+        return { count: 1 };
       },
     },
     dette: {
@@ -126,7 +126,6 @@ test('vente.annuler restaure le stock et supprime les dettes liées', async (t) 
   });
 
   t.after(() => {
-    prisma.vente.findFirst = originalFindFirst;
     prisma.$transaction = originalTransaction;
   });
 
@@ -142,13 +141,12 @@ test('vente.annuler restaure le stock et supprime les dettes liées', async (t) 
   assert.equal(movementCreates.length, 2);
   assert.equal(movementCreates[0].data.type, 'RETURN');
   assert.equal(movementCreates[0].data.referenceId, 21);
-  assert.deepEqual(venteUpdates[0], { where: { id: 21 }, data: { statut: 'ANNULEE' } });
+  assert.deepEqual(venteUpdates[0], { where: { id: 21, boutiqueId: 4, statut: { not: 'ANNULEE' } }, data: { statut: 'ANNULEE' } });
   assert.deepEqual(remboursementDeletes[0], { where: { detteId: { in: [71, 72] } } });
   assert.deepEqual(detteDeletes[0], { where: { id: { in: [71, 72] } } });
 });
 
 test('vente.annuler utilise quantite quand quantiteBase est absente et ne supprime rien sans dette', async (t) => {
-  const originalFindFirst = prisma.vente.findFirst;
   const originalTransaction = prisma.$transaction;
   const produitUpdates = [];
   const stockUpserts = [];
@@ -156,19 +154,19 @@ test('vente.annuler utilise quantite quand quantiteBase est absente et ne suppri
   const remboursementDeletes = [];
   const detteDeletes = [];
 
-  prisma.vente.findFirst = async () => ({
+  const vente = {
     id: 22,
     statut: 'COMPLETEE',
     details: [
       { produitId: 9, quantite: 4, uniteNom: 'piece', prixUnitaire: 250 },
     ],
-  });
+  };
 
   prisma.$transaction = async (callback) => callback({
     produit: {
       update: async (args) => {
         produitUpdates.push(args);
-        return args;
+        return { stock: 10 };
       },
     },
     stockBalance: {
@@ -183,7 +181,7 @@ test('vente.annuler utilise quantite quand quantiteBase est absente et ne suppri
         return args;
       },
     },
-    vente: { update: async () => null },
+    vente: { findFirst: async () => vente, updateMany: async () => ({ count: 1 }) },
     dette: {
       findMany: async () => [],
       deleteMany: async (args) => {
@@ -200,7 +198,6 @@ test('vente.annuler utilise quantite quand quantiteBase est absente et ne suppri
   });
 
   t.after(() => {
-    prisma.vente.findFirst = originalFindFirst;
     prisma.$transaction = originalTransaction;
   });
 

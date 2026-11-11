@@ -80,10 +80,14 @@ const create = async (req, res) => {
         const sousTotal = prixUnitaire * quantiteUser;
         montantTotal += sousTotal;
 
-        await tx.produit.update({
-          where: { id: produit.id },
+        const [produitMisAJour] = await tx.produit.updateManyAndReturn({
+          where: { id: produit.id, boutiqueId: req.boutiqueId, stock: { gte: quantiteBase } },
           data: { stock: { decrement: quantiteBase } },
+          select: { stock: true },
         });
+        if (!produitMisAJour) {
+          throw new BusinessError(`Stock insuffisant pour ${produit.nom}.`);
+        }
 
         // Mettre à jour StockBalance
         await tx.stockBalance.upsert({
@@ -92,7 +96,7 @@ const create = async (req, res) => {
           create: {
             produitId: produit.id,
             boutiqueId: req.boutiqueId,
-            stockBase: Math.max(0, produit.stock - quantiteBase),
+            stockBase: produitMisAJour.stock,
             dernierMouvement: new Date(),
           },
         });
@@ -247,25 +251,26 @@ const annuler = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const vente = await prisma.vente.findFirst({
-      where: { id: parseInt(id), boutiqueId: req.boutiqueId },
-      include: { details: true },
-    });
+    const refusal = await prisma.$transaction(async (tx) => {
+      const vente = await tx.vente.findFirst({
+        where: { id: parseInt(id), boutiqueId: req.boutiqueId },
+        include: { details: true },
+      });
 
-    if (!vente) {
-      return notFound(res, 'Vente non trouvée', { code: 'SALE_NOT_FOUND' });
-    }
+      if (!vente) return 'SALE_NOT_FOUND';
 
-    if (vente.statut === 'ANNULEE') {
-      return badRequest(res, 'Vente déjà annulée', { code: 'SALE_ALREADY_CANCELLED' });
-    }
+      // Prendre le verrou sur la vente avant de modifier le stock ou la dette.
+      const { count } = await tx.vente.updateMany({
+        where: { id: vente.id, boutiqueId: req.boutiqueId, statut: { not: 'ANNULEE' } },
+        data: { statut: 'ANNULEE' },
+      });
+      if (count === 0) return 'SALE_ALREADY_CANCELLED';
 
-    await prisma.$transaction(async (tx) => {
       // Remettre le stock + écrire StockMovement RETURN
       for (const detail of vente.details) {
         const qtyToRestore = detail.quantiteBase || detail.quantite;
 
-        await tx.produit.update({
+        const produitMisAJour = await tx.produit.update({
           where: { id: detail.produitId },
           data: { stock: { increment: qtyToRestore } },
         });
@@ -277,7 +282,7 @@ const annuler = async (req, res) => {
           create: {
             produitId: detail.produitId,
             boutiqueId: req.boutiqueId,
-            stockBase: qtyToRestore,
+            stockBase: produitMisAJour.stock,
             dernierMouvement: new Date(),
           },
         });
@@ -299,11 +304,6 @@ const annuler = async (req, res) => {
         });
       }
 
-      await tx.vente.update({
-        where: { id: parseInt(id) },
-        data: { statut: 'ANNULEE' },
-      });
-
       const dettes = await tx.dette.findMany({
         where: { venteId: parseInt(id) },
         select: { id: true },
@@ -314,7 +314,15 @@ const annuler = async (req, res) => {
         await tx.remboursement.deleteMany({ where: { detteId: { in: detteIds } } });
         await tx.dette.deleteMany({ where: { id: { in: detteIds } } });
       }
-    });
+      return null;
+    }, { isolationLevel: 'ReadCommitted' });
+
+    if (refusal === 'SALE_NOT_FOUND') {
+      return notFound(res, 'Vente non trouvée', { code: refusal });
+    }
+    if (refusal === 'SALE_ALREADY_CANCELLED') {
+      return badRequest(res, 'Vente déjà annulée', { code: refusal });
+    }
 
     logAudit(prisma, {
       action: 'CANCEL',

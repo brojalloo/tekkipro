@@ -457,7 +457,7 @@ test('vente.create refuse une vente à crédit sans client', async (t) => {
   prisma.$transaction = async (callback) => callback({
     produit: {
       findFirst: async () => ({ id: 10, nom: 'Yaourt', stock: 12, prixVente: 500, uniteBase: 'piece', unitesVente: [] }),
-      update: async () => null,
+      updateManyAndReturn: async () => [{ stock: 11 }],
     },
     stockBalance: { upsert: async () => null },
     vente: { create: async () => { throw new Error('should not create sale'); } },
@@ -486,7 +486,7 @@ test('vente.create refuse une vente quand le stock est insuffisant', async (t) =
   prisma.$transaction = async (callback) => callback({
     produit: {
       findFirst: async () => ({ id: 10, nom: 'Yaourt', stock: 1, prixVente: 500, uniteBase: 'piece', unitesVente: [] }),
-      update: async () => { produitUpdated = true; return null; },
+      updateManyAndReturn: async () => { produitUpdated = true; return []; },
     },
     stockBalance: { upsert: async () => null },
     vente: { create: async () => { venteCreated = true; return null; } },
@@ -520,7 +520,7 @@ test('vente.create enregistre une dette quand le montant payé est partiel', asy
     client: { findFirst: async () => ({ id: 3, boutiqueId: 4 }) },
     produit: {
       findFirst: async () => ({ id: 11, nom: 'Lait', stock: 20, prixVente: 300, uniteBase: 'piece', unitesVente: [] }),
-      update: async () => null,
+      updateManyAndReturn: async () => [{ stock: 18 }],
     },
     stockBalance: { upsert: async () => null },
     vente: {
@@ -600,9 +600,9 @@ test('vente.create enregistre plusieurs lignes et mouvements pour une vente mult
           ],
         };
       },
-      update: async (args) => {
+      updateManyAndReturn: async (args) => {
         productUpdates.push(args);
-        return args;
+        return [{ stock: args.where.id === 20 ? 13 : 18 }];
       },
     },
     stockBalance: {
@@ -664,8 +664,8 @@ test('vente.create enregistre plusieurs lignes et mouvements pour une vente mult
     uniteNom: 'Pack',
   });
   assert.deepEqual(productUpdates, [
-    { where: { id: 20 }, data: { stock: { decrement: 2 } } },
-    { where: { id: 21 }, data: { stock: { decrement: 6 } } },
+    { where: { id: 20, boutiqueId: 4, stock: { gte: 2 } }, data: { stock: { decrement: 2 } }, select: { stock: true } },
+    { where: { id: 21, boutiqueId: 4, stock: { gte: 6 } }, data: { stock: { decrement: 6 } }, select: { stock: true } },
   ]);
   assert.equal(stockUpserts.length, 2);
   assert.equal(movementArgs.data.length, 2);
@@ -688,9 +688,9 @@ test('vente.create refuse une unité de vente introuvable pour un produit', asyn
         uniteBase: 'bouteille',
         unitesVente: [{ id: 90, nom: 'Pack 6', facteurConversion: 6, prix: 1500 }],
       }),
-      update: async () => {
+      updateManyAndReturn: async () => {
         produitUpdated = true;
-        return null;
+        return [];
       },
     },
     stockBalance: { upsert: async () => null },
@@ -719,11 +719,14 @@ test('vente.create refuse une unité de vente introuvable pour un produit', asyn
 });
 
 test('vente.annuler refuse une vente déjà annulée', async (t) => {
-  const originalFindFirst = prisma.vente.findFirst;
-
-  prisma.vente.findFirst = async () => ({ id: 15, statut: 'ANNULEE', details: [] });
-
-  t.after(() => { prisma.vente.findFirst = originalFindFirst; });
+  const originalTransaction = prisma.$transaction;
+  prisma.$transaction = async (callback) => callback({
+    vente: {
+      findFirst: async () => ({ id: 15, statut: 'ANNULEE', details: [] }),
+      updateMany: async () => ({ count: 0 }),
+    },
+  });
+  t.after(() => { prisma.$transaction = originalTransaction; });
 
   const res = createMockResponse();
   await venteController.annuler({ boutiqueId: 4, user: { id: 9 }, params: { id: '15' } }, res);

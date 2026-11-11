@@ -61,25 +61,28 @@ const rembourser = async (req, res) => {
     const { id } = req.params;
     const { montant } = req.body;
 
-    const dette = await prisma.dette.findFirst({
-      where: { id: parseInt(id), vente: { boutiqueId: req.boutiqueId } },
-      include: { vente: true, client: true },
-    });
-
-    if (!dette) {
-      return notFound(res, 'Dette non trouvée', { code: 'DEBT_NOT_FOUND' });
-    }
-
-    if (dette.statut === 'PAYEE') {
-      return badRequest(res, 'Cette dette est déjà payée', { code: 'DEBT_ALREADY_PAID' });
-    }
-
     const montantRemboursement = parseFloat(montant);
-    if (!Number.isFinite(montantRemboursement) || montantRemboursement <= 0 || montantRemboursement > dette.montantRestant) {
-      return badRequest(res, `Montant invalide. Restant: ${dette.montantRestant} FCFA`, { code: 'DEBT_INVALID_AMOUNT' });
-    }
-
     const result = await prisma.$transaction(async (tx) => {
+      // L'annulation verrouille aussi la vente avant de modifier ou supprimer la dette.
+      const [vente] = await tx.$queryRaw`
+        SELECT v.id
+        FROM ventes v
+        JOIN dettes d ON d."venteId" = v.id
+        WHERE d.id = ${parseInt(id)}
+          AND v."boutiqueId" = ${req.boutiqueId}
+          AND v.statut <> 'ANNULEE'
+        FOR UPDATE OF v
+      `;
+      if (!vente) return { code: 'DEBT_NOT_FOUND' };
+
+      const dette = await tx.dette.findUnique({ where: { id: parseInt(id) } });
+      if (!dette) return { code: 'DEBT_NOT_FOUND' };
+      if (dette.statut === 'PAYEE') return { code: 'DEBT_ALREADY_PAID' };
+
+      if (!Number.isFinite(montantRemboursement) || montantRemboursement <= 0 || montantRemboursement > dette.montantRestant) {
+        return { code: 'DEBT_INVALID_AMOUNT', montantRestant: dette.montantRestant };
+      }
+
       await tx.remboursement.create({
         data: { montant: montantRemboursement, detteId: parseInt(id) },
       });
@@ -106,13 +109,23 @@ const rembourser = async (req, res) => {
         },
       });
 
-      return updatedDette;
-    });
+      return { dette: updatedDette };
+    }, { isolationLevel: 'ReadCommitted' });
+
+    if (result.code === 'DEBT_NOT_FOUND') {
+      return notFound(res, 'Dette non trouvée', { code: result.code });
+    }
+    if (result.code === 'DEBT_ALREADY_PAID') {
+      return badRequest(res, 'Cette dette est déjà payée', { code: result.code });
+    }
+    if (result.code === 'DEBT_INVALID_AMOUNT') {
+      return badRequest(res, `Montant invalide. Restant: ${result.montantRestant} FCFA`, { code: result.code });
+    }
 
     res.json({
       success: true,
-      message: result.statut === 'PAYEE' ? 'Dette entièrement remboursée' : 'Remboursement enregistré',
-      data: result,
+      message: result.dette.statut === 'PAYEE' ? 'Dette entièrement remboursée' : 'Remboursement enregistré',
+      data: result.dette,
     });
   } catch (error) {
     logger.error('Erreur rembourser dette', error);

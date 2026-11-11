@@ -18,13 +18,12 @@ const createMockResponse = () => {
 };
 
 test('dette.rembourser enregistre un remboursement partiel et garde la vente en crédit', async (t) => {
-  const originalFindFirst = prisma.dette.findFirst;
   const originalTransaction = prisma.$transaction;
   let remboursementArgs = null;
   let detteUpdateArgs = null;
   let venteUpdateArgs = null;
 
-  prisma.dette.findFirst = async () => ({
+  const dette = {
     id: 10,
     venteId: 50,
     montantPaye: 200,
@@ -32,9 +31,10 @@ test('dette.rembourser enregistre un remboursement partiel et garde la vente en 
     statut: 'EN_COURS',
     client: { id: 3, nom: 'Ndiaye' },
     vente: { id: 50, numero: 'VNT-50' },
-  });
+  };
 
   prisma.$transaction = async (callback) => callback({
+    $queryRaw: async () => [{ id: dette.venteId }],
     remboursement: {
       create: async (args) => {
         remboursementArgs = args;
@@ -42,6 +42,7 @@ test('dette.rembourser enregistre un remboursement partiel et garde la vente en 
       },
     },
     dette: {
+      findUnique: async () => dette,
       update: async (args) => {
         detteUpdateArgs = args;
         return {
@@ -63,7 +64,6 @@ test('dette.rembourser enregistre un remboursement partiel et garde la vente en 
   });
 
   t.after(() => {
-    prisma.dette.findFirst = originalFindFirst;
     prisma.$transaction = originalTransaction;
   });
 
@@ -86,11 +86,10 @@ test('dette.rembourser enregistre un remboursement partiel et garde la vente en 
 });
 
 test('dette.rembourser clôture entièrement la dette et repasse la vente en COMPLETEE', async (t) => {
-  const originalFindFirst = prisma.dette.findFirst;
   const originalTransaction = prisma.$transaction;
   let venteUpdateArgs = null;
 
-  prisma.dette.findFirst = async () => ({
+  const dette = {
     id: 11,
     venteId: 51,
     montantPaye: 100,
@@ -98,11 +97,13 @@ test('dette.rembourser clôture entièrement la dette et repasse la vente en COM
     statut: 'EN_COURS',
     client: { id: 4, nom: 'Fall' },
     vente: { id: 51, numero: 'VNT-51' },
-  });
+  };
 
   prisma.$transaction = async (callback) => callback({
+    $queryRaw: async () => [{ id: dette.venteId }],
     remboursement: { create: async () => ({ id: 2 }) },
     dette: {
+      findUnique: async () => dette,
       update: async () => ({
         id: 11,
         statut: 'PAYEE',
@@ -121,7 +122,6 @@ test('dette.rembourser clôture entièrement la dette et repasse la vente en COM
   });
 
   t.after(() => {
-    prisma.dette.findFirst = originalFindFirst;
     prisma.$transaction = originalTransaction;
   });
 
@@ -138,9 +138,8 @@ test('dette.rembourser clôture entièrement la dette et repasse la vente en COM
 });
 
 test('dette.rembourser refuse un montant supérieur au restant dû', async (t) => {
-  const originalFindFirst = prisma.dette.findFirst;
 
-  prisma.dette.findFirst = async () => ({
+  const dette = {
     id: 12,
     venteId: 52,
     montantPaye: 100,
@@ -148,11 +147,14 @@ test('dette.rembourser refuse un montant supérieur au restant dû', async (t) =
     statut: 'EN_COURS',
     client: { id: 6, nom: 'Sarr' },
     vente: { id: 52, numero: 'VNT-52' },
-  });
+  };
 
-  t.after(() => {
-    prisma.dette.findFirst = originalFindFirst;
+  const originalTransaction = prisma.$transaction;
+  prisma.$transaction = async (callback) => callback({
+    $queryRaw: async () => [{ id: dette.venteId }],
+    dette: { findUnique: async () => dette },
   });
+  t.after(() => { prisma.$transaction = originalTransaction; });
 
   const res = createMockResponse();
   await detteController.rembourser({ boutiqueId: 4, params: { id: '12' }, body: { montant: '250' } }, res);
@@ -163,9 +165,8 @@ test('dette.rembourser refuse un montant supérieur au restant dû', async (t) =
 });
 
 test('dette.rembourser refuse une dette déjà payée', async (t) => {
-  const originalFindFirst = prisma.dette.findFirst;
 
-  prisma.dette.findFirst = async () => ({
+  const dette = {
     id: 13,
     venteId: 53,
     montantPaye: 500,
@@ -173,11 +174,14 @@ test('dette.rembourser refuse une dette déjà payée', async (t) => {
     statut: 'PAYEE',
     client: { id: 7, nom: 'Ba' },
     vente: { id: 53, numero: 'VNT-53' },
-  });
+  };
 
-  t.after(() => {
-    prisma.dette.findFirst = originalFindFirst;
+  const originalTransaction = prisma.$transaction;
+  prisma.$transaction = async (callback) => callback({
+    $queryRaw: async () => [{ id: dette.venteId }],
+    dette: { findUnique: async () => dette },
   });
+  t.after(() => { prisma.$transaction = originalTransaction; });
 
   const res = createMockResponse();
   await detteController.rembourser({ boutiqueId: 4, params: { id: '13' }, body: { montant: '50' } }, res);
