@@ -22,7 +22,7 @@ const logoStorage = multer.diskStorage({
 
 const logoUpload = multer({
   storage: logoStorage,
-  limits: { fileSize: MAX_SIZE_BYTES },
+  limits: { fileSize: MAX_SIZE_BYTES, fieldArrayIndexLimit: 100 },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);
     cb(new Error('Format non supporté. Utilisez JPG, PNG ou WebP.'));

@@ -16,7 +16,9 @@ COPY src ./src/
 # ---- Production stage ----
 FROM node:22-alpine AS production
 
-RUN apk add --no-cache openssl
+# npm sert à la construction. Prisma et Node démarrent directement.
+RUN apk add --no-cache openssl \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 
