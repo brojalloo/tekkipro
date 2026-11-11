@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
+    branches: [ main, dev ]
   pull_request:
+    branches: [ main, dev ]
 
 permissions:
   contents: read
@@ -81,7 +83,7 @@ jobs:
 
   deploy:
     name: Deploy to VPS
-    needs: [backend, frontend]
+    needs: [docker-dev]
     runs-on: [self-hosted, linux, x64]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
     steps:
