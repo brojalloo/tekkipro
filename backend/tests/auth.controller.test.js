@@ -117,7 +117,7 @@ test('login autorise un admin non vérifié en développement sans SMTP', async 
   assert.ok(payload.data.token);
 });
 
-test('createRateLimiter bloque après le nombre maximum de tentatives', () => {
+test('createRateLimiter bloque après le nombre maximum de tentatives', async () => {
   const limiter = createRateLimiter({ windowMs: 60_000, max: 2, message: 'Limite atteinte' });
   const req = { ip: '127.0.0.1', path: '/api/auth/login', route: { path: '/login' } };
 
@@ -139,9 +139,9 @@ test('createRateLimiter bloque après le nombre maximum de tentatives', () => {
     },
   };
 
-  limiter(req, res, () => { nextCalls += 1; });
-  limiter(req, res, () => { nextCalls += 1; });
-  limiter(req, res, () => { nextCalls += 1; });
+  await limiter(req, res, () => { nextCalls += 1; });
+  await limiter(req, res, () => { nextCalls += 1; });
+  await limiter(req, res, () => { nextCalls += 1; });
 
   assert.equal(nextCalls, 2);
   assert.equal(statusCode, 429);
