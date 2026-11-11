@@ -1,4 +1,6 @@
-param([switch]$Build)
+param([switch]$Build, [switch]$Automatic)
+
+if ($Build -and $Automatic) { throw 'Choisis Build ou Automatic.' }
 
 $ErrorActionPreference = 'Stop'
 $context = 'desktop-linux'
@@ -12,7 +14,24 @@ function Invoke-Docker {
     }
 }
 
-Invoke-Docker info --format '{{.OSType}}' | Out-Null
+if ($Automatic) {
+    $repo = Join-Path $PSScriptRoot '../..'
+    $branch = & git -C $repo branch --show-current
+    if ($LASTEXITCODE -ne 0) { throw 'Impossible de lire la branche Git.' }
+    if ($branch -ne 'dev') { return }
+
+    # Docker Desktop can be unavailable while Windows or the session starts.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & docker --context $context info --format '{{.OSType}}' 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) { return }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+} else {
+    Invoke-Docker info --format '{{.OSType}}' | Out-Null
+}
 
 if (-not (Test-Path -LiteralPath $envFile)) {
     $bytes = New-Object byte[] 32

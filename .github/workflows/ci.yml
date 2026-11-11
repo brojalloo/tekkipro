@@ -5,12 +5,14 @@ on:
     branches: [ main, dev ]
   pull_request:
     branches: [ main, dev ]
+  schedule:
+    - cron: '17 9 1 * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'schedule' && 'production-monthly' || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
@@ -89,29 +91,52 @@ jobs:
       - name: Build
         run: npm run build --prefix frontend
 
-  deploy:
-    name: Deploy to VPS
-    needs: [trivy]
-    runs-on: [self-hosted, linux, x64]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
+  production-policy:
+    name: Vérifier l’approbation de production
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Sync code to production
+      - name: Vérifier les règles de l’environnement production
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          rsync -av --delete \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='*/node_modules' \
-            --exclude='frontend/dist' \
-            --exclude='*.env' \
-            --exclude='.env*' \
-            "$GITHUB_WORKSPACE/" /opt/tekkipro/
+          environment="repos/$GITHUB_REPOSITORY/environments/production"
+          if ! gh api "$environment" | jq -e '
+            any(.protection_rules[]?; .type == "required_reviewers" and (.reviewers | length > 0))
+            and .deployment_branch_policy.custom_branch_policies == true
+          ' > /dev/null; then
+            echo "::error::Configure l’environnement production avec une approbation obligatoire et une règle de branche main."
+            exit 1
+          fi
+          if ! gh api "$environment/deployment-branch-policies" | jq -e '
+            .total_count == 1 and (.branch_policies[0] | .name == "main" and .type == "branch")
+          ' > /dev/null; then
+            echo "::error::L’environnement production doit autoriser uniquement la branche main."
+            exit 1
+          fi
 
-      - name: Restart containers
-        working-directory: /opt/tekkipro/infra
-        run: docker compose up -d --build
+  deploy:
+    name: Production VPS
+    needs: [trivy, production-policy]
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Déployer le commit approuvé
+        env:
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: bash deploy/production/Deploy-Vps.sh
 
   docker-dev:
     name: Docker

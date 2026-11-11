@@ -2,6 +2,8 @@
 
 [Démarrer et développer avec Docker Desktop sur Windows](deploy/dev-local/README.md).
 
+[Configurer le déploiement mensuel de main vers le VPS](deploy/production/README.md).
+
 TekkiPro est un SaaS de gestion de boutique avec trois applications dans ce dépôt :
 - `backend/` : API Node.js / Express / Prisma
 - `frontend/` : client web React + Vite

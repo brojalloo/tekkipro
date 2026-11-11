@@ -61,6 +61,8 @@ services:
       ORANGE_MONEY_MERCHANT_KEY: ${ORANGE_MONEY_MERCHANT_KEY:-}
     ports:
       - '127.0.0.1:5000:5000'
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -234,6 +236,8 @@ services:
       - tekkipro_net
 
 volumes:
+  uploads_data:
+    name: tekkipro_uploads_data
   postgres_data:
     name: tekkipro_postgres_data
   backup_data:
