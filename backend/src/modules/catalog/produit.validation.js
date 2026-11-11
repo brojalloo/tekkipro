@@ -17,8 +17,8 @@ const isBooleanLike = (value) => ['true', 'false'].includes(normalizeBooleanLike
 
 const optionalPositiveInt = (builder, label) => builder.custom((value) => {
   if (isEmptyValue(value)) return true;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed) || parsed < 1) {
+  if ((typeof value !== 'number' && typeof value !== 'string')
+    || !/^[0-9]+$/.test(String(value)) || Number(value) < 1 || Number(value) > 2147483647) {
     throw new Error(`${label} invalide`);
   }
   return true;
@@ -68,8 +68,6 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
         })
     : optionalNonNegativeNumber(body('stock'), 'Le stock');
 
-  const categorieRule = optionalPositiveInt(body('categorieId'), 'Catégorie').toInt();
-
   return [
     ...(requireName ? [nameRule] : [body('nom').optional({ values: 'falsy' }).trim().isLength({ min: 2, max: 160 }).withMessage('Le nom du produit doit contenir entre 2 et 160 caractères')]),
     body('description')
@@ -102,7 +100,7 @@ const productBodyValidation = ({ requireName, requireStock = false }) => {
     optionalNonNegativeNumber(body('prixVenteDetail'), 'Le prix de vente au détail'),
     stockRule,
     optionalNonNegativeNumber(body('stockAlerte'), "Le stock d'alerte"),
-    categorieRule,
+    optionalPositiveInt(body('categorieId'), 'Catégorie'),
     optionalPositiveInt(body('fournisseurId'), 'Fournisseur'),
     body('datePeremption')
       .optional({ nullable: true })

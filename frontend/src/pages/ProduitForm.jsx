@@ -1,6 +1,8 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/useAuth';
+import { getApiErrorMessage, isUpgradeRequiredError } from '../lib/apiError';
 import toast from 'react-hot-toast';
 import BarcodeScannerInput from '../features/products/components/BarcodeScannerInput';
 import { showUpgradeToast } from '../lib/upgradeToast';
@@ -57,6 +59,7 @@ const SUGGESTIONS_UNITES = {
 
 export default function ProduitForm() {
   const navigate = useNavigate();
+  const { isPro } = useAuth();
   const { id } = useParams();
   const isEdit = Boolean(id);
   const [searchParams] = useSearchParams();
@@ -82,21 +85,31 @@ export default function ProduitForm() {
   const [scannerActive, setScannerActive] = useState(false);
 
   useEffect(() => {
-    loadOptions();
+    let cancelled = false;
+
+    api.get('/categories').then(({ data }) => {
+      if (!cancelled) setCategories(data.data || []);
+    }).catch(() => {
+      if (!cancelled) toast.error('Impossible de charger les catégories.');
+    });
+
+    if (isPro) {
+      api.get('/fournisseurs').then(({ data }) => {
+        if (!cancelled) setFournisseurs(data.data || []);
+      }).catch((error) => {
+        if (!cancelled && !isUpgradeRequiredError(error)) {
+          toast.error('Impossible de charger les fournisseurs.');
+        }
+      });
+    }
+
+    return () => { cancelled = true; };
+  }, [id, isPro]);
+
+  useEffect(() => {
     if (isEdit) loadProduit();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-
-  const loadOptions = async () => {
-    try {
-      const [catRes, fournRes] = await Promise.all([
-        api.get('/categories'),
-        api.get('/fournisseurs'),
-      ]);
-      setCategories(catRes.data.data);
-      setFournisseurs(fournRes.data.data);
-    } catch (_e) { toast.error('Erreur de chargement des options'); }
-  };
 
   const loadProduit = async () => {
     try {
@@ -130,14 +143,17 @@ export default function ProduitForm() {
     setScannerActive(false);
   };
 
+  const hasCommercialStock = Boolean(commercialMode)
+    && commercialSize !== '' && Number(commercialSize) > 0
+    && commercialCount !== '' && Number(commercialCount) >= 0;
+
   // Calculate stock in base unit
   const getStockBase = () => {
     const qty = parseFloat(stockQty || 0);
     // If commercial helper filled, compute from it (overrides stockQty)
-    if (commercialMode && commercialSize && commercialCount) {
+    if (hasCommercialStock) {
       const size = parseFloat(commercialSize || 0);
       const count = parseFloat(commercialCount || 0);
-      if (isNaN(size) || isNaN(count)) return 0;
       if (commercialMode === 'poids') {
         // commercialSize in kg -> convert to grams
         return count * size * 1000;
@@ -218,13 +234,15 @@ export default function ProduitForm() {
       } catch (_e) { toast.error('Erreur de suppression'); }
     }
     setUnitesVente(unitesVente.filter((_, i) => i !== idx));
+    if (stockUniteIdx === idx) setStockUniteIdx(-1);
+    if (stockUniteIdx > idx) setStockUniteIdx(stockUniteIdx - 1);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = {};
     if (form.prixVente === '' || form.prixVente === null || form.prixVente === undefined) errors.prixVente = 'Le prix de vente est obligatoire';
-    if (!isEdit && (stockQty === '' || stockQty === null || stockQty === undefined)) errors.stockQty = 'Le stock initial est obligatoire';
+    if (!isEdit && !hasCommercialStock && stockQty === '') errors.stockQty = 'Saisissez le stock initial ou renseignez le conditionnement et le nombre de packs.';
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
@@ -232,11 +250,12 @@ export default function ProduitForm() {
     setFormErrors({});
     setLoading(true);
     try {
-      const stockBase = isEdit ? (stockQty !== '' ? Number(stockQty) : undefined) : getStockBase();
+      const stockBase = isEdit ? undefined : getStockBase();
       const validUnites = unitesVente.filter(u => u.nom && u.facteurConversion && u.prix);
 
       const data = {
         ...form,
+        fournisseurId: isPro ? form.fournisseurId : undefined,
         stock: stockBase,
         unitesVente: isEdit ? undefined : validUnites.map(u => ({
           nom: u.nom,
@@ -279,7 +298,7 @@ export default function ProduitForm() {
       if (error?.response?.data?.upgrade) {
         showUpgradeToast({ message: error.response.data.message, navigate });
       } else {
-        toast.error(error.response?.data?.message || 'Erreur');
+        toast.error(getApiErrorMessage(error));
       }
     } finally {
       setLoading(false);
@@ -379,7 +398,7 @@ export default function ProduitForm() {
                 <div className="space-y-2">
                   <label>
                     <FiLayers size={14} />
-                    Catégorie <span className="text-red-500">*</span>
+                    Catégorie
                   </label>
                   <select className={`w-full py-3 px-4 bg-white border-2 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10 ${formErrors.categorieId ? 'border-red-400' : 'border-gray-100'}`} name="categorieId" value={form.categorieId} onChange={handleChange}>
                     <option value="">-- Aucune catégorie --</option>
@@ -438,7 +457,14 @@ export default function ProduitForm() {
                       key={u.value}
                       type="button"
                       className={`flex flex-col items-start p-3 border rounded-xl text-left transition-all hover:border-[#1B5E20]/30 ${form.uniteBase === u.value ? 'border-[#1B5E20] bg-[#1B5E20]/5 text-[#1B5E20] ring-1 ring-[#1B5E20]/20' : 'border-gray-100 bg-white'}`}
-                      onClick={() => setForm({ ...form, uniteBase: u.value })}
+                      onClick={() => {
+                        if (form.uniteBase === u.value) return;
+                        setForm({ ...form, uniteBase: u.value });
+                        setCommercialMode('');
+                        setCommercialSize('');
+                        setCommercialCount('');
+                        setStockUniteIdx(-1);
+                      }}
                     >
                       <strong>{u.label}</strong>
                       <span>{u.exemple}</span>
@@ -450,12 +476,12 @@ export default function ProduitForm() {
               {/* Commercial helper: show quick inputs to compute stock automatically */}
               {!isEdit && (form.uniteBase === 'g' || form.uniteBase === 'ml' || form.uniteBase === 'piece' || form.uniteBase === 'paquet') && (
                 <div className="pf-commercial-helper">
-                  <label>
+                  <label htmlFor="commercial-mode">
                     <FiInfo size={14} /> Mode commercial (aide à la conversion automatique)
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <select className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" value={commercialMode} onChange={(e) => { setCommercialMode(e.target.value); setCommercialSize(''); setCommercialCount(''); }}>
+                      <select id="commercial-mode" className="w-full py-3 px-4 bg-white border-2 border-gray-100 rounded-xl text-[0.9rem] font-semibold transition-all focus:outline-none focus:border-[#1B5E20] focus:ring-4 focus:ring-[#1B5E20]/10" value={commercialMode} onChange={(e) => { setCommercialMode(e.target.value); setCommercialSize(''); setCommercialCount(''); }}>
                         <option value="">-- Aucun --</option>
                         {form.uniteBase === 'g' && <option value="poids">Sacs / Poids (kg)</option>}
                         {form.uniteBase === 'ml' && <option value="volume">Bidons / Volume (L)</option>}
@@ -475,7 +501,7 @@ export default function ProduitForm() {
                       </>
                     )}
                   </div>
-                  {commercialMode && commercialSize && commercialCount && (
+                  {hasCommercialStock && (
                     <div className="flex gap-2.5 p-3.5 bg-primary/5 border border-primary/15 rounded-xl text-sm text-foreground" style={{marginTop:'0.6rem'}}>
                       <FiCheck size={15} />
                       <div>
@@ -496,7 +522,7 @@ export default function ProduitForm() {
                   <div className="space-y-2" style={{ flex: 2 }}>
                     <label>
                       <FiBarChart2 size={14} />
-                      Stock initial — quantité <span className="text-red-500">*</span>
+                      Stock initial — quantité {!hasCommercialStock && <span className="text-red-500">*</span>}
                     </label>
                     <div className="relative">
                       <input
@@ -562,7 +588,7 @@ export default function ProduitForm() {
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">{form.uniteBase}</span>
                   </div>
                 </div>
-                <div className="space-y-2">
+                {isPro && <div className="space-y-2">
                   <label>
                     <FiTruck size={14} />
                     Fournisseur
@@ -571,7 +597,7 @@ export default function ProduitForm() {
                     <option value="">-- Aucun fournisseur --</option>
                     {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                   </select>
-                </div>
+                </div>}
               </div>
             </div>
           </div>
