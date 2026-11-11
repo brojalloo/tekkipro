@@ -4,9 +4,26 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   backend:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tekkipro_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d tekkipro_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -25,10 +42,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
-        run: rm -rf node_modules && npm ci
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
 
       - name: Lint
         run: npm run lint
@@ -37,7 +57,10 @@ jobs:
         run: npm test
 
   frontend:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,25 +68,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
-        run: rm -rf node_modules frontend/node_modules mobile/node_modules && npm install
+        run: npm ci
 
       - name: Lint
-        run: npm run lint -w frontend
+        run: npm run lint
 
       - name: Test
-        run: npm run test -w frontend
+        run: npm test
 
       - name: Build
-        run: npm run build -w frontend
+        run: npm run build
 
   deploy:
     name: Deploy to VPS
     needs: [backend, frontend]
     runs-on: [self-hosted, linux, x64]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,3 +105,67 @@ jobs:
       - name: Restart containers
         working-directory: /opt/tekkipro/infra
         run: docker compose up -d --build
+
+  docker-dev:
+    name: Docker local et publication dev
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: docker-dev-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      COMPOSE_FILE: deploy/dev-local/compose.yaml
+      DEV_IMAGE: tekkipro-dev:ci
+      TEKKIPRO_JWT_SECRET: tekkipro-ci-test-secret-with-32-characters
+      DEV_BACKEND_IMAGE: tekkipro-api-dev:ci
+      DEV_REVISION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Construire et démarrer les conteneurs
+        run: docker compose up --build --wait --wait-timeout 180
+
+      - name: Vérifier l’application via le port local
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8092/ -o /tmp/tekkipro-index.html
+          grep -q '/assets/' /tmp/tekkipro-index.html
+          curl --fail --silent --show-error http://127.0.0.1:8092/api/health
+          curl --fail --silent --show-error http://127.0.0.1:8092/api/auth/register \
+            -H 'Content-Type: application/json' -H 'Origin: http://127.0.0.1:8092' \
+            --data '{"nomBoutique":"Boutique CI","slug":"boutique-ci","nom":"Test","prenom":"Docker","email":"ci@example.test","password":"Local-ci-1234"}' -o /dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8092/api/auth/login \
+            -H 'Content-Type: application/json' -H 'Origin: http://127.0.0.1:8092' \
+            --data '{"email":"ci@example.test","password":"Local-ci-1234"}' -o /dev/null
+
+      - name: Journaux du démarrage
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Arrêter la pile de test
+        if: always()
+        run: docker compose down --volumes
+
+      - name: Publier les images validées sur GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          registry="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          image="$registry/tekkipro-dev"
+          echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+          backend="$registry/tekkipro-api-dev"
+          docker tag "$DEV_BACKEND_IMAGE" "$backend:$GITHUB_SHA"
+          docker push "$backend:$GITHUB_SHA"
+          docker tag "$DEV_IMAGE" "$image:$GITHUB_SHA"
+          docker push "$image:$GITHUB_SHA"
+          if [ "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)" = "$GITHUB_SHA" ]; then
+            docker tag "$image:$GITHUB_SHA" "$image:dev"
+            docker push "$image:dev"
+          fi

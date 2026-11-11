@@ -1,5 +1,7 @@
 # ---- Build stage ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -12,7 +14,9 @@ RUN npx prisma generate
 COPY src ./src/
 
 # ---- Production stage ----
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -23,6 +27,7 @@ COPY --from=builder /app/src ./src
 COPY package*.json ./
 
 RUN addgroup -S app && adduser -S app -G app \
+    && mkdir -p /app/uploads/logos \
     && chown -R app:app /app
 
 # Variables d'environnement par défaut (surcharger avec docker-compose)
@@ -37,5 +42,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 USER app
 
 # Appliquer les migrations Prisma puis démarrer le serveur
-CMD ["sh", "-c", "npx prisma migrate deploy && node src/server.js"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node src/server.js"]
 

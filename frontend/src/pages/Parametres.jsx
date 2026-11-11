@@ -130,7 +130,7 @@ export default function Parametres() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-5 bg-[#F9FBF9] rounded-xl border-2 border-dashed border-[#1B5E20]/15 hover:border-[#1B5E20]/40 transition-colors">
                 <div className="w-20 h-20 rounded-xl bg-white border-2 border-[#1B5E20]/15 overflow-hidden shadow-sm shrink-0 flex items-center justify-center">
                   {boutique?.logo
-                    ? <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${boutique.logo}`} alt="Logo boutique" className="w-full h-full object-cover" />
+                    ? <img src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${boutique.logo}`} alt="Logo boutique" className="w-full h-full object-cover" />
                     : <div className="flex items-center justify-center text-[#1B5E20]/25 w-full h-full"><FiCamera size={28} /></div>
                   }
                 </div>

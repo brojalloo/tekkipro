@@ -6,12 +6,14 @@ const prisma = require('../../config/database');
 const { badRequest, created, error: sendError, notFound, forbidden, success } = require('../../common/utils/response');
 const logger = require('../../common/utils/logger');
 
-const LOGOS_DIR = path.join(__dirname, '../../../../uploads/logos');
+const LOGOS_DIR = path.join(__dirname, '../../../uploads/logos');
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 Mo
 
 const logoStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, LOGOS_DIR),
+  destination: (_req, _file, cb) => {
+    fs.mkdir(LOGOS_DIR, { recursive: true }, (err) => cb(err, LOGOS_DIR));
+  },
   filename: (req, _file, cb) => {
     const ext = _file.mimetype === 'image/png' ? '.png' : _file.mimetype === 'image/webp' ? '.webp' : '.jpg';
     cb(null, `boutique-${req.boutiqueId}${ext}`);
@@ -241,7 +243,7 @@ const uploadLogo = (req, res) => {
       // Supprimer l'ancien logo s'il existe et est différent
       const existing = await prisma.boutique.findUnique({ where: { id: req.boutiqueId }, select: { logo: true } });
       if (existing?.logo) {
-        const oldPath = path.join(__dirname, '../../../../', existing.logo);
+        const oldPath = path.join(LOGOS_DIR, path.basename(existing.logo));
         if (oldPath !== path.join(LOGOS_DIR, req.file.filename) && fs.existsSync(oldPath)) {
           fs.unlink(oldPath, () => {});
         }
