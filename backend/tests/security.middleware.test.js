@@ -95,7 +95,7 @@ test('buildPaymentRateLimitKey isole par utilisateur, boutique et route', () => 
   assert.equal(key, 'payment:8:9:/wave/initiate');
 });
 
-test('passwordResetRateLimiter bloque après le seuil défini', () => {
+test('passwordResetRateLimiter bloque après le seuil défini', async () => {
   const req = {
     ip: '127.0.0.1',
     route: { path: '/forgot-password' },
@@ -118,19 +118,19 @@ test('passwordResetRateLimiter bloque après le seuil défini', () => {
 
   let nextCalls = 0;
   for (let i = 0; i < 5; i += 1) {
-    passwordResetRateLimiter(req, res, () => { nextCalls += 1; });
+    await passwordResetRateLimiter(req, res, () => { nextCalls += 1; });
   }
 
   assert.equal(nextCalls, 5);
 
-  passwordResetRateLimiter(req, res, () => { nextCalls += 1; });
+  await passwordResetRateLimiter(req, res, () => { nextCalls += 1; });
 
   assert.equal(nextCalls, 5);
   assert.equal(res.statusCode, 429);
   assert.match(res.payload.message, /mot de passe/i);
 });
 
-test('paymentWriteRateLimiter limite par utilisateur authentifié et non par IP seule', () => {
+test('paymentWriteRateLimiter limite par utilisateur authentifié et non par IP seule', async () => {
   const reqA = {
     ip: '127.0.0.1',
     user: { id: 10, boutiqueId: 5 },
@@ -161,17 +161,17 @@ test('paymentWriteRateLimiter limite par utilisateur authentifié et non par IP 
   const resA = createRes();
   let nextA = 0;
   for (let i = 0; i < 10; i += 1) {
-    paymentWriteRateLimiter(reqA, resA, () => { nextA += 1; });
+    await paymentWriteRateLimiter(reqA, resA, () => { nextA += 1; });
   }
   assert.equal(nextA, 10);
 
-  paymentWriteRateLimiter(reqA, resA, () => { nextA += 1; });
+  await paymentWriteRateLimiter(reqA, resA, () => { nextA += 1; });
   assert.equal(nextA, 10);
   assert.equal(resA.statusCode, 429);
 
   const resB = createRes();
   let nextB = 0;
-  paymentWriteRateLimiter(reqB, resB, () => { nextB += 1; });
+  await paymentWriteRateLimiter(reqB, resB, () => { nextB += 1; });
   assert.equal(nextB, 1);
   assert.equal(resB.statusCode, undefined);
 });

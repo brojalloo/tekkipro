@@ -1,0 +1,72 @@
+name: tekkipro-dev-local
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tekkipro
+      POSTGRES_USER: tekkipro
+      POSTGRES_PASSWORD: tekkipro-local
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U tekkipro -d tekkipro"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    image: ${DEV_BACKEND_IMAGE:-ghcr.io/brojalloo/tekkipro-api-dev:dev}
+    build:
+      context: ../../backend
+      labels:
+        org.opencontainers.image.source: https://github.com/brojalloo/tekkipro
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://tekkipro:tekkipro-local@db:5432/tekkipro
+      JWT_SECRET: ${TEKKIPRO_JWT_SECRET:?Lancez Sync-Dev.ps1 pour initialiser la configuration locale}
+      APP_URL: http://127.0.0.1:8092
+      FRONTEND_URL: http://127.0.0.1:8092
+      TRUST_PROXY: '1'
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: ${DEV_IMAGE:-ghcr.io/brojalloo/tekkipro-web-dev-local:dev}
+    build:
+      context: ../../frontend
+      labels:
+        org.opencontainers.image.source: https://github.com/brojalloo/tekkipro
+        org.opencontainers.image.revision: ${DEV_REVISION:-local}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8092:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/api/health]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
+  uploads:

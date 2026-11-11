@@ -60,9 +60,9 @@ function registerRoutes(app) {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', app: 'Tekkipro API', version: '2.0.0' });
   });
-}
 
   app.get('/api/metrics', metricsHandler);
+}
 
 module.exports = { registerRoutes };
 
