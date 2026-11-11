@@ -135,12 +135,8 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8092/ -o /tmp/tekkipro-index.html
           grep -q '/assets/' /tmp/tekkipro-index.html
           curl --fail --silent --show-error http://127.0.0.1:8092/api/health
-          curl --fail --silent --show-error http://127.0.0.1:8092/api/auth/register \
-            -H 'Content-Type: application/json' -H 'Origin: http://127.0.0.1:8092' \
-            --data '{"nomBoutique":"Boutique CI","slug":"boutique-ci","nom":"Test","prenom":"Docker","email":"ci@example.test","password":"Local-ci-1234"}' -o /dev/null
-          curl --fail --silent --show-error http://127.0.0.1:8092/api/auth/login \
-            -H 'Content-Type: application/json' -H 'Origin: http://127.0.0.1:8092' \
-            --data '{"email":"ci@example.test","password":"Local-ci-1234"}' -o /dev/null
+      - name: Tester la caisse sur PostgreSQL
+        run: node --test backend/tests/integration/checkout.test.js
 
       - name: Journaux du démarrage
         if: failure()
@@ -149,6 +145,31 @@ jobs:
       - name: Arrêter la pile de test
         if: always()
         run: docker compose down --volumes
+
+      - name: Scanner l’image API avec Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: docker
+        with:
+          scan-type: image
+          image-ref: ${{ env.DEV_BACKEND_IMAGE }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: '0'
+
+      - name: Scanner l’image web avec Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: docker
+        with:
+          skip-setup-trivy: true
+          scan-type: image
+          image-ref: ${{ env.DEV_IMAGE }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: '0'
 
       - name: Publier les images validées sur GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
