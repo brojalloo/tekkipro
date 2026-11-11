@@ -155,7 +155,7 @@ jobs:
           name: tekkipro-images
           path: ${{ runner.temp }}/tekkipro-images.tar
           compression-level: 1
-          retention-days: 1
+          retention-days: 7
           if-no-files-found: error
           overwrite: true
 
