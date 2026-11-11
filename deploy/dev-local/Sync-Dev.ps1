@@ -41,11 +41,11 @@ $previousImage = $env:DEV_IMAGE
 $previousBackendImage = $env:DEV_BACKEND_IMAGE
 try {
     if ($Build) {
-        $env:DEV_IMAGE = 'tekkipro-dev:local'
+        $env:DEV_IMAGE = 'tekkipro-web-dev-local:local'
         $env:DEV_BACKEND_IMAGE = 'tekkipro-api-dev:local'
         Invoke-Docker @composeArgs up --build --wait --wait-timeout 180
     } else {
-        $repository = 'ghcr.io/brojalloo/tekkipro-dev'
+        $repository = 'ghcr.io/brojalloo/tekkipro-web-dev-local'
         Invoke-Docker pull "${repository}:dev"
         $image = Invoke-Docker image inspect "${repository}:dev" --format '{{index .RepoDigests 0}}'
         if ($image -notlike "$repository@sha256:*") {

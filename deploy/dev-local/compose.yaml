@@ -29,6 +29,8 @@ services:
     image: ${DEV_BACKEND_IMAGE:-ghcr.io/brojalloo/tekkipro-api-dev:dev}
     build:
       context: ../../backend
+      labels:
+        org.opencontainers.image.source: https://github.com/brojalloo/tekkipro
     restart: unless-stopped
     environment:
       NODE_ENV: development
@@ -47,10 +49,11 @@ services:
         condition: service_healthy
 
   frontend:
-    image: ${DEV_IMAGE:-ghcr.io/brojalloo/tekkipro-dev:dev}
+    image: ${DEV_IMAGE:-ghcr.io/brojalloo/tekkipro-web-dev-local:dev}
     build:
       context: ../../frontend
       labels:
+        org.opencontainers.image.source: https://github.com/brojalloo/tekkipro
         org.opencontainers.image.revision: ${DEV_REVISION:-local}
     restart: unless-stopped
     ports:

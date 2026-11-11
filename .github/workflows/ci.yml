@@ -116,7 +116,7 @@ jobs:
       cancel-in-progress: true
     env:
       COMPOSE_FILE: deploy/dev-local/compose.yaml
-      DEV_IMAGE: tekkipro-dev:ci
+      DEV_IMAGE: tekkipro-web-dev-local:ci
       TEKKIPRO_JWT_SECRET: tekkipro-ci-test-secret-with-32-characters
       DEV_BACKEND_IMAGE: tekkipro-api-dev:ci
       DEV_REVISION: ${{ github.sha }}
@@ -154,7 +154,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           registry="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
-          image="$registry/tekkipro-dev"
+          image="$registry/tekkipro-web-dev-local"
           echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
 
           backend="$registry/tekkipro-api-dev"
