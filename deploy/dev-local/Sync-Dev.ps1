@@ -52,7 +52,8 @@ try {
             throw "Empreinte de l'image introuvable pour $repository."
         }
         $env:DEV_IMAGE = $image
-        $revision = Invoke-Docker image inspect $image --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}'
+        $labels = Invoke-Docker image inspect $image --format '{{json .Config.Labels}}' | ConvertFrom-Json
+        $revision = $labels.'org.opencontainers.image.revision'
         if ($revision -notmatch '^[a-f0-9]{40}$') {
             throw "La revision de l'image TekkiPro est introuvable."
         }
