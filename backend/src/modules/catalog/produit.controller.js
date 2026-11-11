@@ -112,11 +112,12 @@ const normalizeManualUnits = (unitesVente = []) => {
 
   return unitesVente
     .map((u) => {
+      if (!u || typeof u.nom !== 'string' || !u.nom.trim()) return null;
       const facteurConversion = parseNumber(u.facteurConversion);
       const prix = parseNumber(u.prix);
       const prixAchat = parseNumber(u.prixAchat);
 
-      if (!u.nom || !Number.isFinite(facteurConversion) || facteurConversion <= 0 || prix === null || prix < 0) {
+      if (!Number.isFinite(facteurConversion) || facteurConversion <= 0 || prix === null || prix < 0) {
         return null;
       }
 
@@ -270,6 +271,22 @@ const getById = async (req, res) => {
   }
 };
 
+const validateProductRelations = async (boutiqueId, categorieId, fournisseurId) => {
+  if (categorieId && !(await prisma.categorie.findFirst({
+    where: { id: Number(categorieId), boutiqueId },
+    select: { id: true },
+  }))) {
+    return { message: 'Cette catégorie n’est pas disponible dans cette boutique.', code: 'INVALID_PRODUCT_CATEGORY' };
+  }
+  if (fournisseurId && !(await prisma.fournisseur.findFirst({
+    where: { id: Number(fournisseurId), boutiqueId },
+    select: { id: true },
+  }))) {
+    return { message: 'Ce fournisseur n’est pas disponible dans cette boutique.', code: 'INVALID_PRODUCT_SUPPLIER' };
+  }
+  return null;
+};
+
 // Créer un produit
 const create = async (req, res) => {
   try {
@@ -292,6 +309,9 @@ const create = async (req, res) => {
     const unitsToCreate = automaticConfig
       ? automaticConfig.unitsToCreate
       : normalizeManualUnits(unitesVente);
+
+    const relationError = await validateProductRelations(req.boutiqueId, categorieId, fournisseurId);
+    if (relationError) return badRequest(res, relationError.message, { code: relationError.code });
 
     const produit = await prisma.produit.create({
       data: {
@@ -322,6 +342,9 @@ const create = async (req, res) => {
     });
     return created(res, produit, 'Produit cree');
   } catch (error) {
+    if (error?.code === 'P2003') {
+      return badRequest(res, 'La catégorie ou le fournisseur sélectionné n’est plus disponible.', { code: 'INVALID_PRODUCT_RELATION' });
+    }
     logger.error('Erreur create produit', error);
     return sendError(res, 'Erreur lors de la création du produit', 500, { code: 'PRODUCT_CREATE_FAILED' });
   }
@@ -351,6 +374,9 @@ const update = async (req, res) => {
       return badRequest(res, automaticConfig.error, { code: 'INVALID_AUTOMATIC_PRODUCT_CONFIG' });
     }
 
+    const relationError = await validateProductRelations(req.boutiqueId, categorieId, fournisseurId);
+    if (relationError) return badRequest(res, relationError.message, { code: relationError.code });
+
     const produit = await prisma.produit.update({
       where: { id: parseInt(id) },
       data: {
@@ -358,19 +384,19 @@ const update = async (req, res) => {
         description,
         prixVente: automaticConfig
           ? automaticConfig.prixVente
-          : (prixVente !== undefined && prixVente !== '' ? parseFloat(prixVente) : undefined),
+          : (parseNumber(prixVente) ?? undefined),
         prixAchat: automaticConfig
           ? automaticConfig.prixAchat
-          : (prixAchat !== undefined && prixAchat !== '' ? parseFloat(prixAchat) : undefined),
+          : (parseNumber(prixAchat) ?? undefined),
         stock: automaticConfig && automaticConfig.stock !== undefined
           ? automaticConfig.stock
           : (stock !== undefined && stock !== null && stock !== '' ? parseNumber(stock) : undefined),
         stockAlerte: automaticConfig
           ? automaticConfig.stockAlerte
-          : (stockAlerte !== undefined && stockAlerte !== '' ? parseFloat(stockAlerte) : undefined),
+          : (parseNumber(stockAlerte) ?? undefined),
         uniteBase: automaticConfig ? automaticConfig.uniteBase : uniteBase,
         codeBarre,
-        actif,
+        actif: actif == null ? undefined : parseBooleanInput(actif),
         categorieId: categorieId ? parseInt(categorieId) : (categorieId === '' || categorieId === null ? null : undefined),
         fournisseurId: fournisseurId ? parseInt(fournisseurId) : (fournisseurId === '' || fournisseurId === null ? null : undefined),
         ...peremptionPayload.data,
@@ -394,6 +420,9 @@ const update = async (req, res) => {
     });
     res.json({ success: true, message: 'Produit mis a jour', data: produit });
   } catch (error) {
+    if (error?.code === 'P2003') {
+      return badRequest(res, 'La catégorie ou le fournisseur sélectionné n’est plus disponible.', { code: 'INVALID_PRODUCT_RELATION' });
+    }
     logger.error('Erreur update produit', error);
     return sendError(res, 'Erreur lors de la mise à jour', 500, { code: 'PRODUCT_UPDATE_FAILED' });
   }

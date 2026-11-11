@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from 'vitest';
 import ProduitForm from './ProduitForm';
 
-const { apiGet, apiPost, apiPut, apiDelete, mockNavigate, toastSuccess, toastError, showUpgradeToast } = vi.hoisted(() => ({
+const { apiGet, apiPost, apiPut, apiDelete, mockNavigate, toastSuccess, toastError, showUpgradeToast, authState } = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   apiPut: vi.fn(),
@@ -13,7 +13,10 @@ const { apiGet, apiPost, apiPut, apiDelete, mockNavigate, toastSuccess, toastErr
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   showUpgradeToast: vi.fn(),
+  authState: { isPro: true },
 }));
+
+vi.mock('../context/useAuth', () => ({ useAuth: () => authState }));
 
 vi.mock('../services/api', () => ({
   default: {
@@ -54,6 +57,7 @@ vi.mock('react-router-dom', async () => {
 describe('ProduitForm page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.isPro = true;
     apiGet.mockImplementation(async (url) => {
       if (url === '/categories') return { data: { data: [{ id: 1, nom: 'Épicerie' }] } };
       if (url === '/fournisseurs') return { data: { data: [{ id: 2, nom: 'Grossiste Dakar' }] } };
@@ -64,7 +68,8 @@ describe('ProduitForm page', () => {
     apiDelete.mockResolvedValue({ data: { success: true } });
   });
 
-  it('crée un produit manuel puis redirige vers la liste', async () => {
+  it('crée un produit Starter avec une catégorie sans demander les fournisseurs', async () => {
+    authState.isPro = false;
     const { container } = render(
       <MemoryRouter initialEntries={['/app/produits/nouveau']}>
         <Routes>
@@ -73,7 +78,10 @@ describe('ProduitForm page', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/categories'));
+    expect(await screen.findByRole('option', { name: 'Épicerie' })).toBeInTheDocument();
+    expect(apiGet).not.toHaveBeenCalledWith('/fournisseurs');
+    expect(toastError).not.toHaveBeenCalled();
+    fireEvent.change(container.querySelector('select[name="categorieId"]'), { target: { value: '1' } });
 
     fireEvent.change(container.querySelector('input[name="nom"]'), { target: { value: 'Riz local premium' } });
     fireEvent.change(container.querySelector('input[placeholder="Ex: 20"]'), { target: { value: '20' } });
@@ -84,6 +92,7 @@ describe('ProduitForm page', () => {
     await waitFor(() => {
       expect(apiPost).toHaveBeenCalledWith('/produits', expect.objectContaining({
         nom: 'Riz local premium',
+        categorieId: '1',
         stock: 20,
         uniteBase: 'g',
         prixVente: '500',
@@ -94,6 +103,25 @@ describe('ProduitForm page', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/app/produits');
     });
   }, 10000);
+
+  it('enregistre le stock calculé à partir des sacs sans saisir de quantité manuelle', async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/app/produits/nouveau']}>
+        <Routes>
+          <Route path="/app/produits/nouveau" element={<ProduitForm />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(container.querySelector('input[name="nom"]'), { target: { value: 'Riz en sacs' } });
+    fireEvent.change(container.querySelector('input[name="prixVente"]'), { target: { value: '1' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /Mode commercial/ }), { target: { value: 'poids' } });
+    fireEvent.change(screen.getByPlaceholderText('Ex: 50'), { target: { value: '25' } });
+    fireEvent.change(screen.getByPlaceholderText('Ex: 10'), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: /Créer le produit/i }));
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/produits', expect.objectContaining({ stock: 50000 })));
+  });
 
   it('charge un produit en édition puis enregistre la mise à jour', async () => {
     apiGet.mockImplementation(async (url) => {
@@ -143,7 +171,7 @@ describe('ProduitForm page', () => {
         nom: 'Riz local modifié',
         prixVente: '450',
         codeBarre: '777888',
-        stock: 12,
+        stock: undefined,
         uniteBase: 'g',
       }));
       expect(toastSuccess).toHaveBeenCalledWith('Produit mis à jour avec succès.');
