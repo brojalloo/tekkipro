@@ -1,9 +1,7 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useState, useEffect, Fragment } from 'react';
 import ProBadge from './ProBadge';
-import ProTooltip from './ProTooltip';
-import UsageMeter from './UsageMeter';
 import {
   FiHome, FiPackage, FiShoppingCart, FiUsers, FiTruck,
   FiDatabase, FiDollarSign, FiUserCheck, FiSettings, FiLogOut, FiShield, FiUser, FiCreditCard,
@@ -12,7 +10,7 @@ import {
 } from 'react-icons/fi';
 
 export default function Layout() {
-  const { user, boutique, logout, isAdmin, isPro, isBusiness, plan, mesBoutiques, activeBoutique, switchBoutique, getActiveBoutiqueName, planUsage } = useAuth();
+  const { user, boutique, logout, isAdmin, isPro, isBusiness, plan, mesBoutiques, activeBoutique, switchBoutique, getActiveBoutiqueName } = useAuth();
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -84,10 +82,10 @@ export default function Layout() {
     ...(isAdmin ? [
       ...(isPro ? [{ to: '/app/fournisseurs', icon: <FiTruck />, label: 'Fournisseurs', sectionBefore: 'Administration' }] : [{ to: '/app/fournisseurs', icon: <FiTruck />, label: 'Fournisseurs', locked: true, sectionBefore: 'Administration' }]),
       ...(isPro ? [{ to: '/app/employes', icon: <FiUserCheck />, label: 'Employés' }] : [{ to: '/app/employes', icon: <FiUserCheck />, label: 'Employés', locked: true }]),
-      { to: '/app/activite', icon: <FiClock />, label: 'Activite' },
+      { to: '/app/activite', icon: <FiClock />, label: 'Activité' },
       { to: '/app/parametres', icon: <FiSettings />, label: 'Paramètres' },
       { to: '/app/abonnement', icon: <FiCreditCard />, label: 'Abonnement' },
-      ...(isBusiness ? [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques' }] : [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques', locked: true }]),
+      ...(isBusiness ? [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques' }] : [{ to: '/app/boutiques', icon: <FiGrid />, label: 'Mes Boutiques', locked: true, requiredPlan: 'BUSINESS' }]),
     ] : []),
   ];
 
@@ -105,7 +103,7 @@ export default function Layout() {
       {mobileOpen && <div className="sidebar-overlay" aria-hidden="true" onClick={() => { setMobileOpen(false); setShowSwitcher(false); }} />}
       
       {/* Mobile hamburger */}
-      <button className="mobile-menu-btn" onClick={toggleMobile} aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={mobileOpen} aria-controls="app-sidebar">
+      <button className={`mobile-menu-btn ${mobileOpen ? 'menu-open' : ''}`} onClick={toggleMobile} aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={mobileOpen} aria-controls="app-sidebar">
         {mobileOpen ? <FiX size={22} /> : <FiMenu size={22} />}
       </button>
 
@@ -121,7 +119,6 @@ export default function Layout() {
             {showExpandedSidebarContent && (
               <div className="sidebar-brand-copy">
                 <h1>TekkiPro</h1>
-                <span className="sidebar-brand-subtitle">Retail operating system</span>
               </div>
             )}
           </div>
@@ -172,24 +169,22 @@ export default function Layout() {
                 <span className="sidebar-section-label">{item.sectionBefore}</span>
               )}
               {item.locked ? (
-                <ProTooltip locked={true} featureLabel={item.label} requiredPlan="PRO">
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    className="nav-locked"
-                    aria-disabled="true"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    {item.icon}
-                    <span className="nav-label">{item.label}</span>
-                    {showExpandedSidebarContent && (
-                      <ProBadge variant="label" requiredPlan="PRO" className="ml-auto" />
-                    )}
-                    {!showExpandedSidebarContent && (
-                      <ProBadge variant="icon-only" requiredPlan="PRO" />
-                    )}
-                  </NavLink>
-                </ProTooltip>
+                <Link
+                  to="/app/abonnement"
+                  className="nav-locked"
+                  title={`${item.label} · forfait ${item.requiredPlan || 'PRO'}`}
+                  aria-label={`${item.label}, disponible avec le forfait ${item.requiredPlan || 'PRO'}`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.icon}
+                  <span className="nav-label">{item.label}</span>
+                  <ProBadge
+                    variant={showExpandedSidebarContent ? 'label' : 'icon-only'}
+                    requiredPlan={item.requiredPlan}
+                    className={showExpandedSidebarContent ? 'ml-auto' : undefined}
+                    asLink={false}
+                  />
+                </Link>
               ) : (
                 <NavLink to={item.to} end={item.end}
                   className={({ isActive }) => isActive ? 'active' : ''}
@@ -213,27 +208,8 @@ export default function Layout() {
               </div>
             </div>
           )}
-          {showExpandedSidebarContent && planUsage && (
-            <div className="flex flex-col gap-2 px-3 py-3 border-t border-border/40 mt-1">
-              <UsageMeter
-                label="Ventes / mois"
-                used={planUsage.ventesParMois?.used ?? 0}
-                limit={planUsage.ventesParMois?.limit ?? null}
-              />
-              <UsageMeter
-                label="Produits"
-                used={planUsage.produits?.used ?? 0}
-                limit={planUsage.produits?.limit ?? null}
-              />
-              <UsageMeter
-                label="Clients"
-                used={planUsage.clients?.used ?? 0}
-                limit={planUsage.clients?.limit ?? null}
-              />
-            </div>
-          )}
-          <button className="btn-logout" onClick={logout} title={!showExpandedSidebarContent ? 'Déconnexion' : undefined} aria-label="Se déconnecter">
-            <FiLogOut /> {showExpandedSidebarContent && 'Déconnexion'}
+          <button className="btn-logout" onClick={logout} title="Déconnexion" aria-label="Se déconnecter">
+            <FiLogOut aria-hidden="true" />
           </button>
         </div>
       </aside>

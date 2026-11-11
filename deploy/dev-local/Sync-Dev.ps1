@@ -90,4 +90,5 @@ try {
     $env:DEV_BACKEND_IMAGE = $previousBackendImage
 }
 
+if (-not $Build) { Write-Host "Revision dev active : $revision" }
 Write-Host 'Application disponible sur http://127.0.0.1:8092'

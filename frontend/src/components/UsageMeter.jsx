@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 const UNLIMITED = 999999;
 const UPGRADE_THRESHOLD = 0.8;
 
-export default function UsageMeter({ label, used, limit, compact = false }) {
+export default function UsageMeter({ label, used, limit, compact = false, showUpgradeLink = true }) {
   // Show nothing for plans without real limits
   if (!limit || limit >= UNLIMITED) return null;
 
   const pct = Math.min(Math.round((used / limit) * 100), 100);
-  const showCta = pct >= UPGRADE_THRESHOLD * 100;
+  const showCta = showUpgradeLink && pct >= UPGRADE_THRESHOLD * 100;
 
   const barColor =
     pct >= 90 ? 'bg-red-500' :
@@ -21,6 +21,7 @@ export default function UsageMeter({ label, used, limit, compact = false }) {
         <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
           <div
             role="progressbar"
+            aria-label={label}
             aria-valuenow={pct}
             aria-valuemin={0}
             aria-valuemax={100}
@@ -44,6 +45,7 @@ export default function UsageMeter({ label, used, limit, compact = false }) {
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
           role="progressbar"
+          aria-label={label}
           aria-valuenow={pct}
           aria-valuemin={0}
           aria-valuemax={100}
