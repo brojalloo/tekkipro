@@ -10,6 +10,29 @@ Ouvre [127.0.0.1:8092](http://127.0.0.1:8092). La commande télécharge la derni
 
 Si le paquet GHCR est privé, lance `docker --context desktop-linux login ghcr.io --username brojalloo` et utilise un jeton GitHub classique avec `read:packages` à l’invite du mot de passe. Tant que la première publication de `dev` n’a pas réussi, utilise la construction locale ci-dessous.
 
+## Activer les mises à jour automatiques
+
+Depuis ta copie de travail Windows sur `dev`, avec Docker Desktop démarré :
+
+```powershell
+.\deploy\dev-local\Install-AutoSync.ps1
+```
+
+La tâche **TekkiPro - Synchronisation dev** vérifie GHCR toutes les cinq minutes pendant ta session Windows et au début d’une nouvelle session. Elle attend un prochain passage si Docker Desktop est indisponible ou si la copie de travail est sur une autre branche. GitHub publie les images après les tests et Trivy. Le script sélectionne les images web et API de la même révision et conserve les volumes Docker existants.
+
+Si les images sont privées, connecte-toi à GHCR une fois avec le même compte Windows avant d’installer la tâche. Vérifie l’heure et le résultat de la dernière exécution dans PowerShell :
+
+```powershell
+Get-ScheduledTaskInfo -TaskName 'TekkiPro - Synchronisation dev'
+```
+
+Pour tester une construction locale avec `-Build`, mets la tâche en pause et attends la fin d’une éventuelle synchronisation en cours. Réactive-la ensuite pour reprendre les mises à jour GHCR :
+
+```powershell
+Disable-ScheduledTask -TaskName 'TekkiPro - Synchronisation dev'
+Enable-ScheduledTask -TaskName 'TekkiPro - Synchronisation dev'
+```
+
 ## Développer avec Docker
 
 Après avoir modifié le code, reconstruis l’image depuis le dépôt.

@@ -4,6 +4,10 @@
 set -e
 
 BRANCH=${1:-main}
+if [[ "$BRANCH" != main ]]; then
+    echo 'Le VPS TekkiPro utilise uniquement la branche main.' >&2
+    exit 1
+fi
 APP_DIR=/opt/tekkipro
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
@@ -19,23 +23,6 @@ git fetch origin
 git checkout "$BRANCH"
 git pull origin "$BRANCH"
 
-# Rebuild and restart containers
-log "Rebuilding containers..."
-cd infra
-docker compose pull --quiet 2>/dev/null || true
-docker compose up -d --build --remove-orphans
-
-log "Waiting for services to be healthy..."
-sleep 5
-
-# Health check
-if docker compose ps | grep -q "Up"; then
-    log "Deploy SUCCESS — containers running"
-    docker compose ps
-else
-    log "ERROR — containers not running after deploy"
-    docker compose logs --tail=50
-    exit 1
-fi
-
+log "Rebuilding containers and checking production..."
+bash "$APP_DIR/deploy/production/Apply-Vps.sh"
 log "=== Deploy complete ==="
