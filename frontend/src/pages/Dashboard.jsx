@@ -7,7 +7,7 @@ import {
   FiShoppingCart, FiDollarSign, FiTrendingUp, FiAlertTriangle,
   FiUsers, FiPackage, FiArrowRight, FiBarChart2, FiAward,
   FiSun, FiMoon, FiSunrise, FiCalendar, FiActivity,
-  FiStar, FiShield, FiZap, FiArrowUpRight
+  FiStar, FiShield, FiZap, FiArrowUpRight, FiChevronDown
 } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatLimit } from '../config/planConfig';
@@ -140,7 +140,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-transparent flex flex-col gap-5 p-4 md:p-6 lg:p-8 font-sans">
+    <div className="min-w-0 flex flex-col gap-4 sm:gap-5 font-sans">
       {/* Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -164,113 +164,117 @@ export default function Dashboard() {
       <div className="h-px bg-gradient-to-r from-[#1B5E20]/15 via-[#FFD600]/10 to-transparent" />
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-4 ${isAdmin ? 'lg:grid-cols-3 2xl:grid-cols-6' : 'xl:grid-cols-4'}`}>
         {/* Ventes du jour */}
-        <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] border border-[#1B5E20]/50 rounded-[22px] shadow-lg shadow-[#1B5E20]/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#1B5E20]/30 transition-all overflow-hidden group">
+        <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-[#1B5E20] to-[#0D3B14] border border-[#1B5E20]/50 rounded-[22px] shadow-sm overflow-hidden group">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,214,0,0.12),transparent_60%)] pointer-events-none" />
           <div className="flex items-center justify-between">
             <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-white/15 text-white"><FiShoppingCart size={20} /></div>
             <span className="text-[0.72rem] font-bold text-white/50 uppercase tracking-widest">{stats?.ventesJour?.nombre || 0} ventes</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[1.35rem] font-extrabold text-white tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.ventesJour?.total)}</span>
+            <span className="text-lg sm:text-[1.35rem] font-extrabold text-white tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.ventesJour?.total)}</span>
             <span className="text-[0.78rem] font-semibold text-white/60 truncate">Ventes du jour</span>
           </div>
         </div>
 
         {/* Ventes du mois */}
-        <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-white to-slate-50 border border-[#1B5E20]/15 rounded-[22px] shadow-lg shadow-slate-200/40 hover:-translate-y-1 hover:shadow-xl transition-all overflow-hidden">
+        <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-white to-slate-50 border border-[#1B5E20]/15 rounded-[22px] shadow-sm overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(27,94,32,0.05),transparent_60%)] pointer-events-none" />
           <div className="flex items-center justify-between">
             <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-[#1B5E20]/10 text-[#1B5E20]"><FiDollarSign size={20} /></div>
             <span className="text-[0.72rem] font-bold text-muted-foreground uppercase tracking-widest">{stats?.ventesMois?.nombre || 0} ventes</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[1.35rem] font-extrabold text-foreground tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.ventesMois?.total)}</span>
+            <span className="text-lg sm:text-[1.35rem] font-extrabold text-foreground tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.ventesMois?.total)}</span>
             <span className="text-[0.78rem] font-semibold text-muted-foreground truncate">Ventes du mois</span>
           </div>
         </div>
 
         {isAdmin && (
-          <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-[#FFD600] to-[#F9A825] border border-[#FFD600]/50 rounded-[22px] shadow-lg shadow-[#FFD600]/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#FFD600]/30 transition-all overflow-hidden">
+          <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-[#FFD600] to-[#F9A825] border border-[#FFD600]/50 rounded-[22px] shadow-sm overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.3),transparent_60%)] pointer-events-none" />
             <div className="flex items-center justify-between">
               <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-black/10 text-[#1B5E20]"><FiTrendingUp size={20} /></div>
               <span className="text-[0.72rem] font-bold text-[#5D4037]/60 uppercase tracking-widest">Aujourd&apos;hui</span>
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[1.35rem] font-extrabold text-[#1B3300] tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.beneficeJour)}</span>
+              <span className="text-lg sm:text-[1.35rem] font-extrabold text-[#1B3300] tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.beneficeJour)}</span>
               <span className="text-[0.78rem] font-semibold text-[#5D4037]/70 truncate">Bénéfice du jour</span>
             </div>
           </div>
         )}
 
         {isAdmin && (
-          <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-white to-slate-50 border border-[#1B5E20]/15 rounded-[22px] shadow-lg shadow-slate-200/40 hover:-translate-y-1 hover:shadow-xl transition-all overflow-hidden">
+          <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-white to-slate-50 border border-[#1B5E20]/15 rounded-[22px] shadow-sm overflow-hidden">
             <div className="flex items-center justify-between">
               <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-[#1B5E20]/10 text-[#1B5E20]"><FiTrendingUp size={20} /></div>
               <span className="text-[0.72rem] font-bold text-muted-foreground uppercase tracking-widest">Ce mois</span>
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[1.35rem] font-extrabold text-[#155230] tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.beneficeMois)}</span>
+              <span className="text-lg sm:text-[1.35rem] font-extrabold text-[#155230] tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.beneficeMois)}</span>
               <span className="text-[0.78rem] font-semibold text-muted-foreground truncate">Bénéfice du mois</span>
             </div>
           </div>
         )}
 
         {/* Dettes */}
-        <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] border border-[#D32F2F]/40 rounded-[22px] shadow-lg shadow-[#D32F2F]/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#D32F2F]/30 transition-all overflow-hidden">
+        <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] border border-[#D32F2F]/40 rounded-[22px] shadow-sm overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_60%)] pointer-events-none" />
           <div className="flex items-center justify-between">
             <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-white/15 text-white"><FiDollarSign size={20} /></div>
             <span className="text-[0.72rem] font-bold text-white/50 uppercase tracking-widest">{stats?.dettes?.nombre || 0} clients</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[1.35rem] font-extrabold text-white tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.dettes?.total)}</span>
+            <span className="text-lg sm:text-[1.35rem] font-extrabold text-white tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{formatCFA(stats?.dettes?.total)}</span>
             <span className="text-[0.78rem] font-semibold text-white/60 truncate">Crédits / Dettes</span>
           </div>
         </div>
 
         {/* Alertes stock */}
-        <div className="relative flex flex-col gap-3 p-5 bg-gradient-to-br from-white to-amber-50/50 border border-amber-200/60 rounded-[22px] shadow-lg shadow-slate-200/40 hover:-translate-y-1 hover:shadow-xl transition-all overflow-hidden">
+        <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 bg-gradient-to-br from-white to-amber-50/50 border border-amber-200/60 rounded-[22px] shadow-sm overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="w-[42px] h-[42px] flex items-center justify-center rounded-xl shrink-0 bg-amber-400/15 text-amber-600"><FiAlertTriangle size={20} /></div>
             <span className="text-[0.72rem] font-bold text-muted-foreground uppercase tracking-widest">Stock</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[1.35rem] font-extrabold text-amber-700 tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{stats?.alertesStock || 0}</span>
+            <span className="text-lg sm:text-[1.35rem] font-extrabold text-amber-700 tracking-tight truncate" style={{fontFamily:'Sora,sans-serif'}}>{stats?.alertesStock || 0}</span>
             <span className="text-[0.78rem] font-semibold text-muted-foreground truncate">Alertes stock</span>
           </div>
         </div>
 
       </div>
 
-      {planUsage && plan === 'GRATUIT' && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-white border border-border/60 rounded-2xl">
-          <UsageMeter
-            label="Ventes ce mois"
-            used={planUsage.ventesParMois?.used ?? 0}
-            limit={planUsage.ventesParMois?.limit ?? null}
-          />
-          <UsageMeter
-            label="Produits actifs"
-            used={planUsage.produits?.used ?? 0}
-            limit={planUsage.produits?.limit ?? null}
-          />
-          <UsageMeter
-            label="Clients"
-            used={planUsage.clients?.used ?? 0}
-            limit={planUsage.clients?.limit ?? null}
-          />
-        </div>
+      {plan === 'GRATUIT' && (planUsage || isAdmin) && (
+        <details className="group min-w-0 rounded-2xl border border-border bg-card">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-2xl px-4 py-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+            <FiZap size={18} className="shrink-0 text-primary" aria-hidden="true" />
+            <span className="flex-1 text-sm font-bold text-foreground">Limites Starter</span>
+            <FiChevronDown size={18} className="shrink-0 text-muted-foreground group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="border-t border-border/60 px-4 py-4">
+            {planUsage && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <UsageMeter label="Produits actifs" used={planUsage.produits?.used ?? 0} limit={planUsage.produits?.limit ?? null} showUpgradeLink={false} />
+                <UsageMeter label="Clients" used={planUsage.clients?.used ?? 0} limit={planUsage.clients?.limit ?? null} showUpgradeLink={false} />
+                <UsageMeter label="Ventes ce mois" used={planUsage.ventesParMois?.used ?? 0} limit={planUsage.ventesParMois?.limit ?? null} showUpgradeLink={false} />
+              </div>
+            )}
+            {isAdmin && (
+              <Link to="/app/abonnement" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
+                Voir les forfaits <FiArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+        </details>
       )}
 
       {/* Plan Info Widget */}
-      {isAdmin && (
+      {isAdmin && plan !== 'GRATUIT' && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:px-6 bg-gradient-to-b from-white to-blue-50/30 border border-border/80 rounded-[20px] shadow-sm">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${plan === 'GRATUIT' ? 'bg-muted text-muted-foreground' : plan === 'PRO' ? 'bg-primary/10 text-primary' : 'bg-[#d4af37]/10 text-[#d4af37]'} shrink-0`} >
-              {plan === 'GRATUIT' ? <FiZap size={18} /> : plan === 'PRO' ? <FiStar size={18} /> : <FiShield size={18} />}
+            <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center ${plan === 'PRO' ? 'bg-primary/10 text-primary' : 'bg-[#d4af37]/10 text-[#d4af37]'} shrink-0`} >
+              {plan === 'PRO' ? <FiStar size={18} /> : <FiShield size={18} />}
             </div>
             <div className="flex flex-col">
               <span className="text-[0.65rem] font-extrabold text-muted-foreground uppercase tracking-widest">Plan actuel</span>
@@ -282,19 +286,14 @@ export default function Dashboard() {
             <span className="inline-flex items-center gap-1.5 text-[0.8rem] font-bold text-muted-foreground"><FiUsers size={12} /> {formatLimit(planLimits.utilisateurs)} utilisateurs</span>
             <span className="inline-flex items-center gap-1.5 text-[0.8rem] font-bold text-muted-foreground"><FiShoppingCart size={12} /> {formatLimit(planLimits.ventesParMois)} ventes/mois</span>
           </div>
-          {plan === 'GRATUIT' && (
-            <Link to="/app/abonnement" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-br from-accent to-secondary text-white text-[0.8rem] font-bold shadow-md shadow-accent/20 hover:-translate-y-0.5 hover:shadow-lg transition-all">
-              <FiArrowUpRight size={14} /> Upgrade
-            </Link>
-          )}
         </div>
       )}
 
       {/* Chart + Top Produits */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
-        <div className="relative p-6 bg-gradient-to-br from-white to-slate-50/80 border border-border/70 rounded-[28px] shadow-lg shadow-slate-200/40 overflow-hidden">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4">
+        <div className="relative min-w-0 p-4 sm:p-6 bg-gradient-to-br from-white to-slate-50/80 border border-border/70 rounded-[28px] shadow-lg shadow-slate-200/40 overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#1B5E20] to-transparent opacity-50" />
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#1B5E20]/10 text-[#1B5E20]"><FiBarChart2 size={16} /></div>
               <h3 className="text-base font-extrabold text-foreground m-0" style={{fontFamily:'Sora,sans-serif'}}>Ventes — 14 derniers jours</h3>
@@ -327,9 +326,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="relative p-6 bg-gradient-to-br from-white to-slate-50/80 border border-border/70 rounded-[28px] shadow-lg shadow-slate-200/40 overflow-hidden">
+        <div className="relative min-w-0 p-4 sm:p-6 bg-gradient-to-br from-white to-slate-50/80 border border-border/70 rounded-[28px] shadow-lg shadow-slate-200/40 overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#FFD600] to-transparent opacity-70" />
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-[#FFD600]/15 text-[#B8860B]"><FiAward size={16} /></div>
               <h3 className="text-[1rem] font-extrabold text-foreground m-0" style={{fontFamily:'Sora,sans-serif'}}>Top Produits</h3>
