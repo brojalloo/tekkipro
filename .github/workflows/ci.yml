@@ -9,6 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  DEV_IMAGE: tekkipro-web-dev-local:ci
+  DEV_BACKEND_IMAGE: tekkipro-api-dev:ci
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -83,7 +91,7 @@ jobs:
 
   deploy:
     name: Deploy to VPS
-    needs: [docker-dev]
+    needs: [trivy]
     runs-on: [self-hosted, linux, x64]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
     steps:
@@ -106,21 +114,13 @@ jobs:
         run: docker compose up -d --build
 
   docker-dev:
-    name: Docker local et publication dev
+    name: Docker
     needs: [backend, frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: read
-      packages: write
-    concurrency:
-      group: docker-dev-${{ github.ref }}
-      cancel-in-progress: true
     env:
       COMPOSE_FILE: deploy/dev-local/compose.yaml
-      DEV_IMAGE: tekkipro-web-dev-local:ci
       TEKKIPRO_JWT_SECRET: tekkipro-ci-test-secret-with-32-characters
-      DEV_BACKEND_IMAGE: tekkipro-api-dev:ci
       DEV_REVISION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -146,10 +146,38 @@ jobs:
         if: always()
         run: docker compose down --volumes
 
+      - name: Archiver les images testées
+        run: docker save --output "${{ runner.temp }}/tekkipro-images.tar" "$DEV_BACKEND_IMAGE" "$DEV_IMAGE"
+
+      - name: Transférer les images testées
+        uses: actions/upload-artifact@v4
+        with:
+          name: tekkipro-images
+          path: ${{ runner.temp }}/tekkipro-images.tar
+          compression-level: 1
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true
+
+  trivy:
+    name: Trivy
+    needs: [docker-dev]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TRIVY_IMAGE_SRC: docker
+    steps:
+      - name: Récupérer les images testées
+        uses: actions/download-artifact@v4
+        with:
+          name: tekkipro-images
+          path: ${{ runner.temp }}
+
+      - name: Charger les images
+        run: docker load --input "${{ runner.temp }}/tekkipro-images.tar"
+
       - name: Scanner l’image API avec Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        env:
-          TRIVY_IMAGE_SRC: docker
         with:
           scan-type: image
           image-ref: ${{ env.DEV_BACKEND_IMAGE }}
@@ -160,8 +188,6 @@ jobs:
 
       - name: Scanner l’image web avec Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        env:
-          TRIVY_IMAGE_SRC: docker
         with:
           skip-setup-trivy: true
           scan-type: image
@@ -171,8 +197,26 @@ jobs:
           format: table
           exit-code: '0'
 
+  publish-dev:
+    name: Publication GHCR
+    needs: [trivy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Récupérer les images scannées
+        uses: actions/download-artifact@v4
+        with:
+          name: tekkipro-images
+          path: ${{ runner.temp }}
+
+      - name: Charger les images
+        run: docker load --input "${{ runner.temp }}/tekkipro-images.tar"
+
       - name: Publier les images validées sur GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

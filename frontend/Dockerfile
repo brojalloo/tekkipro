@@ -15,7 +15,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # ---- Production stage (Nginx) ----
-FROM nginx:alpine AS production
+FROM nginx:alpine-slim AS production
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY --from=builder /app/nginx/default.conf /etc/nginx/conf.d/default.conf
