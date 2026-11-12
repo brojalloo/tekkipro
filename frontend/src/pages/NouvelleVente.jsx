@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import api from '../services/api';
@@ -29,10 +29,14 @@ export default function NouvelleVente() {
   const { plan, planUsage } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const barcodeSearch = searchParams.get('codeBarre') || '';
   const autoAddedBarcodeRef = useRef(null);
-  const [produits, setProduits] = useState([]);
+  const [catalogue, setCatalogue] = useState(null);
   const [clients, setClients] = useState([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(barcodeSearch);
+  const [page, setPage] = useState(1);
+  const [catalogueVersion, setCatalogueVersion] = useState(0);
+  const [clientsVersion, setClientsVersion] = useState(0);
   const [cart, setCart] = useState([]);
   const [clientId, setClientId] = useState('');
   const [modePaiement, setModePaiement] = useState('CASH');
@@ -43,24 +47,60 @@ export default function NouvelleVente() {
   const [scanLoading, setScanLoading] = useState(false);
   const [showCart, setShowCart] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  const query = search.trim();
+  const params = new URLSearchParams({ limit: '30' });
+  if (query) params.set('search', query);
+  if (page > 1) params.set('page', String(page));
+  const productsUrl = `/produits?${params}`;
+  const currentCatalogue = catalogue?.url === productsUrl && catalogue.version === catalogueVersion ? catalogue : null;
+  const produits = currentCatalogue?.products;
+  const catalogueLoading = !currentCatalogue;
+  const productCount = currentCatalogue?.pagination?.total ?? produits?.length;
 
-  const loadData = async () => {
-    try {
-      const [prodRes, clientRes] = await Promise.all([
-        api.get('/produits?limit=1000'),
-        api.get('/clients?limit=1000'),
-      ]);
-      setProduits(prodRes.data.data.filter(p => p.actif));
-      setClients(clientRes.data.data);
-    } catch { toast.error('Erreur de chargement des données'); }
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadProducts = async () => {
+      try {
+        const { data } = await api.get(productsUrl, { signal: controller.signal });
+        if (!controller.signal.aborted) {
+          setCatalogue({
+            url: productsUrl,
+            version: catalogueVersion,
+            products: data.data.filter(p => p.actif),
+            pagination: data.pagination,
+          });
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setCatalogue({ url: productsUrl, version: catalogueVersion, error: true });
+          toast.error('Erreur de chargement des données');
+        }
+      }
+    };
+
+    const timer = query ? setTimeout(loadProducts, 250) : undefined;
+    if (!query) void loadProducts();
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [productsUrl, query, catalogueVersion]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/clients?limit=1000').then(({ data }) => {
+      if (!cancelled) setClients(data.data);
+    }).catch(() => {
+      if (!cancelled) toast.error('Impossible de charger les clients.');
+    });
+    return () => { cancelled = true; };
+  }, [clientsVersion]);
+
+  const changeSearch = (value) => {
+    setSearch(value);
+    setPage(1);
   };
-
-  const filteredProduits = useMemo(() =>
-    produits.filter(p =>
-      p.nom.toLowerCase().includes(search.toLowerCase()) ||
-      p.codeBarre?.includes(search)
-    ), [produits, search]);
 
   const addToCart = useCallback((produit) => {
     setCart(currentCart => {
@@ -93,15 +133,16 @@ export default function NouvelleVente() {
   }, []);
 
   useEffect(() => {
-    const barcodeSearch = searchParams.get('codeBarre');
-    if (!barcodeSearch) {
-      autoAddedBarcodeRef.current = null;
-      return;
+    autoAddedBarcodeRef.current = null;
+    if (barcodeSearch) {
+      setSearch(barcodeSearch);
+      setPage(1);
     }
-    setSearch(barcodeSearch);
-    if (autoAddedBarcodeRef.current === barcodeSearch) return;
+  }, [barcodeSearch]);
 
-    const produitFromBarcode = produits.find((p) => p.actif && p.codeBarre === barcodeSearch);
+  useEffect(() => {
+    if (!barcodeSearch || query !== barcodeSearch || autoAddedBarcodeRef.current === barcodeSearch) return;
+    const produitFromBarcode = produits?.find(p => p.codeBarre === barcodeSearch);
     if (!produitFromBarcode) return;
     const availableStock = Number(produitFromBarcode.stock || 0);
     if (availableStock <= 0) return;
@@ -113,7 +154,7 @@ export default function NouvelleVente() {
 
     if (autoSelectedUnit) addUniteToCart(produitFromBarcode, autoSelectedUnit);
     else addToCart(produitFromBarcode);
-  }, [addToCart, addUniteToCart, produits, searchParams]);
+  }, [addToCart, addUniteToCart, barcodeSearch, produits, query]);
 
   const handleScan = useCallback(async (code) => {
     if (scanLoading) return;
@@ -184,7 +225,8 @@ export default function NouvelleVente() {
       });
       toast.success(getApiSuccessMessage(res, { fallback: getLocalSuccessMessage({ entity: 'vente', action: 'save', params: { numero: res.data.data.numero } }) }));
       setCart([]); setClientId(''); setMontantPaye('');
-      loadData();
+      setCatalogueVersion(version => version + 1);
+      setClientsVersion(version => version + 1);
     } catch (error) {
       const upgradeRequired = isUpgradeRequiredError(error);
       const msg = getApiErrorMessage(error, { fallback: 'Erreur de vente', includeStatus: !upgradeRequired });
@@ -226,14 +268,22 @@ export default function NouvelleVente() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 min-h-[calc(100vh-100px)] pb-20 lg:pb-0">
-        <div className="p-5 md:p-8 lg:pr-6 overflow-y-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] gap-0 min-h-[calc(100vh-100px)] pb-20 lg:pb-0">
+        <div className="min-w-0 p-4 sm:p-5 md:p-6 lg:pr-5">
           <BarcodeScannerInput onScan={handleScan} active={scanMode} showInput={false} />
 
           <div className="flex items-center gap-3 px-4 py-3 bg-white border border-[#1B5E20]/15 rounded-[18px] mb-6 focus-within:border-[#1B5E20]/40 focus-within:shadow-[0_0_0_3px_rgba(27,94,32,0.08)] transition-all shadow-sm">
             <FiSearch size={18} className="text-[#1B5E20]/50 shrink-0" />
-            <input type="text" className="flex-1 bg-transparent border-none outline-none text-[0.92rem] font-medium text-foreground placeholder:text-muted-foreground" placeholder="Rechercher un produit…"
-              value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input type="text" className="min-w-0 flex-1 bg-transparent border-none outline-none text-[0.92rem] font-medium text-foreground placeholder:text-muted-foreground" placeholder="Rechercher un produit…"
+              aria-label="Rechercher par nom ou code-barres"
+              maxLength={120} value={search} onChange={(e) => changeSearch(e.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' || event.nativeEvent.isComposing || !query || produits?.length !== 1 || currentCatalogue.pagination?.total > 1) return;
+                const [produit] = produits;
+                const unite = produit.unitesVente?.find(u => u.estDefaut) || produit.unitesVente?.[0];
+                if (unite) addUniteToCart(produit, unite);
+                else addToCart(produit);
+              }} />
 
             <button
               type="button"
@@ -249,9 +299,17 @@ export default function NouvelleVente() {
             </button>
           </div>
 
-          <div className="flex justify-end mb-2 px-1"><span className="text-xs text-muted-foreground">{filteredProduits.length} produit{filteredProduits.length > 1 ? 's' : ''}</span></div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-            {filteredProduits.map(p => {
+          <div role="status" className="mb-2 px-1 text-xs text-muted-foreground">
+            {catalogueLoading && 'Recherche des produits…'}
+            {productCount !== undefined && `${productCount} produit${productCount === 1 ? '' : 's'}`}
+          </div>
+          {currentCatalogue?.error && (
+            <button type="button" className="mb-4 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-primary" onClick={() => setCatalogueVersion(version => version + 1)}>
+              Réessayer la recherche
+            </button>
+          )}
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 2xl:grid-cols-3 gap-3">
+            {produits?.map(p => {
               const isAlert = p.stock <= p.stockAlerte;
               return (
                 <div key={p.id} className={`relative bg-white border rounded-[20px] p-5 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all flex flex-col cursor-pointer group ${isAlert ? 'border-amber-300/50 bg-amber-50/30' : 'border-[#1B5E20]/12 hover:border-[#1B5E20]/30 hover:shadow-[#1B5E20]/10'}`} onClick={() => addToCart(p)}>
@@ -292,7 +350,7 @@ export default function NouvelleVente() {
               );
             })}
 
-            {filteredProduits.length === 0 && (
+            {produits?.length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-16 h-16 flex items-center justify-center rounded-2xl bg-[#1B5E20]/8 text-[#1B5E20]/30 mb-4"><FiInbox size={32} /></div>
                 <h3 className="text-[1rem] font-semibold text-muted-foreground mb-1">Aucun produit trouvé</h3>
@@ -300,6 +358,13 @@ export default function NouvelleVente() {
               </div>
             )}
           </div>
+          {currentCatalogue?.pagination?.totalPages > 1 && (
+            <nav aria-label="Pages du catalogue" className="mt-4 flex items-center justify-between gap-2 text-sm">
+              <button type="button" disabled={page === 1} className="rounded-lg border border-border bg-white px-3 py-2 disabled:opacity-40" onClick={() => setPage(value => value - 1)}>Précédent</button>
+              <span>Page {page} / {currentCatalogue.pagination.totalPages}</span>
+              <button type="button" disabled={!currentCatalogue.pagination.hasNext} className="rounded-lg border border-border bg-white px-3 py-2 disabled:opacity-40" onClick={() => setPage(value => value + 1)}>Suivant</button>
+            </nav>
+          )}
         </div>
 
         {/* Mobile overlay backdrop */}
@@ -419,7 +484,7 @@ export default function NouvelleVente() {
           onClick={() => setShowCart(true)}
         >
           <FiShoppingCart size={17} />
-          Panier ({cart.length})
+          Panier ({cart.length}) · {formatCFA(total)}
         </button>
       )}
     </div>
