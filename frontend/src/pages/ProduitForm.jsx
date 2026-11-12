@@ -266,6 +266,24 @@ export default function ProduitForm() {
         })),
       };
 
+      if (!isEdit && hasCommercialStock) {
+        const factor = Number(commercialSize) * (commercialMode === 'carton' ? 1 : 1000);
+        data.prixAchat = Number(form.prixAchat || 0) / factor;
+        data.prixVente = Number(form.prixVente) / factor;
+        const packName = commercialMode === 'poids' ? `Sac ${commercialSize} kg`
+          : commercialMode === 'volume' ? `Bidon ${commercialSize} L` : `Carton ${commercialSize}`;
+        const pack = data.unitesVente.find(unit => unit.facteurConversion === factor);
+        if (pack) {
+          pack.prixAchat = Number(form.prixAchat || 0);
+        } else {
+          data.unitesVente.push({
+            nom: packName, facteurConversion: factor,
+            prix: Number(form.prixVente), prixAchat: Number(form.prixAchat || 0),
+            estDefaut: !data.unitesVente.some(unit => unit.estDefaut),
+          });
+        }
+      }
+
       if (isEdit) {
         await api.put(`/produits/${id}`, data);
         // Save new units
@@ -477,7 +495,7 @@ export default function ProduitForm() {
               {!isEdit && (form.uniteBase === 'g' || form.uniteBase === 'ml' || form.uniteBase === 'piece' || form.uniteBase === 'paquet') && (
                 <div className="pf-commercial-helper">
                   <label htmlFor="commercial-mode">
-                    <FiInfo size={14} /> Mode commercial (aide à la conversion automatique)
+                    <FiInfo size={14} /> Comment achetez-vous ce produit ?
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
@@ -495,7 +513,7 @@ export default function ProduitForm() {
                           <input type="number" value={commercialSize} onChange={(e) => setCommercialSize(e.target.value)} placeholder={commercialMode === 'poids' ? 'Ex: 50' : commercialMode === 'volume' ? 'Ex: 20' : 'Ex: 40'} min="0" step="0.01" />
                         </div>
                         <div className="space-y-2">
-                          <label>Nombre de packs</label>
+                          <label>Nombre de sacs, bidons ou cartons</label>
                           <input type="number" value={commercialCount} onChange={(e) => setCommercialCount(e.target.value)} placeholder="Ex: 10" min="0" step="1" />
                         </div>
                       </>
@@ -584,6 +602,7 @@ export default function ProduitForm() {
                       onChange={handleChange}
                       placeholder="0"
                       min="0"
+                      step="any"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none">{form.uniteBase}</span>
                   </div>
@@ -610,7 +629,7 @@ export default function ProduitForm() {
               </div>
               <div>
                 <h2 className="text-base font-bold m-0 text-foreground">Prix de référence</h2>
-                <p>Prix par défaut (utilisés si aucune unité de vente n'est définie)</p>
+                <p>{hasCommercialStock ? 'Saisissez le prix pour un sac, un bidon ou un carton complet.' : `Saisissez les prix pour 1 ${form.uniteBase}.`}</p>
               </div>
             </div>
             <div className="p-6 space-y-6">
@@ -618,7 +637,7 @@ export default function ProduitForm() {
                 <div className="space-y-2">
                   <label>
                     <FiDollarSign size={14} />
-                    Prix de vente (CFA) <span className="text-red-500">*</span>
+                    Prix de vente (FCFA / {hasCommercialStock ? 'sac, bidon ou carton' : form.uniteBase}) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -637,7 +656,7 @@ export default function ProduitForm() {
                 <div className="space-y-2">
                   <label>
                     <FiDollarSign size={14} />
-                    Prix d'achat (CFA)
+                    Prix d'achat (FCFA / {hasCommercialStock ? 'sac, bidon ou carton' : form.uniteBase})
                   </label>
                   <div className="relative">
                     <input
