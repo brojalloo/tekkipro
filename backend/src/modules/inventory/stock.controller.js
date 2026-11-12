@@ -8,58 +8,6 @@ const { logAudit } = require('../../common/utils/auditLog');
 
 const hasValue = (value) => value !== undefined && value !== null && value !== '';
 
-const getClosestUnitByPrice = (units = [], targets = [], priceField = 'prix') => {
-  const validTargets = targets
-    .map((value) => Number(value))
-    .filter((value) => Number.isFinite(value) && value > 0);
-
-  const pricedUnits = units.filter((u) => {
-    const unitPrice = Number(u[priceField]);
-    return Number(u.facteurConversion) > 0 && Number.isFinite(unitPrice) && unitPrice > 0;
-  });
-
-  if (!validTargets.length || !pricedUnits.length) {
-    return null;
-  }
-
-  return [...pricedUnits].sort((a, b) => {
-    const scoreA = Math.min(...validTargets.map((target) => Math.abs(Number(a[priceField]) - target)));
-    const scoreB = Math.min(...validTargets.map((target) => Math.abs(Number(b[priceField]) - target)));
-
-    if (scoreA !== scoreB) return scoreA - scoreB;
-
-    return Number(a.facteurConversion) - Number(b.facteurConversion);
-  })[0] || null;
-};
-
-const getReferenceUnit = (produit) => {
-  const validUnits = (produit.unitesVente || []).filter((u) => Number(u.facteurConversion) > 0);
-  const defaultUnit = validUnits.find(u => u.estDefaut);
-  if (defaultUnit) return defaultUnit;
-
-  const purchaseUnit = getClosestUnitByPrice(validUnits, [produit.prixAchat, produit.prixVente], 'prixAchat');
-  if (purchaseUnit) return purchaseUnit;
-
-  const saleUnit = getClosestUnitByPrice(validUnits, [produit.prixVente, produit.prixAchat], 'prix');
-  if (saleUnit) return saleUnit;
-
-  return [...validUnits].sort((a, b) => Number(a.facteurConversion) - Number(b.facteurConversion))[0] || null;
-};
-
-const getPrixAchatBaseForInventaire = (produit) => {
-  const referenceUnit = getReferenceUnit(produit);
-
-  if (hasValue(referenceUnit?.prixAchat) && referenceUnit.facteurConversion > 0) {
-    return referenceUnit.prixAchat / referenceUnit.facteurConversion;
-  }
-
-  if (referenceUnit?.facteurConversion > 1) {
-    return (produit.prixAchat || 0) / referenceUnit.facteurConversion;
-  }
-
-  return produit.prixAchat || 0;
-};
-
 // Entrée de stock (approvisionnement)
 const entreeStock = async (req, res) => {
   try {
@@ -97,7 +45,7 @@ const entreeStock = async (req, res) => {
       : null;
     const prixAchatEntree = parsedPrixAchat !== null
       ? parsedPrixAchat
-      : (unite?.prixAchat ?? (unite?.facteurConversion ? (produit.prixAchat || 0) * unite.facteurConversion : (produit.prixAchat || 0)));
+      : ((produit.prixAchat || 0) * (unite?.facteurConversion || 1));
 
     const result = await prisma.$transaction(async (tx) => {
       // Mettre à jour le stock du produit (toujours en unité de base)
@@ -240,7 +188,7 @@ const getInventaire = async (req, res) => {
     ]);
 
     const inventaire = produits.map(p => {
-      const prixAchatBase = getPrixAchatBaseForInventaire(p);
+      const prixAchatBase = Number(p.prixAchat) || 0;
       const peremption = getPeremptionStatus(p);
       const enAlerteStock = p.stock <= p.stockAlerte;
 
@@ -256,8 +204,12 @@ const getInventaire = async (req, res) => {
       };
     });
 
-        const totalValeurStock = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
-    const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
+    const tousProduits = await prisma.produit.findMany({
+      where,
+      select: { stock: true, prixAchat: true, stockAlerte: true, datePeremption: true, alertePeremptionJours: true },
+    });
+    const totalValeurStock = tousProduits.reduce((sum, p) => sum + p.stock * p.prixAchat, 0);
+    const produitsEnAlerte = tousProduits.filter(p => p.stock <= p.stockAlerte || hasPeremptionAlert(p)).length;
 
     res.json({
       success: true,
