@@ -115,12 +115,12 @@ describe('ProduitForm page', () => {
 
     fireEvent.change(container.querySelector('input[name="nom"]'), { target: { value: 'Riz en sacs' } });
     fireEvent.change(container.querySelector('input[name="prixVente"]'), { target: { value: '1' } });
-    fireEvent.change(screen.getByRole('combobox', { name: /Mode commercial/ }), { target: { value: 'poids' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /Comment achetez-vous ce produit/ }), { target: { value: 'poids' } });
     fireEvent.change(screen.getByPlaceholderText('Ex: 50'), { target: { value: '25' } });
     fireEvent.change(screen.getByPlaceholderText('Ex: 10'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: /Créer le produit/i }));
 
-    await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/produits', expect.objectContaining({ stock: 50000 })));
+    await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/produits', expect.objectContaining({ stock: 50000, prixVente: 1 / 25000, prixAchat: 0, unitesVente: [expect.objectContaining({ facteurConversion: 25000, prix: 1, prixAchat: 0 })] })));
   });
 
   it('charge un produit en édition puis enregistre la mise à jour', async () => {

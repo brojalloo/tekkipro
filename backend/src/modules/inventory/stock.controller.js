@@ -97,7 +97,7 @@ const entreeStock = async (req, res) => {
       : null;
     const prixAchatEntree = parsedPrixAchat !== null
       ? parsedPrixAchat
-      : (unite?.prixAchat ?? (unite?.facteurConversion ? (produit.prixAchat || 0) * unite.facteurConversion : (produit.prixAchat || 0)));
+      : (getPrixAchatBaseForInventaire(produit) * (unite?.facteurConversion || 1));
 
     const result = await prisma.$transaction(async (tx) => {
       // Mettre à jour le stock du produit (toujours en unité de base)
@@ -256,8 +256,12 @@ const getInventaire = async (req, res) => {
       };
     });
 
-        const totalValeurStock = inventaire.reduce((sum, p) => sum + p.valeurStock, 0);
-    const produitsEnAlerte = inventaire.filter(p => p.enAlerte).length;
+    const tousProduits = await prisma.produit.findMany({
+      where,
+      select: { stock: true, prixAchat: true, prixVente: true, unitesVente: true, stockAlerte: true, datePeremption: true, alertePeremptionJours: true },
+    });
+    const totalValeurStock = tousProduits.reduce((sum, p) => sum + p.stock * getPrixAchatBaseForInventaire(p), 0);
+    const produitsEnAlerte = tousProduits.filter(p => p.stock <= p.stockAlerte || hasPeremptionAlert(p)).length;
 
     res.json({
       success: true,
